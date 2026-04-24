@@ -1,4 +1,4 @@
-﻿import { AdsSection } from '@/components/AdsSection'
+import { AdsSection } from '@/components/AdsSection'
 import { Footer } from '@/components/Footer'
 import { HeroSection } from '@/components/HeroSection'
 import { Navbar } from '@/components/Navbar'

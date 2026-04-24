@@ -1,4 +1,4 @@
-﻿export const CATEGORIES = [
+export const CATEGORIES = [
   {
     id: 'cat_tech',
     name: 'High-Tech',
