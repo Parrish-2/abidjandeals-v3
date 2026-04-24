@@ -29,19 +29,21 @@ async function getAds() {
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
       { cookies: { getAll: () => cookieStore.getAll() } }
     )
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('ads')
-      .select('id, title, price, city, quartier, etat, views, images, is_boosted, boost_until, boost_level, category_id')
+      .select('*')
       .eq('status', 'active')
       .order('created_at', { ascending: false })
       .limit(8)
+    if (error) console.error('getAds error:', error)
     return (data ?? []).map((ad: any) => ({
       ...ad,
-      category: ad.category_id,
+      category: ad.category_id ?? ad.category ?? '',
       seller: 'Vendeur',
       img: ad.images?.[0] ?? null,
     }))
-  } catch {
+  } catch (e) {
+    console.error('getAds catch:', e)
     return []
   }
 }
