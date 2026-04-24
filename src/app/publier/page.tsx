@@ -15,10 +15,10 @@ const QUARTIERS: Record<string, string[]> = {
     'Plateau', 'Port-Bouët', 'Treichville', 'Yopougon', 'Bingerville',
     'Riviera', 'Angré', 'Deux-Plateaux', 'Bassam', 'Songon',
     'Zone 4', 'Zone industrielle', 'Vridi', 'Williamsville',
-    'Carrefour Bandji', 'N\'dotré', 'M\'Pouto', 'Anoumabo'
+    'Carrefour Bandji', "N'dotré", "M'Pouto", 'Anoumabo',
   ],
-  'Bouaké': ['Centre', 'Air France', 'Belleville', 'Commerce', 'Koko', 'N\'Gattakro', 'Sokoura'],
-  'Yamoussoukro': ['Habitat', 'Centre', 'Dioulakro', 'N\'Zuessy', 'Morofé'],
+  'Bouaké': ['Centre', 'Air France', 'Belleville', 'Commerce', 'Koko', "N'Gattakro", 'Sokoura'],
+  'Yamoussoukro': ['Habitat', 'Centre', 'Dioulakro', "N'Zuessy", 'Morofé'],
   'San-Pédro': ['Centre', 'Bardot', 'Cité', 'Zone industrielle'],
   'Korhogo': ['Centre', 'Commerce', 'Résidentiel'],
   'Daloa': ['Centre', 'Lobia', 'Tazibouo'],
@@ -26,11 +26,11 @@ const QUARTIERS: Record<string, string[]> = {
   'Gagnoa': ['Centre', 'Dioulabougou', 'Résidentiel'],
 }
 
-// ── Champs dynamiques par catégorie ─────────────────────────────────────────
-const CATEGORY_FIELDS: Record<string, {
-  etats: string[]
-  extraFields: { name: string; label: string; type?: string; options?: string[]; placeholder?: string }[]
-}> = {
+type ExtraField = { name: string; label: string; type?: string; options?: string[]; placeholder?: string }
+type CatConfig = { etats: string[]; extraFields: ExtraField[] }
+
+// ── Champs dynamiques — IDs alignés sur src/lib/data.ts ─────────────────────
+const CATEGORY_FIELDS: Record<string, CatConfig> = {
   auto: {
     etats: ['Neuf', 'Très bon état', 'Bon état', 'État correct', 'Pour pièces'],
     extraFields: [
@@ -40,7 +40,7 @@ const CATEGORY_FIELDS: Record<string, {
       { name: 'kilometrage', label: 'Kilométrage (km)', type: 'number', placeholder: '45000' },
       { name: 'carburant', label: 'Carburant', type: 'select', options: ['Essence', 'Diesel', 'Hybride', 'Électrique', 'GPL'] },
       { name: 'boite', label: 'Boîte de vitesse', type: 'select', options: ['Automatique', 'Manuelle'] },
-    ]
+    ],
   },
   immobilier: {
     etats: ['Neuf', 'Bon état', 'À rénover'],
@@ -49,7 +49,7 @@ const CATEGORY_FIELDS: Record<string, {
       { name: 'surface', label: 'Surface (m²)', type: 'number', placeholder: '120' },
       { name: 'pieces', label: 'Nombre de pièces', type: 'select', options: ['Studio', '2 pièces', '3 pièces', '4 pièces', '5 pièces', '6+'] },
       { name: 'meuble', label: 'Meublé ?', type: 'select', options: ['Oui', 'Non', 'Partiellement'] },
-    ]
+    ],
   },
   hightech: {
     etats: ['Neuf', 'Reconditionné', 'Très bon état', 'Bon état', 'À réparer'],
@@ -59,7 +59,7 @@ const CATEGORY_FIELDS: Record<string, {
       { name: 'stockage', label: 'Stockage', type: 'select', options: ['32 Go', '64 Go', '128 Go', '256 Go', '512 Go', '1 To', '2 To'] },
       { name: 'ram', label: 'RAM', type: 'select', options: ['2 Go', '4 Go', '6 Go', '8 Go', '12 Go', '16 Go', '32 Go'] },
       { name: 'couleur', label: 'Couleur', placeholder: 'Noir, Blanc, Or...' },
-    ]
+    ],
   },
   electromenager: {
     etats: ['Neuf', 'Très bon état', 'Bon état', 'En panne'],
@@ -67,7 +67,7 @@ const CATEGORY_FIELDS: Record<string, {
       { name: 'marque', label: 'Marque', placeholder: 'LG, Samsung, Midea...' },
       { name: 'modele', label: 'Modèle / Référence', placeholder: 'Référence du produit' },
       { name: 'capacite', label: 'Capacité / Puissance', placeholder: '350L, 1.5CV, 7kg...' },
-    ]
+    ],
   },
   location: {
     etats: ['Disponible', 'Sous réserve'],
@@ -75,37 +75,37 @@ const CATEGORY_FIELDS: Record<string, {
       { name: 'capacite', label: 'Capacité / Places', placeholder: '30 personnes, 300 invités...' },
       { name: 'duree_min', label: 'Durée minimale', placeholder: '1 jour, 1 semaine...' },
       { name: 'caution', label: 'Caution (FCFA)', type: 'number', placeholder: '50000' },
-    ]
+    ],
   },
   services: {
     etats: ['Disponible', 'Sur rendez-vous'],
     extraFields: [
-      { name: 'experience', label: 'Expérience', type: 'select', options: ['Moins d\'1 an', '1-3 ans', '3-5 ans', '5-10 ans', 'Plus de 10 ans'] },
+      { name: 'experience', label: 'Expérience', type: 'select', options: ["Moins d'1 an", '1-3 ans', '3-5 ans', '5-10 ans', 'Plus de 10 ans'] },
       { name: 'deplacement', label: 'Déplacement', type: 'select', options: ['À domicile', 'En boutique', 'Les deux'] },
-      { name: 'delai', label: 'Délai d\'intervention', placeholder: '24h, 1 semaine...' },
-    ]
+      { name: 'delai', label: "Délai d'intervention", placeholder: '24h, 1 semaine...' },
+    ],
   },
   bebe: {
     etats: ['Neuf', 'Très bon état', 'Bon état'],
     extraFields: [
       { name: 'marque', label: 'Marque', placeholder: 'Chicco, Graco...' },
       { name: 'age_cible', label: 'Âge cible', type: 'select', options: ['0-3 mois', '3-6 mois', '6-12 mois', '1-2 ans', '2-3 ans', '3-5 ans', '5+ ans'] },
-    ]
+    ],
   },
   pharma: {
     etats: ['Neuf', 'Non ouvert', 'Entamé'],
     extraFields: [
       { name: 'marque', label: 'Marque / Laboratoire', placeholder: 'Nom du fabricant' },
-      { name: 'date_expiration', label: 'Date d\'expiration', placeholder: 'MM/AAAA' },
-    ]
+      { name: 'date_expiration', label: "Date d'expiration", placeholder: 'MM/AAAA' },
+    ],
   },
   epicerie: {
     etats: ['Disponible', 'Stock limité'],
     extraFields: [
       { name: 'poids', label: 'Poids / Quantité', placeholder: '1kg, 500g, 1L...' },
-      { name: 'origine', label: 'Origine', placeholder: 'Côte d\'Ivoire, Importé...' },
-      { name: 'date_expiration', label: 'Date d\'expiration', placeholder: 'MM/AAAA' },
-    ]
+      { name: 'origine', label: 'Origine', placeholder: "Côte d'Ivoire, Importé..." },
+      { name: 'date_expiration', label: "Date d'expiration", placeholder: 'MM/AAAA' },
+    ],
   },
   lingerie: {
     etats: ['Neuf avec étiquette', 'Neuf sans étiquette', 'Très bon état'],
@@ -113,13 +113,13 @@ const CATEGORY_FIELDS: Record<string, {
       { name: 'taille', label: 'Taille', type: 'select', options: ['XS', 'S', 'M', 'L', 'XL', 'XXL', '36', '38', '40', '42', '44', '46', 'Autre'] },
       { name: 'couleur', label: 'Couleur', placeholder: 'Noir, Rouge, Blanc...' },
       { name: 'marque', label: 'Marque', placeholder: 'Marque...' },
-    ]
+    ],
   },
 }
 
-const DEFAULT_CONFIG = {
+const DEFAULT_CONFIG: CatConfig = {
   etats: ['Neuf', 'Très bon état', 'Bon état', 'État correct'],
-  extraFields: [{ name: 'marque', label: 'Marque (optionnel)', placeholder: 'Marque de l\'article' }]
+  extraFields: [{ name: 'marque', label: 'Marque (optionnel)', placeholder: "Marque de l'article" }],
 }
 
 const STORAGE_KEY = 'abidjandeals_draft'
@@ -142,10 +142,9 @@ export default function PublierPage() {
   })
 
   const selectedCat = CATEGORIES.find(c => c.id === form.category)
-  const catConfig = form.category ? (CATEGORY_FIELDS[form.category] || DEFAULT_CONFIG) : null
-  const quartiersForCity = form.city ? (QUARTIERS[form.city] || []) : []
+  const catConfig: CatConfig = form.category ? (CATEGORY_FIELDS[form.category] ?? DEFAULT_CONFIG) : DEFAULT_CONFIG
+  const quartiersForCity = form.city ? (QUARTIERS[form.city] ?? []) : []
 
-  // ── Charger le brouillon au démarrage ────────────────────────────────────
   useEffect(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY)
@@ -158,7 +157,6 @@ export default function PublierPage() {
     } catch { }
   }, [])
 
-  // ── Sauvegarder automatiquement toutes les 3 secondes ───────────────────
   useEffect(() => {
     const hasContent = form.title || form.description || form.price || form.category
     if (!hasContent) return
@@ -199,7 +197,7 @@ export default function PublierPage() {
     if (!files) return
     const limit = type === 'video' ? 1 : 5 - media.filter(m => m.type === 'image').length
     const newItems: MediaFile[] = Array.from(files).slice(0, limit).map(file => ({
-      file, url: URL.createObjectURL(file), type
+      file, url: URL.createObjectURL(file), type,
     }))
     setMedia(prev => [...prev, ...newItems].slice(0, 6))
   }
@@ -215,48 +213,31 @@ export default function PublierPage() {
     if (videos.length) addMedia(videos as unknown as FileList, 'video')
   }, [media])
 
-  // ── Soumission corrigée ──────────────────────────────────────────────────
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!form.category) { toast.error('Choisissez une catégorie'); return }
     if (!form.city) { toast.error('Choisissez une ville'); return }
     setLoading(true)
-
     try {
       const { data: { user } } = await supabase.auth.getUser()
-      if (!user) {
-        toast.error('Connectez-vous pour publier')
-        setLoading(false)
-        return
-      }
+      if (!user) { toast.error('Connectez-vous pour publier'); setLoading(false); return }
 
       const uploadedImages: string[] = []
       let videoUrl = ''
 
-      // Upload avec timeout de 30 secondes par fichier
       for (const m of media) {
         try {
           const ext = m.file.name.split('.').pop()
           const path = `ads/${user.id}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
-
           const uploadPromise = supabase.storage.from('ads-media').upload(path, m.file)
-          const timeoutPromise = new Promise((_, reject) =>
-            setTimeout(() => reject(new Error('Upload timeout')), 30000)
-          )
-
+          const timeoutPromise = new Promise<never>((_, reject) => setTimeout(() => reject(new Error('timeout')), 30000))
           const { error } = await Promise.race([uploadPromise, timeoutPromise]) as any
-
           if (!error) {
             const { data } = supabase.storage.from('ads-media').getPublicUrl(path)
             if (m.type === 'image') uploadedImages.push(data.publicUrl)
             else videoUrl = data.publicUrl
-          } else {
-            console.warn('Upload échoué pour', m.file.name, error)
           }
-        } catch (uploadErr) {
-          // On continue sans ce fichier plutôt que de bloquer toute la soumission
-          console.warn('Upload ignoré (timeout ou erreur):', uploadErr)
-        }
+        } catch { console.warn('Upload ignoré') }
       }
 
       const { error } = await supabase.from('ads').insert({
@@ -278,23 +259,12 @@ export default function PublierPage() {
         views: 0,
       })
 
-      if (error) {
-        toast.error('Erreur: ' + error.message)
-        return
-      }
-
+      if (error) { toast.error('Erreur: ' + error.message); return }
       localStorage.removeItem(STORAGE_KEY)
       setSuccess(true)
       setTimeout(() => router.push('/dashboard'), 2500)
-
-    } catch (err) {
-      console.error('Erreur soumission:', err)
-      toast.error('Une erreur est survenue')
-    } finally {
-      // finally garantit que loading repasse à false TOUJOURS,
-      // que ce soit un succès, une erreur ou un timeout
-      setLoading(false)
-    }
+    } catch { toast.error('Une erreur est survenue') }
+    finally { setLoading(false) }
   }
 
   if (success) return (
@@ -316,14 +286,12 @@ export default function PublierPage() {
     <div className="min-h-screen flex flex-col bg-gray-50">
       <Toaster position="top-center" />
       <Navbar />
-
       <main className="flex-1 w-full max-w-6xl mx-auto px-4 py-8">
         <div className="flex items-start justify-between mb-8">
           <div>
             <h1 className="text-3xl font-extrabold text-gray-900">Publier une annonce</h1>
             <p className="text-gray-400 mt-1">Le formulaire s'adapte automatiquement à votre article</p>
           </div>
-          {/* Indicateur sauvegarde */}
           <div className="flex items-center gap-3">
             {lastSaved && (
               <span className="text-xs text-gray-400 flex items-center gap-1">
@@ -339,7 +307,6 @@ export default function PublierPage() {
           </div>
         </div>
 
-        {/* Bannière brouillon récupéré */}
         {hasDraft && (
           <div className="mb-5 bg-blue-50 border border-blue-100 rounded-xl px-4 py-3 flex items-center gap-3">
             <Save size={16} className="text-blue-500 flex-shrink-0" />
@@ -395,7 +362,9 @@ export default function PublierPage() {
                     <div className="grid grid-cols-4 gap-2 mb-3">
                       {media.map((m, i) => (
                         <div key={i} className={`relative rounded-xl overflow-hidden border-2 aspect-square ${i === 0 ? 'border-orange-400' : 'border-gray-100'}`}>
-                          {m.type === 'image' ? <img src={m.url} alt="" className="w-full h-full object-cover" /> : <video src={m.url} className="w-full h-full object-cover" muted />}
+                          {m.type === 'image'
+                            ? <img src={m.url} alt="" className="w-full h-full object-cover" />
+                            : <video src={m.url} className="w-full h-full object-cover" muted />}
                           {i === 0 && <span className="absolute bottom-0 left-0 right-0 bg-orange-500 text-white text-[9px] font-bold text-center py-0.5">PRINCIPALE</span>}
                           {m.type === 'video' && <span className="absolute top-1 left-1 bg-black/60 text-white text-[9px] px-1 rounded">📹</span>}
                           <button type="button" onClick={() => removeMedia(i)}
@@ -421,16 +390,16 @@ export default function PublierPage() {
                 <div className="flex items-center gap-2 mb-4">
                   <div className="w-7 h-7 rounded-full bg-orange-500 text-white text-xs font-bold flex items-center justify-center">3</div>
                   <h2 className="font-bold text-gray-800">
-                    {form.category ? `Détails — ${selectedCat?.name}` : 'Détails de l\'annonce'}
+                    {form.category ? `Détails — ${selectedCat?.name}` : "Détails de l'annonce"}
                   </h2>
                 </div>
                 <div className="space-y-3">
                   <input name="title" value={form.title} onChange={handleChange} required
-                    placeholder={selectedCat ? `Titre — ex: ${selectedCat.name} à vendre...` : 'Titre de l\'annonce *'}
+                    placeholder={selectedCat ? `Titre — ex: ${selectedCat.name} à vendre...` : "Titre de l'annonce *"}
                     className="w-full border border-gray-100 bg-gray-50 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-orange-400 focus:bg-white transition font-medium" />
                   <textarea name="description" value={form.description} onChange={handleChange} rows={4}
                     placeholder={
-                      form.category === 'auto' ? 'Décrivez la voiture : options, historique d\'entretien, raison de vente...' :
+                      form.category === 'auto' ? "Décrivez la voiture : options, historique d'entretien, raison de vente..." :
                         form.category === 'immobilier' ? 'Décrivez le bien : équipements, voisinage, accès, charges...' :
                           form.category === 'hightech' ? 'Décrivez l\'état, les accessoires inclus, raison de vente...' :
                             form.category === 'services' ? 'Décrivez votre service, vos compétences, vos références...' :
@@ -444,16 +413,14 @@ export default function PublierPage() {
                         className="w-full border border-gray-100 bg-gray-50 rounded-xl pl-4 pr-16 py-3 text-sm focus:outline-none focus:border-orange-400 focus:bg-white transition font-bold" />
                       <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400 font-semibold">FCFA</span>
                     </div>
-                    {catConfig && (
-                      <select name="etat" value={form.etat} onChange={handleChange}
-                        className="border border-gray-100 bg-gray-50 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-orange-400 focus:bg-white transition">
-                        <option value="">État *</option>
-                        {catConfig.etats.map(e => <option key={e} value={e}>{e}</option>)}
-                      </select>
-                    )}
+                    <select name="etat" value={form.etat} onChange={handleChange}
+                      className="border border-gray-100 bg-gray-50 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-orange-400 focus:bg-white transition">
+                      <option value="">État</option>
+                      {catConfig.etats.map(e => <option key={e} value={e}>{e}</option>)}
+                    </select>
                   </div>
 
-                  {catConfig?.extraFields && catConfig.extraFields.length > 0 && (
+                  {catConfig.extraFields.length > 0 && (
                     <div className="grid grid-cols-2 gap-3 pt-3 border-t border-gray-50">
                       {catConfig.extraFields.map(field => (
                         <div key={field.name}>
@@ -489,7 +456,6 @@ export default function PublierPage() {
                     {CITIES.map(c => { const name = c.replace(/^[^\s]+\s/, ''); return <option key={name} value={name}>{name}</option> })}
                   </select>
 
-                  {/* Quartier dynamique selon la ville */}
                   {quartiersForCity.length > 0 ? (
                     <select name="quartier" value={form.quartier} onChange={handleChange}
                       className="border border-gray-100 bg-gray-50 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-orange-400 focus:bg-white transition">
@@ -503,10 +469,8 @@ export default function PublierPage() {
                       className="border border-gray-100 bg-gray-50 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-orange-400 focus:bg-white transition" />
                   )}
                 </div>
-
-                {/* Si "Autre" quartier sélectionné */}
                 {form.quartier === 'Autre' && (
-                  <input name="quartier_custom" onChange={e => setForm(f => ({ ...f, quartier: e.target.value }))}
+                  <input onChange={e => setForm(f => ({ ...f, quartier: e.target.value }))}
                     placeholder="Précisez votre quartier"
                     className="mt-3 w-full border border-gray-100 bg-gray-50 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-orange-400 focus:bg-white transition" />
                 )}
