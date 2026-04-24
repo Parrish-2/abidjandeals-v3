@@ -286,7 +286,7 @@ export default function PublierPage() {
     <div className="min-h-screen flex flex-col bg-gray-50">
       <Toaster position="top-center" />
       <Navbar />
-      <main className="flex-1 w-full max-w-6xl mx-auto px-4 py-8">
+      <main className="flex-1 w-full max-w-6xl mx-auto px-4 py-8 pb-28 lg:pb-8">
         <div className="flex items-start justify-between mb-8">
           <div>
             <h1 className="text-3xl font-extrabold text-gray-900">Publier une annonce</h1>
@@ -314,7 +314,7 @@ export default function PublierPage() {
           </div>
         )}
 
-        <form onSubmit={handleSubmit}>
+        <form id="publier-form" onSubmit={handleSubmit}>
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="lg:col-span-2 space-y-5">
 
@@ -494,8 +494,8 @@ export default function PublierPage() {
               </div>
             </div>
 
-            {/* Colonne droite sticky */}
-            <div>
+            {/* Colonne droite sticky — desktop uniquement */}
+            <div className="hidden lg:block">
               <div className="sticky top-4 space-y-4">
                 <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
                   <h3 className="font-bold text-gray-800 mb-4">Résumé</h3>
@@ -548,6 +548,36 @@ export default function PublierPage() {
             </div>
           </div>
         </form>
+
+        {/* ── Barre flottante mobile ── */}
+        <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-100 shadow-2xl px-4 py-3">
+          <div className="flex items-center gap-3 max-w-lg mx-auto">
+            <div className="flex-1 min-w-0">
+              <p className="text-xs text-gray-400 truncate">
+                {selectedCat ? `${selectedCat.icon} ${selectedCat.name}` : 'Aucune catégorie sélectionnée'}
+              </p>
+              <p className="font-extrabold text-orange-500 text-base leading-tight">
+                {form.price ? `${parseInt(form.price).toLocaleString('fr')} FCFA` : 'Prix non défini'}
+              </p>
+              <p className="text-xs text-gray-400 truncate">
+                {form.city || '—'}{form.quartier ? `, ${form.quartier}` : ''}
+              </p>
+            </div>
+            <button
+              type="submit"
+              form="publier-form"
+              disabled={loading}
+              className="flex-shrink-0 px-5 py-3 bg-orange-500 hover:bg-orange-600 text-white font-bold rounded-xl transition flex items-center gap-2 disabled:opacity-60 shadow-lg shadow-orange-200">
+              {loading ? <Loader2 size={16} className="animate-spin" /> : <span>🚀</span>}
+              <span>Publier</span>
+            </button>
+          </div>
+          {lastSaved && (
+            <p className="text-[10px] text-gray-400 text-center mt-1 flex items-center justify-center gap-1">
+              <Save size={9} /> Sauvegardé à {lastSaved}
+            </p>
+          )}
+        </div>
       </main>
       <Footer />
     </div>
