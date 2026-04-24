@@ -245,10 +245,11 @@ export default function PublierPage() {
           try {
             toast.loading(`Upload des médias (${i + 1}/${media.length})...`, { id: 'upload' })
             const ext = m.file.name.split('.').pop()
-            const path = `ads/${user.id}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
+            const bucket = m.type === 'image' ? 'ad-photos' : 'ad-videos'
+            const path = `${user.id}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
 
             // Timeout par fichier : 15 secondes
-            const uploadPromise = supabase.storage.from('ads-media').upload(path, m.file, {
+            const uploadPromise = supabase.storage.from(bucket).upload(path, m.file, {
               cacheControl: '3600',
               upsert: false,
             })
@@ -261,7 +262,7 @@ export default function PublierPage() {
               console.warn('Upload échoué:', result.error.message)
               uploadFailed = true
             } else {
-              const { data } = supabase.storage.from('ads-media').getPublicUrl(path)
+              const { data } = supabase.storage.from(bucket).getPublicUrl(path)
               if (m.type === 'image') uploadedImages.push(data.publicUrl)
               else videoUrl = data.publicUrl
             }
