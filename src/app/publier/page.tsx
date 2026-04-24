@@ -307,8 +307,8 @@ export default function PublierPage() {
 
       clearTimeout(globalTimeout)
       localStorage.removeItem(STORAGE_KEY)
-      localStorage.removeItem('abidjandeals_draft'); setSuccess(true)
-      setTimeout(() => localStorage.removeItem('abidjandeals_draft'); router.push('/dashboard'), 2500)
+      setSuccess(true)
+      setTimeout(() => router.push('/dashboard'), 2500)
     } catch (err) {
       console.error('Erreur soumission:', err)
       toast.error('Une erreur est survenue. RÃ©essayez.')
