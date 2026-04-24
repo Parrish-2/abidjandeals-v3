@@ -218,26 +218,64 @@ export default function PublierPage() {
     if (!form.category) { toast.error('Choisissez une catégorie'); return }
     if (!form.city) { toast.error('Choisissez une ville'); return }
     setLoading(true)
+
+    // Timeout global de 60 secondes sur toute la soumission
+    const globalTimeout = setTimeout(() => {
+      setLoading(false)
+      toast.error('Délai dépassé. Vérifiez votre connexion et réessayez.')
+    }, 60000)
+
     try {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) { toast.error('Connectez-vous pour publier'); setLoading(false); return }
+      const { data: { user }, error: authError } = await supabase.auth.getUser()
+      if (authError || !user) {
+        toast.error('Connectez-vous pour publier')
+        clearTimeout(globalTimeout)
+        setLoading(false)
+        return
+      }
 
       const uploadedImages: string[] = []
       let videoUrl = ''
+      let uploadFailed = false
 
-      for (const m of media) {
-        try {
-          const ext = m.file.name.split('.').pop()
-          const path = `ads/${user.id}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
-          const uploadPromise = supabase.storage.from('ads-media').upload(path, m.file)
-          const timeoutPromise = new Promise<never>((_, reject) => setTimeout(() => reject(new Error('timeout')), 30000))
-          const { error } = await Promise.race([uploadPromise, timeoutPromise]) as any
-          if (!error) {
-            const { data } = supabase.storage.from('ads-media').getPublicUrl(path)
-            if (m.type === 'image') uploadedImages.push(data.publicUrl)
-            else videoUrl = data.publicUrl
+      if (media.length > 0) {
+        toast.loading(`Upload des médias (0/${media.length})...`, { id: 'upload' })
+        for (let i = 0; i < media.length; i++) {
+          const m = media[i]
+          try {
+            toast.loading(`Upload des médias (${i + 1}/${media.length})...`, { id: 'upload' })
+            const ext = m.file.name.split('.').pop()
+            const path = `ads/${user.id}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
+
+            // Timeout par fichier : 15 secondes
+            const uploadPromise = supabase.storage.from('ads-media').upload(path, m.file, {
+              cacheControl: '3600',
+              upsert: false,
+            })
+            const timeoutPromise = new Promise<never>((_, reject) =>
+              setTimeout(() => reject(new Error('timeout')), 15000)
+            )
+            const result = await Promise.race([uploadPromise, timeoutPromise]) as any
+
+            if (result.error) {
+              console.warn('Upload échoué:', result.error.message)
+              uploadFailed = true
+            } else {
+              const { data } = supabase.storage.from('ads-media').getPublicUrl(path)
+              if (m.type === 'image') uploadedImages.push(data.publicUrl)
+              else videoUrl = data.publicUrl
+            }
+          } catch (err) {
+            console.warn('Upload ignoré (timeout):', err)
+            uploadFailed = true
           }
-        } catch { console.warn('Upload ignoré') }
+        }
+        toast.dismiss('upload')
+        if (uploadFailed && uploadedImages.length === 0) {
+          toast.error("Photos non uploadées. L'annonce sera publiée sans photos.", { duration: 4000 })
+        } else if (uploadFailed) {
+          toast.error('Certaines photos n\'ont pas pu être uploadées.', { duration: 3000 })
+        }
       }
 
       const { error } = await supabase.from('ads').insert({
@@ -246,11 +284,11 @@ export default function PublierPage() {
         description: form.description,
         price: parseInt(form.price),
         category_id: form.category,
-        subcategory: form.subcategory,
-        etat: form.etat,
+        subcategory: form.subcategory || null,
+        etat: form.etat || null,
         marque: form.marque || null,
         city: form.city,
-        quartier: form.quartier,
+        quartier: form.quartier || null,
         tel: form.tel,
         whatsapp: form.whatsapp || form.tel,
         images: uploadedImages,
@@ -259,12 +297,23 @@ export default function PublierPage() {
         views: 0,
       })
 
-      if (error) { toast.error('Erreur: ' + error.message); return }
+      if (error) {
+        toast.error('Erreur: ' + error.message)
+        clearTimeout(globalTimeout)
+        return
+      }
+
+      clearTimeout(globalTimeout)
       localStorage.removeItem(STORAGE_KEY)
       setSuccess(true)
       setTimeout(() => router.push('/dashboard'), 2500)
-    } catch { toast.error('Une erreur est survenue') }
-    finally { setLoading(false) }
+    } catch (err) {
+      console.error('Erreur soumission:', err)
+      toast.error('Une erreur est survenue. Réessayez.')
+      clearTimeout(globalTimeout)
+    } finally {
+      setLoading(false)
+    }
   }
 
   if (success) return (
