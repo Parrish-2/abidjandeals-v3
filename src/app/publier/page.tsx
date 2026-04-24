@@ -323,6 +323,12 @@ export default function PublierPage() {
       console.error('Erreur soumission:', err)
       toast.error('Une erreur est survenue. Réessayez.')
       clearTimeout(globalTimeout)
+      // ✅ Effacer le brouillon après publication réussie
+      localStorage.removeItem(STORAGE_KEY)
+      setHasDraft(false)
+      setLastSaved(null)
+      setForm(EMPTY_FORM)
+      setMedia([])
     } finally {
       setLoading(false)
     }
