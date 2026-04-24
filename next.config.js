@@ -1,4 +1,3 @@
-$content = @'
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   turbopack: {},
@@ -43,5 +42,3 @@ const nextConfig = {
   },
 }
 module.exports = nextConfig
-'@
-Set - Content next.config.js $content
