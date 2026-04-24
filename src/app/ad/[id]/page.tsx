@@ -79,7 +79,7 @@ export default function AdDetailPage() {
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       // undefined → pas encore vérifié | null → non connecté | string → connecté
-      setSessionUid(session?.user?.id ?? null)
+      setSessionUid(user?.id ?? null)
     })
   }, [])
 
