@@ -158,7 +158,7 @@ export default function PublierPage() {
     } catch { }
   }, [])
 
-  // ── Sauvegarder automatiquement toutes les 10 secondes ───────────────────
+  // ── Sauvegarder automatiquement toutes les 3 secondes ───────────────────
   useEffect(() => {
     const hasContent = form.title || form.description || form.price || form.category
     if (!hasContent) return
@@ -215,26 +215,47 @@ export default function PublierPage() {
     if (videos.length) addMedia(videos as unknown as FileList, 'video')
   }, [media])
 
+  // ── Soumission corrigée ──────────────────────────────────────────────────
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!form.category) { toast.error('Choisissez une catégorie'); return }
     if (!form.city) { toast.error('Choisissez une ville'); return }
     setLoading(true)
+
     try {
       const { data: { user } } = await supabase.auth.getUser()
-      if (!user) { toast.error('Connectez-vous pour publier'); setLoading(false); return }
+      if (!user) {
+        toast.error('Connectez-vous pour publier')
+        setLoading(false)
+        return
+      }
 
       const uploadedImages: string[] = []
       let videoUrl = ''
 
+      // Upload avec timeout de 30 secondes par fichier
       for (const m of media) {
-        const ext = m.file.name.split('.').pop()
-        const path = `ads/${user.id}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
-        const { error } = await supabase.storage.from('ads-media').upload(path, m.file)
-        if (!error) {
-          const { data } = supabase.storage.from('ads-media').getPublicUrl(path)
-          if (m.type === 'image') uploadedImages.push(data.publicUrl)
-          else videoUrl = data.publicUrl
+        try {
+          const ext = m.file.name.split('.').pop()
+          const path = `ads/${user.id}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
+
+          const uploadPromise = supabase.storage.from('ads-media').upload(path, m.file)
+          const timeoutPromise = new Promise((_, reject) =>
+            setTimeout(() => reject(new Error('Upload timeout')), 30000)
+          )
+
+          const { error } = await Promise.race([uploadPromise, timeoutPromise]) as any
+
+          if (!error) {
+            const { data } = supabase.storage.from('ads-media').getPublicUrl(path)
+            if (m.type === 'image') uploadedImages.push(data.publicUrl)
+            else videoUrl = data.publicUrl
+          } else {
+            console.warn('Upload échoué pour', m.file.name, error)
+          }
+        } catch (uploadErr) {
+          // On continue sans ce fichier plutôt que de bloquer toute la soumission
+          console.warn('Upload ignoré (timeout ou erreur):', uploadErr)
         }
       }
 
@@ -257,12 +278,23 @@ export default function PublierPage() {
         views: 0,
       })
 
-      if (error) { toast.error('Erreur: ' + error.message); setLoading(false); return }
+      if (error) {
+        toast.error('Erreur: ' + error.message)
+        return
+      }
+
       localStorage.removeItem(STORAGE_KEY)
       setSuccess(true)
       setTimeout(() => router.push('/dashboard'), 2500)
-    } catch { toast.error('Une erreur est survenue') }
-    setLoading(false)
+
+    } catch (err) {
+      console.error('Erreur soumission:', err)
+      toast.error('Une erreur est survenue')
+    } finally {
+      // finally garantit que loading repasse à false TOUJOURS,
+      // que ce soit un succès, une erreur ou un timeout
+      setLoading(false)
+    }
   }
 
   if (success) return (
