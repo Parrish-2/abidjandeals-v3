@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 import { Footer } from '@/components/Footer'
 import { Navbar } from '@/components/Navbar'
 import { CATEGORIES, CITIES } from '@/lib/data'
@@ -154,7 +154,7 @@ export default function PublierPage() {
         setHasDraft(true)
         setLastSaved(draft.savedAt || null)
       }
-    } catch {}
+    } catch { }
   }, [])
 
   useEffect(() => {
@@ -166,7 +166,7 @@ export default function PublierPage() {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(draft))
         setLastSaved(draft.savedAt)
         setHasDraft(true)
-      } catch {}
+      } catch { }
     }, 3000)
     return () => clearTimeout(timer)
   }, [form])
@@ -218,26 +218,66 @@ export default function PublierPage() {
     if (!form.category) { toast.error('Choisissez une catégorie'); return }
     if (!form.city) { toast.error('Choisissez une ville'); return }
     setLoading(true)
+
+    // Timeout global de 60 secondes sur toute la soumission
+    const globalTimeout = setTimeout(() => {
+      setLoading(false)
+      toast.error('Délai dépassé. Vérifiez votre connexion et réessayez.')
+    }, 60000)
+
     try {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) { toast.error('Connectez-vous pour publier'); setLoading(false); return }
+      const { data: { session }, error: authError } = await supabase.auth.getSession()
+      const user = session?.user
+      if (authError || !user) {
+        toast.error('Connectez-vous pour publier')
+        clearTimeout(globalTimeout)
+        setLoading(false)
+        return
+      }
 
       const uploadedImages: string[] = []
       let videoUrl = ''
+      let uploadFailed = false
 
-      for (const m of media) {
-        try {
-          const ext = m.file.name.split('.').pop()
-          const path = `ads/${user.id}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
-          const uploadPromise = supabase.storage.from('ads-media').upload(path, m.file)
-          const timeoutPromise = new Promise<never>((_, reject) => setTimeout(() => reject(new Error('timeout')), 30000))
-          const { error } = await Promise.race([uploadPromise, timeoutPromise]) as any
-          if (!error) {
-            const { data } = supabase.storage.from('ads-media').getPublicUrl(path)
-            if (m.type === 'image') uploadedImages.push(data.publicUrl)
-            else videoUrl = data.publicUrl
+      if (media.length > 0) {
+        toast.loading(`Upload des médias (0/${media.length})...`, { id: 'upload' })
+        for (let i = 0; i < media.length; i++) {
+          const m = media[i]
+          try {
+            toast.loading(`Upload des médias (${i + 1}/${media.length})...`, { id: 'upload' })
+            const ext = m.file.name.split('.').pop()
+            const bucket = m.type === 'image' ? 'ad-photos' : 'ad-videos'
+            const path = `${user.id}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
+
+            // Timeout par fichier : 15 secondes
+            const uploadPromise = supabase.storage.from(bucket).upload(path, m.file, {
+              cacheControl: '3600',
+              upsert: false,
+            })
+            const timeoutPromise = new Promise<never>((_, reject) =>
+              setTimeout(() => reject(new Error('timeout')), 15000)
+            )
+            const result = await Promise.race([uploadPromise, timeoutPromise]) as any
+
+            if (result.error) {
+              console.warn('Upload échoué:', result.error.message)
+              uploadFailed = true
+            } else {
+              const { data } = supabase.storage.from(bucket).getPublicUrl(path)
+              if (m.type === 'image') uploadedImages.push(data.publicUrl)
+              else videoUrl = data.publicUrl
+            }
+          } catch (err) {
+            console.warn('Upload ignoré (timeout):', err)
+            uploadFailed = true
           }
-        } catch { console.warn('Upload ignoré') }
+        }
+        toast.dismiss('upload')
+        if (uploadFailed && uploadedImages.length === 0) {
+          toast.error("Photos non uploadées. L'annonce sera publiée sans photos.", { duration: 4000 })
+        } else if (uploadFailed) {
+          toast.error('Certaines photos n\'ont pas pu être uploadées.', { duration: 3000 })
+        }
       }
 
       const { error } = await supabase.from('ads').insert({
@@ -246,11 +286,11 @@ export default function PublierPage() {
         description: form.description,
         price: parseInt(form.price),
         category_id: form.category,
-        subcategory: form.subcategory,
-        etat: form.etat,
+        subcategory: form.subcategory || null,
+        etat: form.etat || null,
         marque: form.marque || null,
         city: form.city,
-        quartier: form.quartier,
+        quartier: form.quartier || null,
         tel: form.tel,
         whatsapp: form.whatsapp || form.tel,
         images: uploadedImages,
@@ -259,12 +299,23 @@ export default function PublierPage() {
         views: 0,
       })
 
-      if (error) { toast.error('Erreur: ' + error.message); return }
+      if (error) {
+        toast.error('Erreur: ' + error.message)
+        clearTimeout(globalTimeout)
+        return
+      }
+
+      clearTimeout(globalTimeout)
       localStorage.removeItem(STORAGE_KEY)
       setSuccess(true)
       setTimeout(() => router.push('/dashboard'), 2500)
-    } catch { toast.error('Une erreur est survenue') }
-    finally { setLoading(false) }
+    } catch (err) {
+      console.error('Erreur soumission:', err)
+      toast.error('Une erreur est survenue. Réessayez.')
+      clearTimeout(globalTimeout)
+    } finally {
+      setLoading(false)
+    }
   }
 
   if (success) return (
@@ -286,7 +337,7 @@ export default function PublierPage() {
     <div className="min-h-screen flex flex-col bg-gray-50">
       <Toaster position="top-center" />
       <Navbar />
-      <main className="flex-1 w-full max-w-6xl mx-auto px-4 py-8">
+      <main className="flex-1 w-full max-w-6xl mx-auto px-4 py-8 pb-28 lg:pb-8">
         <div className="flex items-start justify-between mb-8">
           <div>
             <h1 className="text-3xl font-extrabold text-gray-900">Publier une annonce</h1>
@@ -314,7 +365,7 @@ export default function PublierPage() {
           </div>
         )}
 
-        <form onSubmit={handleSubmit}>
+        <form id="publier-form" onSubmit={handleSubmit}>
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="lg:col-span-2 space-y-5">
 
@@ -400,10 +451,10 @@ export default function PublierPage() {
                   <textarea name="description" value={form.description} onChange={handleChange} rows={4}
                     placeholder={
                       form.category === 'auto' ? "Décrivez la voiture : options, historique d'entretien, raison de vente..." :
-                      form.category === 'immobilier' ? 'Décrivez le bien : équipements, voisinage, accès, charges...' :
-                      form.category === 'hightech' ? 'Décrivez l\'état, les accessoires inclus, raison de vente...' :
-                      form.category === 'services' ? 'Décrivez votre service, vos compétences, vos références...' :
-                      'Décrivez votre article en détail...'
+                        form.category === 'immobilier' ? 'Décrivez le bien : équipements, voisinage, accès, charges...' :
+                          form.category === 'hightech' ? 'Décrivez l\'état, les accessoires inclus, raison de vente...' :
+                            form.category === 'services' ? 'Décrivez votre service, vos compétences, vos références...' :
+                              'Décrivez votre article en détail...'
                     }
                     className="w-full border border-gray-100 bg-gray-50 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-orange-400 focus:bg-white transition resize-none" />
                   <div className="grid grid-cols-2 gap-3">
@@ -494,8 +545,8 @@ export default function PublierPage() {
               </div>
             </div>
 
-            {/* Colonne droite sticky */}
-            <div>
+            {/* Colonne droite sticky — desktop uniquement */}
+            <div className="hidden lg:block">
               <div className="sticky top-4 space-y-4">
                 <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
                   <h3 className="font-bold text-gray-800 mb-4">Résumé</h3>
@@ -548,6 +599,36 @@ export default function PublierPage() {
             </div>
           </div>
         </form>
+
+        {/* ── Barre flottante mobile ── */}
+        <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-100 shadow-2xl px-4 py-3">
+          <div className="flex items-center gap-3 max-w-lg mx-auto">
+            <div className="flex-1 min-w-0">
+              <p className="text-xs text-gray-400 truncate">
+                {selectedCat ? `${selectedCat.icon} ${selectedCat.name}` : 'Aucune catégorie sélectionnée'}
+              </p>
+              <p className="font-extrabold text-orange-500 text-base leading-tight">
+                {form.price ? `${parseInt(form.price).toLocaleString('fr')} FCFA` : 'Prix non défini'}
+              </p>
+              <p className="text-xs text-gray-400 truncate">
+                {form.city || '—'}{form.quartier ? `, ${form.quartier}` : ''}
+              </p>
+            </div>
+            <button
+              type="submit"
+              form="publier-form"
+              disabled={loading}
+              className="flex-shrink-0 px-5 py-3 bg-orange-500 hover:bg-orange-600 text-white font-bold rounded-xl transition flex items-center gap-2 disabled:opacity-60 shadow-lg shadow-orange-200">
+              {loading ? <Loader2 size={16} className="animate-spin" /> : <span>🚀</span>}
+              <span>Publier</span>
+            </button>
+          </div>
+          {lastSaved && (
+            <p className="text-[10px] text-gray-400 text-center mt-1 flex items-center justify-center gap-1">
+              <Save size={9} /> Sauvegardé à {lastSaved}
+            </p>
+          )}
+        </div>
       </main>
       <Footer />
     </div>
