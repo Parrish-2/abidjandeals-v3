@@ -307,7 +307,7 @@ export default function PublierPage() {
 
       clearTimeout(globalTimeout)
       localStorage.removeItem(STORAGE_KEY)
-      setSuccess(true)
+      localStorage.removeItem('abidjandeals_draft'); setSuccess(true)
       setTimeout(() => router.push('/dashboard'), 2500)
     } catch (err) {
       console.error('Erreur soumission:', err)
@@ -634,6 +634,7 @@ export default function PublierPage() {
     </div>
   )
 }
+
 
 
 
