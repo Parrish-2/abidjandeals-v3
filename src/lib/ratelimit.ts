@@ -4,7 +4,6 @@ import { NextRequest } from 'next/server'
 
 let rateLimitPublier: Ratelimit
 
-// ✅ Initialisation lazy + fallback
 function getPublierLimiter() {
   if (rateLimitPublier) return rateLimitPublier
 
@@ -19,28 +18,17 @@ function getPublierLimiter() {
   const redis = Redis.fromEnv()
   rateLimitPublier = new Ratelimit({
     redis,
-    limiter: Ratelimit.slidingWindow(10, '1 m'), // 10 ads/minute/IP
+    limiter: Ratelimit.slidingWindow(10, '1 m'),
     analytics: true,
   })
   return rateLimitPublier
 }
 
-export async function limitPublier(req: NextRequest) {
-  const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown'
-  const result = await getPublierLimiter().limit(ip)
-
-  if (!result.success) {
-    return new Response('Trop de tentatives. Attendez 1 minute.', {
-      status: 429,
-      headers: { 'Retry-After': '60' }
-    })
-  }
-  return null
-}
-
 export function getIP(req: NextRequest): string {
   return req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown'
-} export async function rateLimitStrict(req: NextRequest) {
+}
+
+export async function limitPublier(req: NextRequest) {
   const ip = getIP(req)
   const result = await getPublierLimiter().limit(ip)
   if (!result.success) {
@@ -52,14 +40,14 @@ export function getIP(req: NextRequest): string {
   return null
 }
 
-export async function rateLimitWebhook(req: NextRequest) {
-  const ip = getIP(req)
-  const result = await getPublierLimiter().limit(ip)
-  if (!result.success) {
-    return new Response('Too many requests', {
-      status: 429,
-      headers: { 'Retry-After': '60' }
-    })
+export const rateLimitStrict = {
+  limit: async (ip: string) => {
+    return await getPublierLimiter().limit(ip)
   }
-  return null
+}
+
+export const rateLimitWebhook = {
+  limit: async (ip: string) => {
+    return await getPublierLimiter().limit(ip)
+  }
 }
