@@ -1,0 +1,75 @@
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
+
+  experimental: {
+    optimizePackageImports: ['lucide-react', 'framer-motion'],
+  },
+
+  webpack: (config, { isServer }) => {
+    if (isServer) {
+      config.externals = [
+        ...(Array.isArray(config.externals) ? config.externals : []),
+        '@vladmandic/face-api',
+      ]
+    }
+    config.ignoreWarnings = [{ module: /@vladmandic\/face-api/ }]
+    return config
+  },
+
+  images: {
+    remotePatterns: [
+      { protocol: 'https', hostname: '**.supabase.co' },
+      { protocol: 'https', hostname: '**.supabase.in' },
+      { protocol: 'https', hostname: 'images.unsplash.com' },
+    ],
+  },
+
+  async headers() {
+    return [
+      {
+        source: '/(.*)',
+        headers: [
+          {
+            key: 'Content-Security-Policy',
+            value: [
+              "default-src 'self'",
+              // ✅ Ajout de tous les domaines nécessaires pour Supabase + face-api + Vercel
+              "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://cdn.jsdelivr.net https://vercel.live blob:",
+              "style-src 'self' 'unsafe-inline'",
+              // ✅ Autoriser toutes les images (Supabase Storage + externes)
+              "img-src * data: blob:",
+              // ✅ Autoriser les médias depuis Supabase
+              "media-src 'self' blob: data: https://*.supabase.co https://*.supabase.in https://*.supabase.com",
+              // ✅ Autoriser toutes les connexions réseau (uploads Supabase, face-api models, etc.)
+              "connect-src * blob: data:",
+              "font-src 'self' data: https://fonts.gstatic.com",
+              // ✅ worker-src élargi pour la compression vidéo (MediaRecorder + canvas)
+              "worker-src 'self' blob: data:",
+              // ✅ frame-src élargi pour Vercel preview
+              "frame-src 'self' https://vercel.live",
+              // ✅ object-src bloqué (sécurité)
+              "object-src 'none'",
+              // ✅ Autoriser les WebAssembly (face-api en a besoin)
+              "script-src-elem 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://vercel.live blob:",
+            ].join('; '),
+          },
+          // ✅ Empêcher le clickjacking
+          {
+            key: 'X-Frame-Options',
+            value: 'SAMEORIGIN',
+          },
+          // ✅ Forcer HTTPS
+          {
+            key: 'Strict-Transport-Security',
+            value: 'max-age=63072000; includeSubDomains; preload',
+          },
+        ],
+      },
+    ]
+  },
+}
+
+module.exports = nextConfig
