@@ -123,6 +123,11 @@ const DEFAULT_CONFIG: CatConfig = {
 }
 
 const STORAGE_KEY = 'abidjandeals_draft'
+const EMPTY_FORM = {
+  title: '', description: '', price: '',
+  category: '', subcategory: '', etat: '',
+  city: '', quartier: '', tel: '', whatsapp: '',
+}
 type MediaFile = { file: File; url: string; type: 'image' | 'video' }
 
 export default function PublierPage() {
@@ -306,7 +311,12 @@ export default function PublierPage() {
       }
 
       clearTimeout(globalTimeout)
+      // ✅ Effacer le brouillon proprement après publication
       localStorage.removeItem(STORAGE_KEY)
+      setHasDraft(false)
+      setLastSaved(null)
+      setForm(EMPTY_FORM)
+      setMedia([])
       setSuccess(true)
       setTimeout(() => router.push('/dashboard'), 2500)
     } catch (err) {
