@@ -40,4 +40,26 @@ export async function limitPublier(req: NextRequest) {
 
 export function getIP(req: NextRequest): string {
   return req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown'
+} export async function rateLimitStrict(req: NextRequest) {
+  const ip = getIP(req)
+  const result = await getPublierLimiter().limit(ip)
+  if (!result.success) {
+    return new Response('Trop de tentatives. Attendez 1 minute.', {
+      status: 429,
+      headers: { 'Retry-After': '60' }
+    })
+  }
+  return null
+}
+
+export async function rateLimitWebhook(req: NextRequest) {
+  const ip = getIP(req)
+  const result = await getPublierLimiter().limit(ip)
+  if (!result.success) {
+    return new Response('Too many requests', {
+      status: 429,
+      headers: { 'Retry-After': '60' }
+    })
+  }
+  return null
 }
