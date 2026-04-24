@@ -1,24 +1,10 @@
+$content = @'
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
-
+  turbopack: {},
   experimental: {
     optimizePackageImports: ['lucide-react', 'framer-motion'],
   },
-
-  webpack: (config, { isServer }) => {
-    if (isServer) {
-      config.externals = [
-        ...(Array.isArray(config.externals) ? config.externals : []),
-        '@vladmandic/face-api',
-      ]
-    }
-    config.ignoreWarnings = [{ module: /@vladmandic\/face-api/ }]
-    return config
-  },
-
   images: {
     remotePatterns: [
       { protocol: 'https', hostname: '**.supabase.co' },
@@ -27,7 +13,6 @@ const nextConfig = {
       { protocol: 'https', hostname: 'images.unsplash.com' },
     ],
   },
-
   async headers() {
     return [
       {
@@ -50,18 +35,13 @@ const nextConfig = {
               "script-src-elem 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://vercel.live blob:",
             ].join('; '),
           },
-          {
-            key: 'X-Frame-Options',
-            value: 'SAMEORIGIN',
-          },
-          {
-            key: 'Strict-Transport-Security',
-            value: 'max-age=63072000; includeSubDomains; preload',
-          },
+          { key: 'X-Frame-Options', value: 'SAMEORIGIN' },
+          { key: 'Strict-Transport-Security', value: 'max-age=63072000; includeSubDomains; preload' },
         ],
       },
     ]
   },
 }
-
 module.exports = nextConfig
+'@
+Set - Content next.config.js $content
