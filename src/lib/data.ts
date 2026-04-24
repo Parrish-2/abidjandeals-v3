@@ -114,3 +114,4 @@ export function formatPrice(price: number): string {
 export function getCategoryById(id: string) {
   return CATEGORIES.find(c => c.id === id)
 }
+
