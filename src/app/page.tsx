@@ -1,4 +1,4 @@
-import { AdsSection } from '@/components/AdsSection'
+﻿import { AdsSection } from '@/components/AdsSection'
 import { Footer } from '@/components/Footer'
 import { HeroSection } from '@/components/HeroSection'
 import { Navbar } from '@/components/Navbar'
@@ -14,7 +14,7 @@ async function getStats() {
             { cookies: { getAll: () => cookieStore.getAll() } }
         )
         const [{ count: total }, { count: vendors }] = await Promise.all([
-            supabase.from('ads').select('*', { count: 'exact', head: true }).eq('status', 'active'),
+            supabase.from('ads').select('*', { count: 'exact', head: true }).eq('status', 'active').neq('category_id', 'cat_lingerie'),
             supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('role', 'vendor'),
         ])
         return { total: total ?? 0, vendors: vendors ?? 0 }
@@ -35,6 +35,7 @@ async function getAds() {
             .from('ads')
             .select('*')
             .eq('status', 'active')
+            .neq('category_id', 'cat_lingerie')
             .order('created_at', { ascending: false })
             .limit(8)
         return (data ?? []).map((ad: any) => ({
@@ -57,7 +58,7 @@ export default async function HomePage() {
                 <HeroSection stats={stats} />
                 <div className="max-w-7xl mx-auto px-4 py-10 space-y-12">
                     <AdsSection
-                        title="Annonces récentes"
+                        title="Annonces rÃ©centes"
                         ads={recentAds}
                         seeAllHref="/search"
                     />

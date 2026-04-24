@@ -31,7 +31,7 @@ type CatConfig = { etats: string[]; extraFields: ExtraField[] }
 
 // â”€â”€ Champs dynamiques â€” IDs alignÃ©s sur src/lib/data.ts â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const CATEGORY_FIELDS: Record<string, CatConfig> = {
-  auto: {
+  cat_auto: {
     etats: ['Neuf', 'TrÃ¨s bon Ã©tat', 'Bon Ã©tat', 'Ã‰tat correct', 'Pour piÃ¨ces'],
     extraFields: [
       { name: 'marque', label: 'Marque *', placeholder: 'Toyota, Kia, Renault...' },
@@ -42,7 +42,7 @@ const CATEGORY_FIELDS: Record<string, CatConfig> = {
       { name: 'boite', label: 'BoÃ®te de vitesse', type: 'select', options: ['Automatique', 'Manuelle'] },
     ],
   },
-  immobilier: {
+  cat_immo: {
     etats: ['Neuf', 'Bon Ã©tat', 'Ã€ rÃ©nover'],
     extraFields: [
       { name: 'type_bien', label: 'Type de bien', type: 'select', options: ['Appartement', 'Maison', 'Villa', 'Terrain', 'Bureau', 'EntrepÃ´t', 'Chambre'] },
@@ -51,7 +51,7 @@ const CATEGORY_FIELDS: Record<string, CatConfig> = {
       { name: 'meuble', label: 'MeublÃ© ?', type: 'select', options: ['Oui', 'Non', 'Partiellement'] },
     ],
   },
-  hightech: {
+  cat_tech: {
     etats: ['Neuf', 'ReconditionnÃ©', 'TrÃ¨s bon Ã©tat', 'Bon Ã©tat', 'Ã€ rÃ©parer'],
     extraFields: [
       { name: 'marque', label: 'Marque *', placeholder: 'Apple, Samsung, HP...' },
@@ -61,7 +61,7 @@ const CATEGORY_FIELDS: Record<string, CatConfig> = {
       { name: 'couleur', label: 'Couleur', placeholder: 'Noir, Blanc, Or...' },
     ],
   },
-  electromenager: {
+  cat_elec: {
     etats: ['Neuf', 'TrÃ¨s bon Ã©tat', 'Bon Ã©tat', 'En panne'],
     extraFields: [
       { name: 'marque', label: 'Marque', placeholder: 'LG, Samsung, Midea...' },
@@ -69,7 +69,7 @@ const CATEGORY_FIELDS: Record<string, CatConfig> = {
       { name: 'capacite', label: 'CapacitÃ© / Puissance', placeholder: '350L, 1.5CV, 7kg...' },
     ],
   },
-  location: {
+  cat_location: {
     etats: ['Disponible', 'Sous rÃ©serve'],
     extraFields: [
       { name: 'capacite', label: 'CapacitÃ© / Places', placeholder: '30 personnes, 300 invitÃ©s...' },
@@ -77,7 +77,7 @@ const CATEGORY_FIELDS: Record<string, CatConfig> = {
       { name: 'caution', label: 'Caution (FCFA)', type: 'number', placeholder: '50000' },
     ],
   },
-  services: {
+  cat_serv: {
     etats: ['Disponible', 'Sur rendez-vous'],
     extraFields: [
       { name: 'experience', label: 'ExpÃ©rience', type: 'select', options: ["Moins d'1 an", '1-3 ans', '3-5 ans', '5-10 ans', 'Plus de 10 ans'] },
@@ -85,21 +85,21 @@ const CATEGORY_FIELDS: Record<string, CatConfig> = {
       { name: 'delai', label: "DÃ©lai d'intervention", placeholder: '24h, 1 semaine...' },
     ],
   },
-  bebe: {
+  cat_bebe: {
     etats: ['Neuf', 'TrÃ¨s bon Ã©tat', 'Bon Ã©tat'],
     extraFields: [
       { name: 'marque', label: 'Marque', placeholder: 'Chicco, Graco...' },
       { name: 'age_cible', label: 'Ã‚ge cible', type: 'select', options: ['0-3 mois', '3-6 mois', '6-12 mois', '1-2 ans', '2-3 ans', '3-5 ans', '5+ ans'] },
     ],
   },
-  pharma: {
+  cat_pharma: {
     etats: ['Neuf', 'Non ouvert', 'EntamÃ©'],
     extraFields: [
       { name: 'marque', label: 'Marque / Laboratoire', placeholder: 'Nom du fabricant' },
       { name: 'date_expiration', label: "Date d'expiration", placeholder: 'MM/AAAA' },
     ],
   },
-  epicerie: {
+  cat_epicerie: {
     etats: ['Disponible', 'Stock limitÃ©'],
     extraFields: [
       { name: 'poids', label: 'Poids / QuantitÃ©', placeholder: '1kg, 500g, 1L...' },
@@ -107,7 +107,7 @@ const CATEGORY_FIELDS: Record<string, CatConfig> = {
       { name: 'date_expiration', label: "Date d'expiration", placeholder: 'MM/AAAA' },
     ],
   },
-  lingerie: {
+  cat_lingerie: {
     etats: ['Neuf avec Ã©tiquette', 'Neuf sans Ã©tiquette', 'TrÃ¨s bon Ã©tat'],
     extraFields: [
       { name: 'taille', label: 'Taille', type: 'select', options: ['XS', 'S', 'M', 'L', 'XL', 'XXL', '36', '38', '40', '42', '44', '46', 'Autre'] },
@@ -634,6 +634,7 @@ export default function PublierPage() {
     </div>
   )
 }
+
 
 
 
