@@ -1,0 +1,59 @@
+import { AdsSection } from '@/components/AdsSection'
+import { HeroSection } from '@/components/HeroSection'
+import { createServerClient } from '@supabase/ssr'
+import { cookies } from 'next/headers'
+
+async function getStats() {
+    try {
+        const cookieStore = cookies()
+        const supabase = createServerClient(
+            process.env.NEXT_PUBLIC_SUPABASE_URL!,
+            process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+            { cookies: { getAll: () => cookieStore.getAll() } }
+        )
+        const [{ count: total }, { count: vendors }] = await Promise.all([
+            supabase.from('ads').select('*', { count: 'exact', head: true }).eq('status', 'active'),
+            supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('role', 'vendor'),
+        ])
+        return { total: total ?? 0, vendors: vendors ?? 0 }
+    } catch {
+        return { total: 0, vendors: 0 }
+    }
+}
+
+async function getAds() {
+    try {
+        const cookieStore = cookies()
+        const supabase = createServerClient(
+            process.env.NEXT_PUBLIC_SUPABASE_URL!,
+            process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+            { cookies: { getAll: () => cookieStore.getAll() } }
+        )
+        const { data } = await supabase
+            .from('ads')
+            .select('*')
+            .eq('status', 'active')
+            .order('created_at', { ascending: false })
+            .limit(8)
+        return data ?? []
+    } catch {
+        return []
+    }
+}
+
+export default async function HomePage() {
+    const [stats, recentAds] = await Promise.all([getStats(), getAds()])
+
+    return (
+        <main>
+            <HeroSection stats={stats} />
+            <div className="max-w-7xl mx-auto px-4 py-10 space-y-12">
+                <AdsSection
+                    title="Annonces récentes"
+                    ads={recentAds}
+                    seeAllHref="/search"
+                />
+            </div>
+        </main>
+    )
+}
