@@ -3,15 +3,33 @@ import { Footer } from '@/components/Footer'
 import { Navbar } from '@/components/Navbar'
 import { CATEGORIES, CITIES } from '@/lib/data'
 import { supabase } from '@/lib/supabase'
-import { CheckCircle, ChevronRight, Loader2, MapPin, Phone, Upload, Video, X } from 'lucide-react'
+import { CheckCircle, ChevronRight, Loader2, MapPin, Phone, Save, Upload, Video, X } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import toast, { Toaster } from 'react-hot-toast'
+
+// ── Quartiers par ville ──────────────────────────────────────────────────────
+const QUARTIERS: Record<string, string[]> = {
+  'Abidjan': [
+    'Abobo', 'Adjamé', 'Attécoubé', 'Cocody', 'Koumassi', 'Marcory',
+    'Plateau', 'Port-Bouët', 'Treichville', 'Yopougon', 'Bingerville',
+    'Riviera', 'Angré', 'Deux-Plateaux', 'Bassam', 'Songon',
+    'Zone 4', 'Zone industrielle', 'Vridi', 'Williamsville',
+    'Carrefour Bandji', 'N\'dotré', 'M\'Pouto', 'Anoumabo'
+  ],
+  'Bouaké': ['Centre', 'Air France', 'Belleville', 'Commerce', 'Koko', 'N\'Gattakro', 'Sokoura'],
+  'Yamoussoukro': ['Habitat', 'Centre', 'Dioulakro', 'N\'Zuessy', 'Morofé'],
+  'San-Pédro': ['Centre', 'Bardot', 'Cité', 'Zone industrielle'],
+  'Korhogo': ['Centre', 'Commerce', 'Résidentiel'],
+  'Daloa': ['Centre', 'Lobia', 'Tazibouo'],
+  'Man': ['Centre', 'Libreville', 'Domoraud'],
+  'Gagnoa': ['Centre', 'Dioulabougou', 'Résidentiel'],
+}
 
 // ── Champs dynamiques par catégorie ─────────────────────────────────────────
 const CATEGORY_FIELDS: Record<string, {
-  etats?: string[]
-  extraFields?: { name: string; label: string; type?: string; options?: string[]; placeholder?: string }[]
+  etats: string[]
+  extraFields: { name: string; label: string; type?: string; options?: string[]; placeholder?: string }[]
 }> = {
   auto: {
     etats: ['Neuf', 'Très bon état', 'Bon état', 'État correct', 'Pour pièces'],
@@ -21,15 +39,15 @@ const CATEGORY_FIELDS: Record<string, {
       { name: 'annee', label: 'Année', type: 'number', placeholder: '2020' },
       { name: 'kilometrage', label: 'Kilométrage (km)', type: 'number', placeholder: '45000' },
       { name: 'carburant', label: 'Carburant', type: 'select', options: ['Essence', 'Diesel', 'Hybride', 'Électrique', 'GPL'] },
-      { name: 'boite', label: 'Boîte', type: 'select', options: ['Automatique', 'Manuelle'] },
+      { name: 'boite', label: 'Boîte de vitesse', type: 'select', options: ['Automatique', 'Manuelle'] },
     ]
   },
   immobilier: {
     etats: ['Neuf', 'Bon état', 'À rénover'],
     extraFields: [
-      { name: 'surface', label: 'Surface (m²)', type: 'number', placeholder: '120' },
-      { name: 'pieces', label: 'Nombre de pièces', type: 'select', options: ['1', '2', '3', '4', '5', '6+'] },
       { name: 'type_bien', label: 'Type de bien', type: 'select', options: ['Appartement', 'Maison', 'Villa', 'Terrain', 'Bureau', 'Entrepôt', 'Chambre'] },
+      { name: 'surface', label: 'Surface (m²)', type: 'number', placeholder: '120' },
+      { name: 'pieces', label: 'Nombre de pièces', type: 'select', options: ['Studio', '2 pièces', '3 pièces', '4 pièces', '5 pièces', '6+'] },
       { name: 'meuble', label: 'Meublé ?', type: 'select', options: ['Oui', 'Non', 'Partiellement'] },
     ]
   },
@@ -39,7 +57,7 @@ const CATEGORY_FIELDS: Record<string, {
       { name: 'marque', label: 'Marque *', placeholder: 'Apple, Samsung, HP...' },
       { name: 'modele', label: 'Modèle', placeholder: 'iPhone 15, Galaxy S24...' },
       { name: 'stockage', label: 'Stockage', type: 'select', options: ['32 Go', '64 Go', '128 Go', '256 Go', '512 Go', '1 To', '2 To'] },
-      { name: 'ram', label: 'RAM', type: 'select', options: ['2 Go', '4 Go', '6 Go', '8 Go', '12 Go', '16 Go', '32 Go', '64 Go'] },
+      { name: 'ram', label: 'RAM', type: 'select', options: ['2 Go', '4 Go', '6 Go', '8 Go', '12 Go', '16 Go', '32 Go'] },
       { name: 'couleur', label: 'Couleur', placeholder: 'Noir, Blanc, Or...' },
     ]
   },
@@ -47,7 +65,7 @@ const CATEGORY_FIELDS: Record<string, {
     etats: ['Neuf', 'Très bon état', 'Bon état', 'En panne'],
     extraFields: [
       { name: 'marque', label: 'Marque', placeholder: 'LG, Samsung, Midea...' },
-      { name: 'modele', label: 'Modèle', placeholder: 'Référence du produit' },
+      { name: 'modele', label: 'Modèle / Référence', placeholder: 'Référence du produit' },
       { name: 'capacite', label: 'Capacité / Puissance', placeholder: '350L, 1.5CV, 7kg...' },
     ]
   },
@@ -55,7 +73,7 @@ const CATEGORY_FIELDS: Record<string, {
     etats: ['Disponible', 'Sous réserve'],
     extraFields: [
       { name: 'capacite', label: 'Capacité / Places', placeholder: '30 personnes, 300 invités...' },
-      { name: 'duree_min', label: 'Durée minimale de location', placeholder: '1 jour, 1 semaine...' },
+      { name: 'duree_min', label: 'Durée minimale', placeholder: '1 jour, 1 semaine...' },
       { name: 'caution', label: 'Caution (FCFA)', type: 'number', placeholder: '50000' },
     ]
   },
@@ -94,18 +112,17 @@ const CATEGORY_FIELDS: Record<string, {
     extraFields: [
       { name: 'taille', label: 'Taille', type: 'select', options: ['XS', 'S', 'M', 'L', 'XL', 'XXL', '36', '38', '40', '42', '44', '46', 'Autre'] },
       { name: 'couleur', label: 'Couleur', placeholder: 'Noir, Rouge, Blanc...' },
-      { name: 'marque', label: 'Marque', placeholder: 'Victoria\'s Secret, Autre...' },
+      { name: 'marque', label: 'Marque', placeholder: 'Marque...' },
     ]
   },
 }
 
-const DEFAULT_FIELDS = {
+const DEFAULT_CONFIG = {
   etats: ['Neuf', 'Très bon état', 'Bon état', 'État correct'],
-  extraFields: [
-    { name: 'marque', label: 'Marque (optionnel)', placeholder: 'Marque de l\'article' },
-  ]
+  extraFields: [{ name: 'marque', label: 'Marque (optionnel)', placeholder: 'Marque de l\'article' }]
 }
 
+const STORAGE_KEY = 'abidjandeals_draft'
 type MediaFile = { file: File; url: string; type: 'image' | 'video' }
 
 export default function PublierPage() {
@@ -115,6 +132,8 @@ export default function PublierPage() {
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
   const [media, setMedia] = useState<MediaFile[]>([])
+  const [hasDraft, setHasDraft] = useState(false)
+  const [lastSaved, setLastSaved] = useState<string | null>(null)
 
   const [form, setForm] = useState<Record<string, string>>({
     title: '', description: '', price: '',
@@ -123,10 +142,53 @@ export default function PublierPage() {
   })
 
   const selectedCat = CATEGORIES.find(c => c.id === form.category)
-  const catConfig = form.category ? (CATEGORY_FIELDS[form.category] || DEFAULT_FIELDS) : null
+  const catConfig = form.category ? (CATEGORY_FIELDS[form.category] || DEFAULT_CONFIG) : null
+  const quartiersForCity = form.city ? (QUARTIERS[form.city] || []) : []
+
+  // ── Charger le brouillon au démarrage ────────────────────────────────────
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY)
+      if (saved) {
+        const draft = JSON.parse(saved)
+        setForm(draft.form || {})
+        setHasDraft(true)
+        setLastSaved(draft.savedAt || null)
+      }
+    } catch { }
+  }, [])
+
+  // ── Sauvegarder automatiquement toutes les 10 secondes ───────────────────
+  useEffect(() => {
+    const hasContent = form.title || form.description || form.price || form.category
+    if (!hasContent) return
+    const timer = setTimeout(() => {
+      try {
+        const draft = { form, savedAt: new Date().toLocaleTimeString('fr-FR') }
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(draft))
+        setLastSaved(draft.savedAt)
+        setHasDraft(true)
+      } catch { }
+    }, 3000)
+    return () => clearTimeout(timer)
+  }, [form])
+
+  function clearDraft() {
+    localStorage.removeItem(STORAGE_KEY)
+    setHasDraft(false)
+    setLastSaved(null)
+    setForm({ title: '', description: '', price: '', category: '', subcategory: '', etat: '', city: '', quartier: '', tel: '', whatsapp: '' })
+    setMedia([])
+    toast.success('Brouillon effacé')
+  }
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) {
-    setForm(f => ({ ...f, [e.target.name]: e.target.value }))
+    const { name, value } = e.target
+    setForm(f => {
+      const updated = { ...f, [name]: value }
+      if (name === 'city') updated.quartier = ''
+      return updated
+    })
   }
 
   function handleCategoryChange(catId: string) {
@@ -142,9 +204,7 @@ export default function PublierPage() {
     setMedia(prev => [...prev, ...newItems].slice(0, 6))
   }
 
-  function removeMedia(i: number) {
-    setMedia(prev => prev.filter((_, idx) => idx !== i))
-  }
+  function removeMedia(i: number) { setMedia(prev => prev.filter((_, idx) => idx !== i)) }
 
   const onDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault()
@@ -178,14 +238,6 @@ export default function PublierPage() {
         }
       }
 
-      // Construire les champs extra en JSON
-      const extraData: Record<string, string> = {}
-      if (catConfig?.extraFields) {
-        for (const f of catConfig.extraFields) {
-          if (form[f.name]) extraData[f.name] = form[f.name]
-        }
-      }
-
       const { error } = await supabase.from('ads').insert({
         user_id: user.id,
         title: form.title,
@@ -206,6 +258,7 @@ export default function PublierPage() {
       })
 
       if (error) { toast.error('Erreur: ' + error.message); setLoading(false); return }
+      localStorage.removeItem(STORAGE_KEY)
       setSuccess(true)
       setTimeout(() => router.push('/dashboard'), 2500)
     } catch { toast.error('Une erreur est survenue') }
@@ -219,10 +272,8 @@ export default function PublierPage() {
         <div className="w-24 h-24 rounded-full bg-green-100 flex items-center justify-center">
           <CheckCircle size={48} className="text-green-500" />
         </div>
-        <div>
-          <h1 className="text-2xl font-extrabold text-gray-900 mb-2">Annonce publiée ! 🎉</h1>
-          <p className="text-gray-500">En cours de validation par notre équipe (24h max).</p>
-        </div>
+        <h1 className="text-2xl font-extrabold text-gray-900">Annonce publiée ! 🎉</h1>
+        <p className="text-gray-500">En cours de validation par notre équipe (24h max).</p>
         <p className="text-xs text-gray-400">Redirection vers votre tableau de bord...</p>
       </div>
       <Footer />
@@ -235,16 +286,40 @@ export default function PublierPage() {
       <Navbar />
 
       <main className="flex-1 w-full max-w-6xl mx-auto px-4 py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-extrabold text-gray-900">Publier une annonce</h1>
-          <p className="text-gray-400 mt-1">Le formulaire s'adapte automatiquement à votre article</p>
+        <div className="flex items-start justify-between mb-8">
+          <div>
+            <h1 className="text-3xl font-extrabold text-gray-900">Publier une annonce</h1>
+            <p className="text-gray-400 mt-1">Le formulaire s'adapte automatiquement à votre article</p>
+          </div>
+          {/* Indicateur sauvegarde */}
+          <div className="flex items-center gap-3">
+            {lastSaved && (
+              <span className="text-xs text-gray-400 flex items-center gap-1">
+                <Save size={11} /> Sauvegardé à {lastSaved}
+              </span>
+            )}
+            {hasDraft && (
+              <button type="button" onClick={clearDraft}
+                className="text-xs text-red-400 hover:text-red-500 border border-red-100 rounded-lg px-3 py-1.5 transition">
+                Effacer le brouillon
+              </button>
+            )}
+          </div>
         </div>
+
+        {/* Bannière brouillon récupéré */}
+        {hasDraft && (
+          <div className="mb-5 bg-blue-50 border border-blue-100 rounded-xl px-4 py-3 flex items-center gap-3">
+            <Save size={16} className="text-blue-500 flex-shrink-0" />
+            <p className="text-sm text-blue-700 font-medium">Brouillon récupéré — vos données ont été restaurées automatiquement.</p>
+          </div>
+        )}
 
         <form onSubmit={handleSubmit}>
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="lg:col-span-2 space-y-5">
 
-              {/* ── ÉTAPE 1 : Catégorie ── */}
+              {/* Étape 1 — Catégorie */}
               <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
                 <div className="flex items-center gap-2 mb-4">
                   <div className="w-7 h-7 rounded-full bg-orange-500 text-white text-xs font-bold flex items-center justify-center">1</div>
@@ -252,26 +327,23 @@ export default function PublierPage() {
                 </div>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                   {CATEGORIES.map(cat => (
-                    <button key={cat.id} type="button"
-                      onClick={() => handleCategoryChange(cat.id)}
-                      className={`flex items-center gap-2 px-3 py-2.5 rounded-xl border text-sm font-medium transition-all ${form.category === cat.id ? 'border-orange-500 bg-orange-50 text-orange-600 shadow-sm' : 'border-gray-100 text-gray-600 hover:border-orange-200 hover:bg-orange-50/50'}`}>
+                    <button key={cat.id} type="button" onClick={() => handleCategoryChange(cat.id)}
+                      className={`flex items-center gap-2 px-3 py-2.5 rounded-xl border text-xs font-medium transition-all ${form.category === cat.id ? 'border-orange-500 bg-orange-50 text-orange-600 shadow-sm' : 'border-gray-100 text-gray-600 hover:border-orange-200 hover:bg-orange-50/50'}`}>
                       <span className="text-base">{cat.icon}</span>
-                      <span className="truncate text-xs">{cat.name}</span>
+                      <span className="truncate">{cat.name}</span>
                     </button>
                   ))}
                 </div>
                 {selectedCat && (
-                  <div className="mt-3">
-                    <select name="subcategory" value={form.subcategory} onChange={handleChange}
-                      className="w-full border border-gray-100 bg-gray-50 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-orange-400 focus:bg-white transition">
-                      <option value="">Sous-catégorie (optionnel)</option>
-                      {selectedCat.subcats.map(s => <option key={s} value={s}>{s}</option>)}
-                    </select>
-                  </div>
+                  <select name="subcategory" value={form.subcategory} onChange={handleChange}
+                    className="mt-3 w-full border border-gray-100 bg-gray-50 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-orange-400 focus:bg-white transition">
+                    <option value="">Sous-catégorie (optionnel)</option>
+                    {selectedCat.subcats.map(s => <option key={s} value={s}>{s}</option>)}
+                  </select>
                 )}
               </div>
 
-              {/* ── ÉTAPE 2 : Photos & Vidéo ── */}
+              {/* Étape 2 — Photos & Vidéo */}
               <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
                 <div className="px-5 pt-5 pb-3 border-b border-gray-50 flex items-center gap-2">
                   <div className="w-7 h-7 rounded-full bg-orange-500 text-white text-xs font-bold flex items-center justify-center">2</div>
@@ -279,8 +351,7 @@ export default function PublierPage() {
                   <span className="ml-auto text-xs text-gray-400">{media.length}/6</span>
                 </div>
                 <div className="p-5">
-                  <div
-                    onDrop={onDrop} onDragOver={e => e.preventDefault()}
+                  <div onDrop={onDrop} onDragOver={e => e.preventDefault()}
                     className="border-2 border-dashed border-gray-200 rounded-2xl p-6 text-center hover:border-orange-400 transition-colors cursor-pointer mb-4 group"
                     onClick={() => fileInputRef.current?.click()}>
                     <Upload size={28} className="mx-auto text-gray-300 group-hover:text-orange-400 transition mb-2" />
@@ -288,14 +359,11 @@ export default function PublierPage() {
                     <p className="text-xs text-gray-400 mt-1">JPG, PNG, WEBP · Max 5 photos + 1 vidéo</p>
                     <input ref={fileInputRef} type="file" accept="image/*" multiple className="hidden" onChange={e => addMedia(e.target.files, 'image')} />
                   </div>
-
                   {media.length > 0 && (
                     <div className="grid grid-cols-4 gap-2 mb-3">
                       {media.map((m, i) => (
                         <div key={i} className={`relative rounded-xl overflow-hidden border-2 aspect-square ${i === 0 ? 'border-orange-400' : 'border-gray-100'}`}>
-                          {m.type === 'image'
-                            ? <img src={m.url} alt="" className="w-full h-full object-cover" />
-                            : <video src={m.url} className="w-full h-full object-cover" muted />}
+                          {m.type === 'image' ? <img src={m.url} alt="" className="w-full h-full object-cover" /> : <video src={m.url} className="w-full h-full object-cover" muted />}
                           {i === 0 && <span className="absolute bottom-0 left-0 right-0 bg-orange-500 text-white text-[9px] font-bold text-center py-0.5">PRINCIPALE</span>}
                           {m.type === 'video' && <span className="absolute top-1 left-1 bg-black/60 text-white text-[9px] px-1 rounded">📹</span>}
                           <button type="button" onClick={() => removeMedia(i)}
@@ -306,7 +374,6 @@ export default function PublierPage() {
                       ))}
                     </div>
                   )}
-
                   {!media.find(m => m.type === 'video') && (
                     <button type="button" onClick={() => videoInputRef.current?.click()}
                       className="flex items-center gap-2 text-sm text-gray-500 hover:text-orange-500 border border-dashed border-gray-200 hover:border-orange-300 rounded-xl px-4 py-2.5 w-full justify-center transition">
@@ -317,7 +384,7 @@ export default function PublierPage() {
                 </div>
               </div>
 
-              {/* ── ÉTAPE 3 : Détails dynamiques ── */}
+              {/* Étape 3 — Détails dynamiques */}
               <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
                 <div className="flex items-center gap-2 mb-4">
                   <div className="w-7 h-7 rounded-full bg-orange-500 text-white text-xs font-bold flex items-center justify-center">3</div>
@@ -327,27 +394,25 @@ export default function PublierPage() {
                 </div>
                 <div className="space-y-3">
                   <input name="title" value={form.title} onChange={handleChange} required
-                    placeholder={`Titre${selectedCat ? ` — ex: ${selectedCat.name} à vendre...` : ' de l\'annonce *'}`}
+                    placeholder={selectedCat ? `Titre — ex: ${selectedCat.name} à vendre...` : 'Titre de l\'annonce *'}
                     className="w-full border border-gray-100 bg-gray-50 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-orange-400 focus:bg-white transition font-medium" />
-
                   <textarea name="description" value={form.description} onChange={handleChange} rows={4}
                     placeholder={
-                      form.category === 'auto' ? 'Décrivez la voiture : année, kilométrage, options, historique d\'entretien...' :
-                        form.category === 'immobilier' ? 'Décrivez le bien : superficie, étage, équipements, voisinage, accès...' :
+                      form.category === 'auto' ? 'Décrivez la voiture : options, historique d\'entretien, raison de vente...' :
+                        form.category === 'immobilier' ? 'Décrivez le bien : équipements, voisinage, accès, charges...' :
                           form.category === 'hightech' ? 'Décrivez l\'état, les accessoires inclus, raison de vente...' :
                             form.category === 'services' ? 'Décrivez votre service, vos compétences, vos références...' :
-                              'Décrivez votre article en détail (état, caractéristiques, raison de vente...)'
+                              'Décrivez votre article en détail...'
                     }
                     className="w-full border border-gray-100 bg-gray-50 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-orange-400 focus:bg-white transition resize-none" />
-
                   <div className="grid grid-cols-2 gap-3">
                     <div className="relative">
                       <input name="price" value={form.price} onChange={handleChange} required type="number" min="0"
-                        placeholder={form.category === 'location' ? 'Prix / jour (FCFA) *' : form.category === 'services' ? 'Tarif (FCFA) *' : 'Prix (FCFA) *'}
+                        placeholder={form.category === 'location' ? 'Prix / jour *' : form.category === 'services' ? 'Tarif *' : 'Prix *'}
                         className="w-full border border-gray-100 bg-gray-50 rounded-xl pl-4 pr-16 py-3 text-sm focus:outline-none focus:border-orange-400 focus:bg-white transition font-bold" />
                       <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400 font-semibold">FCFA</span>
                     </div>
-                    {catConfig?.etats && (
+                    {catConfig && (
                       <select name="etat" value={form.etat} onChange={handleChange}
                         className="border border-gray-100 bg-gray-50 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-orange-400 focus:bg-white transition">
                         <option value="">État *</option>
@@ -356,11 +421,10 @@ export default function PublierPage() {
                     )}
                   </div>
 
-                  {/* Champs dynamiques par catégorie */}
                   {catConfig?.extraFields && catConfig.extraFields.length > 0 && (
-                    <div className="grid grid-cols-2 gap-3 pt-2 border-t border-gray-50">
+                    <div className="grid grid-cols-2 gap-3 pt-3 border-t border-gray-50">
                       {catConfig.extraFields.map(field => (
-                        <div key={field.name} className={field.type === 'select' ? '' : ''}>
+                        <div key={field.name}>
                           {field.type === 'select' ? (
                             <select name={field.name} value={form[field.name] || ''} onChange={handleChange}
                               className="w-full border border-gray-100 bg-gray-50 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-orange-400 focus:bg-white transition">
@@ -379,7 +443,7 @@ export default function PublierPage() {
                 </div>
               </div>
 
-              {/* ── ÉTAPE 4 : Localisation ── */}
+              {/* Étape 4 — Localisation */}
               <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
                 <div className="flex items-center gap-2 mb-4">
                   <div className="w-7 h-7 rounded-full bg-orange-500 text-white text-xs font-bold flex items-center justify-center">4</div>
@@ -392,12 +456,31 @@ export default function PublierPage() {
                     <option value="">Ville *</option>
                     {CITIES.map(c => { const name = c.replace(/^[^\s]+\s/, ''); return <option key={name} value={name}>{name}</option> })}
                   </select>
-                  <input name="quartier" value={form.quartier || ''} onChange={handleChange}
-                    placeholder="Quartier (optionnel)" className="border border-gray-100 bg-gray-50 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-orange-400 focus:bg-white transition" />
+
+                  {/* Quartier dynamique selon la ville */}
+                  {quartiersForCity.length > 0 ? (
+                    <select name="quartier" value={form.quartier} onChange={handleChange}
+                      className="border border-gray-100 bg-gray-50 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-orange-400 focus:bg-white transition">
+                      <option value="">Quartier (optionnel)</option>
+                      {quartiersForCity.map(q => <option key={q} value={q}>{q}</option>)}
+                      <option value="Autre">Autre quartier</option>
+                    </select>
+                  ) : (
+                    <input name="quartier" value={form.quartier} onChange={handleChange}
+                      placeholder="Quartier (optionnel)"
+                      className="border border-gray-100 bg-gray-50 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-orange-400 focus:bg-white transition" />
+                  )}
                 </div>
+
+                {/* Si "Autre" quartier sélectionné */}
+                {form.quartier === 'Autre' && (
+                  <input name="quartier_custom" onChange={e => setForm(f => ({ ...f, quartier: e.target.value }))}
+                    placeholder="Précisez votre quartier"
+                    className="mt-3 w-full border border-gray-100 bg-gray-50 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-orange-400 focus:bg-white transition" />
+                )}
               </div>
 
-              {/* ── ÉTAPE 5 : Contact ── */}
+              {/* Étape 5 — Contact */}
               <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
                 <div className="flex items-center gap-2 mb-4">
                   <div className="w-7 h-7 rounded-full bg-orange-500 text-white text-xs font-bold flex items-center justify-center">5</div>
@@ -406,59 +489,58 @@ export default function PublierPage() {
                 </div>
                 <div className="space-y-3">
                   <input name="tel" value={form.tel} onChange={handleChange} required
-                    placeholder="Téléphone * (+225 07 12 34 56 78)" className="w-full border border-gray-100 bg-gray-50 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-orange-400 focus:bg-white transition" />
+                    placeholder="Téléphone * (+225 07 12 34 56 78)"
+                    className="w-full border border-gray-100 bg-gray-50 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-orange-400 focus:bg-white transition" />
                   <input name="whatsapp" value={form.whatsapp || ''} onChange={handleChange}
-                    placeholder="WhatsApp si différent du téléphone" className="w-full border border-gray-100 bg-gray-50 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-orange-400 focus:bg-white transition" />
+                    placeholder="WhatsApp si différent du téléphone"
+                    className="w-full border border-gray-100 bg-gray-50 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-orange-400 focus:bg-white transition" />
                 </div>
               </div>
-
             </div>
 
-            {/* ── Colonne droite sticky ── */}
+            {/* Colonne droite sticky */}
             <div>
               <div className="sticky top-4 space-y-4">
-                {/* Résumé */}
                 <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
                   <h3 className="font-bold text-gray-800 mb-4">Résumé</h3>
                   <div className="space-y-2.5">
                     {[
                       { label: 'Catégorie', value: selectedCat ? `${selectedCat.icon} ${selectedCat.name}` : '—' },
                       { label: 'Photos', value: `${media.filter(m => m.type === 'image').length}/5` },
-                      { label: 'Vidéo', value: media.find(m => m.type === 'video') ? '✅ Ajoutée' : '—' },
+                      { label: 'Vidéo', value: media.find(m => m.type === 'video') ? '✅' : '—' },
                       { label: 'Prix', value: form.price ? `${parseInt(form.price).toLocaleString('fr')} FCFA` : '—' },
                       { label: 'Ville', value: form.city || '—' },
+                      { label: 'Quartier', value: form.quartier || '—' },
                     ].map(item => (
                       <div key={item.label} className="flex items-center justify-between text-sm">
                         <span className="text-gray-400">{item.label}</span>
-                        <span className="font-semibold text-gray-700 text-right">{item.value}</span>
+                        <span className="font-semibold text-gray-700">{item.value}</span>
                       </div>
                     ))}
                   </div>
                 </div>
 
-                {/* Conseils contextuels */}
                 <div className="bg-orange-50 border border-orange-100 rounded-2xl p-4">
                   <p className="text-xs font-bold text-orange-600 mb-2">
-                    💡 {form.category === 'auto' ? 'Conseils vente voiture' :
-                      form.category === 'immobilier' ? 'Conseils immobilier' :
-                        form.category === 'hightech' ? 'Conseils high-tech' :
-                          'Conseils pour vendre vite'}
+                    💡 {form.category === 'auto' ? 'Conseils vente voiture' : form.category === 'immobilier' ? 'Conseils immobilier' : 'Conseils pour vendre vite'}
                   </p>
                   <ul className="text-xs text-orange-600/80 space-y-1.5">
                     {form.category === 'auto' ? <>
                       <li className="flex gap-1.5"><ChevronRight size={10} className="mt-0.5 flex-shrink-0" />Photographiez l'extérieur, l'intérieur et le moteur</li>
-                      <li className="flex gap-1.5"><ChevronRight size={10} className="mt-0.5 flex-shrink-0" />Indiquez le nombre de propriétaires</li>
-                      <li className="flex gap-1.5"><ChevronRight size={10} className="mt-0.5 flex-shrink-0" />Mentionnez si la vignette et l'assurance sont à jour</li>
+                      <li className="flex gap-1.5"><ChevronRight size={10} className="mt-0.5 flex-shrink-0" />Mentionnez si la vignette est à jour</li>
                     </> : form.category === 'immobilier' ? <>
                       <li className="flex gap-1.5"><ChevronRight size={10} className="mt-0.5 flex-shrink-0" />Montrez toutes les pièces en photos</li>
-                      <li className="flex gap-1.5"><ChevronRight size={10} className="mt-0.5 flex-shrink-0" />Précisez l'accès eau, électricité, quartier résidentiel</li>
-                      <li className="flex gap-1.5"><ChevronRight size={10} className="mt-0.5 flex-shrink-0" />Mentionnez la proximité des commerces et axes routiers</li>
+                      <li className="flex gap-1.5"><ChevronRight size={10} className="mt-0.5 flex-shrink-0" />Précisez l'accès eau et électricité</li>
                     </> : <>
                       <li className="flex gap-1.5"><ChevronRight size={10} className="mt-0.5 flex-shrink-0" />Ajoutez au moins 3 photos de qualité</li>
-                      <li className="flex gap-1.5"><ChevronRight size={10} className="mt-0.5 flex-shrink-0" />Soyez honnête sur l'état de l'article</li>
                       <li className="flex gap-1.5"><ChevronRight size={10} className="mt-0.5 flex-shrink-0" />Une vidéo augmente les contacts de ×3</li>
                     </>}
                   </ul>
+                </div>
+
+                <div className="bg-blue-50 border border-blue-100 rounded-xl px-4 py-3 flex items-center gap-2">
+                  <Save size={14} className="text-blue-500 flex-shrink-0" />
+                  <p className="text-xs text-blue-600">Sauvegarde automatique activée — vos données ne seront pas perdues</p>
                 </div>
 
                 <button type="submit" disabled={loading}
