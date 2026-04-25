@@ -1,4 +1,4 @@
-'use client'
+content = r"""'use client'
 import { Footer } from '@/components/Footer'
 import { Navbar } from '@/components/Navbar'
 import { supabase } from '@/lib/supabase'
@@ -279,3 +279,8 @@ export default function AdDetailPage() {
         </div>
     )
 }
+"""
+
+with open('src/app/ad/[id]/page.tsx', 'w', encoding='utf-8') as f:
+    f.write(content)
+print('Done! File written successfully.')
