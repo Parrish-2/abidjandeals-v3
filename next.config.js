@@ -1,7 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: false,
-  turbopack: {},
   experimental: {
     optimizePackageImports: ['lucide-react', 'framer-motion'],
   },
@@ -13,33 +12,6 @@ const nextConfig = {
       { protocol: 'https', hostname: 'images.unsplash.com' },
     ],
   },
-  async headers() {
-    return [
-      {
-        source: '/(.*)',
-        headers: [
-          {
-            key: 'Content-Security-Policy',
-            value: [
-              "default-src 'self'",
-              "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://cdn.jsdelivr.net https://vercel.live blob:",
-              "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-              "img-src * data: blob:",
-              "media-src 'self' blob: data: https://*.supabase.co https://*.supabase.in https://*.supabase.com",
-              "connect-src * blob: data:",
-              "font-src 'self' data: https://fonts.gstatic.com",
-              "worker-src 'self' blob: data:",
-              "frame-src 'self' https://vercel.live",
-              "object-src 'none'",
-              "manifest-src 'self'",
-              "script-src-elem 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://vercel.live blob:",
-            ].join('; '),
-          },
-          { key: 'X-Frame-Options', value: 'SAMEORIGIN' },
-          { key: 'Strict-Transport-Security', value: 'max-age=63072000; includeSubDomains; preload' },
-        ],
-      },
-    ]
-  },
 }
+
 module.exports = nextConfig
