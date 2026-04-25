@@ -257,10 +257,10 @@ function getLabel(key: string, locale: string): string {
 // ── Badge ────────────────────────────────────────────────────────────────────
 
 const BADGE_CFG = {
-  TOP: { bg: 'rgba(249,115,22,0.15)', color: '#ea580c', border: 'rgba(249,115,22,0.3)' },
-  NEW: { bg: 'rgba(16,185,129,0.15)', color: '#059669', border: 'rgba(16,185,129,0.3)' },
-  PROMO: { bg: 'rgba(99,102,241,0.15)', color: '#6366f1', border: 'rgba(99,102,241,0.3)' },
-  URGENT: { bg: 'rgba(239,68,68,0.15)', color: '#dc2626', border: 'rgba(239,68,68,0.3)' },
+  TOP: { bg: 'rgba(249,115,22,0.10)', color: '#ea580c', border: 'rgba(249,115,22,0.25)' },
+  NEW: { bg: 'rgba(16,185,129,0.10)', color: '#059669', border: 'rgba(16,185,129,0.25)' },
+  PROMO: { bg: 'rgba(99,102,241,0.10)', color: '#6366f1', border: 'rgba(99,102,241,0.25)' },
+  URGENT: { bg: 'rgba(239,68,68,0.10)', color: '#dc2626', border: 'rgba(239,68,68,0.25)' },
 } as const
 
 function Badge({ type }: { type: keyof typeof BADGE_CFG }) {
@@ -269,9 +269,9 @@ function Badge({ type }: { type: keyof typeof BADGE_CFG }) {
     <span style={{
       background: s.bg, color: s.color,
       border: `1px solid ${s.border}`,
-      fontSize: 9, fontWeight: 800,
-      padding: '2px 7px', borderRadius: 20,
-      letterSpacing: '0.06em', lineHeight: 1, flexShrink: 0,
+      fontSize: 9, fontWeight: 700,
+      padding: '2px 6px', borderRadius: 20,
+      letterSpacing: '0.05em', lineHeight: 1, flexShrink: 0,
       textTransform: 'uppercase',
     }}>
       {type}
@@ -285,26 +285,31 @@ interface MegaPanelPortalProps {
   cat: MegaCat
   locale: string
   navbarRef: React.RefObject<HTMLDivElement>
-  onNavigate: (url: string) => void
-  onMouseEnter: () => void
-  onMouseLeave: () => void
+  onNavigate: (url: string, catId: string) => void
+  onClose: () => void
 }
 
-function MegaPanelPortal({
-  cat, locale, navbarRef, onNavigate, onMouseEnter, onMouseLeave,
-}: MegaPanelPortalProps) {
+function MegaPanelPortal({ cat, locale, navbarRef, onNavigate, onClose }: MegaPanelPortalProps) {
   const [top, setTop] = useState(0)
   const [imgError, setImgError] = useState(false)
 
   const label = getLabel(cat.labelKey, locale)
   const desc = getLabel(cat.descKey, locale)
+  const seeAllBtn = locale === 'en' ? 'See all' : 'Voir tout'
+  const seeAllLabel = locale === 'en' ? `See all in ${label}` : `Voir tout en ${label}`
+  const subcatTitle = locale === 'en' ? 'Subcategories' : 'Sous-catégories'
+  const trendLabel = locale === 'en' ? 'Trending' : 'Tendance'
+  const catsLabel = locale === 'en'
+    ? `${cat.subs.length} categories`
+    : `${cat.subs.length} catégories`
+
+  const calc = useCallback(() => {
+    if (!navbarRef.current) return
+    const r = navbarRef.current.getBoundingClientRect()
+    setTop(r.bottom + window.scrollY)
+  }, [navbarRef])
 
   useEffect(() => {
-    function calc() {
-      if (!navbarRef.current) return
-      const rect = navbarRef.current.getBoundingClientRect()
-      setTop(rect.bottom + window.scrollY)
-    }
     calc()
     window.addEventListener('resize', calc, { passive: true })
     window.addEventListener('scroll', calc, { passive: true })
@@ -312,48 +317,43 @@ function MegaPanelPortal({
       window.removeEventListener('resize', calc)
       window.removeEventListener('scroll', calc)
     }
-  }, [navbarRef])
+  }, [calc])
 
   if (typeof document === 'undefined') return null
 
-  const seeAllLabel = locale === 'en' ? `See all in ${label}` : `Voir tout en ${label}`
-  const subcatTitle = locale === 'en' ? 'Subcategories' : 'Sous-catégories'
-  const trendLabel = locale === 'en' ? 'Trending' : 'Tendance'
-  const seeAllBtn = locale === 'en' ? 'See all' : 'Voir tout'
-
   return createPortal(
     <>
+      {/* Overlay */}
       <div
         data-megamenu-overlay
+        onClick={onClose}
         style={{
           position: 'fixed', inset: 0, zIndex: 9998,
-          background: 'rgba(0,0,0,0.25)',
-          pointerEvents: 'none',
+          background: 'rgba(15,17,23,0.08)',
           animation: 'mmFadeIn 0.18s ease',
+          cursor: 'default',
         }}
       />
 
+      {/* Panel */}
       <div
         data-megamenu-panel
-        onMouseEnter={onMouseEnter}
-        onMouseLeave={onMouseLeave}
         style={{
           position: 'absolute',
           top,
           left: 0, right: 0,
           zIndex: 9999,
-          background: 'linear-gradient(180deg, #161B27 0%, #0F1117 100%)',
-          borderBottom: '1px solid rgba(255,255,255,0.07)',
-          borderTop: '1px solid rgba(255,255,255,0.05)',
-          boxShadow: '0 16px 48px rgba(0,0,0,0.5)',
+          background: '#ffffff',
+          borderBottom: '1px solid #e2e8f0',
+          boxShadow: '0 8px 32px rgba(0,0,0,0.10), 0 2px 8px rgba(0,0,0,0.06)',
           animation: 'mmSlideDown 0.2s cubic-bezier(0.16,1,0.3,1)',
         }}
       >
-        <div style={{ height: 2, background: cat.gradient }} />
+        {/* Barre couleur catégorie */}
+        <div style={{ height: 3, background: cat.gradient }} />
 
         <div style={{
-          maxWidth: 1200,
-          margin: '0 auto',
+          maxWidth: 1200, margin: '0 auto',
           padding: '16px 24px 20px',
           display: 'grid',
           gridTemplateColumns: '200px 1px 1fr',
@@ -361,30 +361,32 @@ function MegaPanelPortal({
           alignItems: 'start',
         }}>
 
-          {/* ── Gauche : carte catégorie ── */}
+          {/* Gauche : carte catégorie */}
           <div>
             <button
-              onClick={() => onNavigate(`/search?category=${cat.id}`)}
+              onClick={() => onNavigate(`/search?category=${cat.id}`, cat.id)}
               style={{
                 display: 'flex', flexDirection: 'column',
-                borderRadius: 14, overflow: 'hidden',
-                border: 'none', cursor: 'pointer', width: '100%',
+                borderRadius: 12, overflow: 'hidden',
+                border: `1px solid ${cat.color}25`,
+                cursor: 'pointer', width: '100%',
                 textAlign: 'left', background: 'none', padding: 0,
-                boxShadow: `0 6px 24px ${cat.color}33`,
-                transition: 'transform 0.2s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.2s',
+                boxShadow: `0 4px 16px ${cat.color}20`,
+                transition: 'transform 0.2s, box-shadow 0.2s',
               }}
               onMouseEnter={e => {
                 const el = e.currentTarget as HTMLElement
-                el.style.transform = 'translateY(-3px) scale(1.01)'
-                el.style.boxShadow = `0 14px 36px ${cat.color}55`
+                el.style.transform = 'translateY(-2px)'
+                el.style.boxShadow = `0 10px 28px ${cat.color}35`
               }}
               onMouseLeave={e => {
                 const el = e.currentTarget as HTMLElement
-                el.style.transform = 'translateY(0) scale(1)'
-                el.style.boxShadow = `0 6px 24px ${cat.color}33`
+                el.style.transform = 'translateY(0)'
+                el.style.boxShadow = `0 4px 16px ${cat.color}20`
               }}
             >
-              <div style={{ height: 100, overflow: 'hidden', position: 'relative', background: `${cat.color}22` }}>
+              {/* Image */}
+              <div style={{ height: 100, overflow: 'hidden', position: 'relative', background: `${cat.color}12` }}>
                 {!imgError ? (
                   <img
                     src={cat.imageUrl} alt={label}
@@ -396,68 +398,72 @@ function MegaPanelPortal({
                     {cat.icon}
                   </div>
                 )}
-                <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(to top, ${cat.color}ee 0%, ${cat.color}44 50%, transparent 100%)` }} />
-                <span style={{ position: 'absolute', bottom: 8, left: 10, fontSize: 22, lineHeight: 1, filter: 'drop-shadow(0 2px 6px rgba(0,0,0,0.6))' }}>
-                  {cat.icon}
-                </span>
-                <span style={{ position: 'absolute', bottom: 10, left: 38, fontSize: 12, fontWeight: 800, color: '#fff', textShadow: '0 1px 4px rgba(0,0,0,0.7)' }}>
+                <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.5) 0%, transparent 60%)' }} />
+                <span style={{ position: 'absolute', bottom: 8, left: 10, fontSize: 22 }}>{cat.icon}</span>
+                <span style={{ position: 'absolute', bottom: 10, left: 38, fontSize: 12, fontWeight: 800, color: '#fff', textShadow: '0 1px 4px rgba(0,0,0,0.5)' }}>
                   {label}
                 </span>
                 {cat.isAdult && (
-                  <span style={{
-                    position: 'absolute', top: 6, right: 6,
-                    background: '#f43f5e', color: '#fff',
-                    fontSize: 9, fontWeight: 800,
-                    padding: '2px 6px', borderRadius: 20,
-                  }}>
+                  <span style={{ position: 'absolute', top: 6, right: 6, background: '#f43f5e', color: '#fff', fontSize: 9, fontWeight: 800, padding: '2px 6px', borderRadius: 20 }}>
                     🔞 18+
                   </span>
                 )}
               </div>
 
-              <div style={{ padding: '10px 12px 12px', background: 'rgba(255,255,255,0.04)', borderTop: `2px solid ${cat.color}33` }}>
-                <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', margin: '0 0 8px', lineHeight: 1.4 }}>
-                  {desc}
-                </p>
+              {/* Body */}
+              <div style={{ padding: '10px 12px 12px', background: '#fafafa', borderTop: `2px solid ${cat.color}20` }}>
+                <p style={{ fontSize: 11, color: '#94a3b8', margin: '0 0 8px', lineHeight: 1.4 }}>{desc}</p>
                 <span style={{
                   display: 'inline-flex', alignItems: 'center', gap: 4,
                   fontSize: 11, color: '#fff', fontWeight: 700,
                   background: cat.gradient,
                   padding: '5px 10px', borderRadius: 20,
-                  boxShadow: `0 3px 10px ${cat.color}50`,
+                  boxShadow: `0 3px 10px ${cat.color}40`,
                 }}>
                   {seeAllBtn} <ArrowRight size={10} />
                 </span>
               </div>
             </button>
 
+            {/* Stats row */}
             <div style={{ marginTop: 8, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
-              <div style={{ padding: '8px 10px', borderRadius: 10, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', textAlign: 'center' }}>
-                <p style={{ fontSize: 16, margin: '0 0 1px' }}>🔥</p>
-                <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)', margin: 0, fontWeight: 600 }}>
-                  {cat.subs.length} {locale === 'en' ? 'subcats' : 'sous-cats'}
-                </p>
+              <div style={{
+                padding: '8px 10px', borderRadius: 10,
+                background: '#f8fafc', border: '1px solid #f1f5f9',
+                textAlign: 'center',
+              }}>
+                <p style={{ fontSize: 16, margin: '0 0 2px' }}>🔥</p>
+                <p style={{ fontSize: 10, color: '#94a3b8', margin: 0, fontWeight: 600 }}>{catsLabel}</p>
               </div>
-              <div style={{ padding: '8px 10px', borderRadius: 10, background: `${cat.color}15`, border: `1px solid ${cat.color}30`, textAlign: 'center' }}>
-                <TrendingUp size={14} style={{ color: cat.color, margin: '0 auto 1px', display: 'block' }} />
+              <div style={{
+                padding: '8px 10px', borderRadius: 10,
+                background: `${cat.color}0d`,
+                border: `1px solid ${cat.color}25`,
+                textAlign: 'center',
+              }}>
+                <TrendingUp size={14} style={{ color: cat.color, margin: '0 auto 2px', display: 'block' }} />
                 <p style={{ fontSize: 10, color: cat.color, margin: 0, fontWeight: 700 }}>{trendLabel}</p>
               </div>
             </div>
           </div>
 
-          {/* ── Séparateur ── */}
-          <div style={{
-            alignSelf: 'stretch',
-            background: 'linear-gradient(to bottom, transparent, rgba(255,255,255,0.1) 20%, rgba(255,255,255,0.1) 80%, transparent)',
-          }} />
+          {/* Séparateur vertical */}
+          <div style={{ alignSelf: 'stretch', background: '#f1f5f9' }} />
 
-          {/* ── Droite : sous-catégories ── */}
+          {/* Droite : sous-catégories */}
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
-              <div style={{ width: 24, height: 24, borderRadius: 7, background: cat.gradient, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <div style={{
+                width: 24, height: 24, borderRadius: 7,
+                background: cat.gradient,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}>
                 <Sparkles size={12} color="#fff" />
               </div>
-              <p style={{ fontSize: 10, fontWeight: 800, color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '0.10em', margin: 0 }}>
+              <p style={{
+                fontSize: 10, fontWeight: 700, color: '#94a3b8',
+                textTransform: 'uppercase', letterSpacing: '0.10em', margin: 0,
+              }}>
                 {subcatTitle}
               </p>
             </div>
@@ -465,27 +471,26 @@ function MegaPanelPortal({
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(190px, 1fr))', gap: '2px 4px' }}>
               {cat.subs.map(sub => {
                 const subLabel = getLabel(sub.nameKey, locale)
-                const subUrl = `/search?category=${cat.id}&sub=${sub.id}`
                 return (
                   <button
                     key={sub.id}
-                    onClick={() => onNavigate(subUrl)}
+                    onClick={() => onNavigate(`/search?category=${cat.id}&sub=${sub.id}`, cat.id)}
                     style={{
                       display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                      gap: 8, padding: '9px 12px', borderRadius: 10,
+                      gap: 8, padding: '9px 10px', borderRadius: 9,
                       background: 'transparent', border: '1px solid transparent',
                       cursor: 'pointer', width: '100%', textAlign: 'left',
-                      transition: 'all 0.13s ease',
+                      transition: 'all 0.12s ease',
                     }}
                     onMouseEnter={e => {
                       const el = e.currentTarget as HTMLElement
-                      el.style.background = `${cat.color}12`
-                      el.style.borderColor = `${cat.color}30`
+                      el.style.background = '#f8fafc'
+                      el.style.borderColor = '#e2e8f0'
                       el.style.transform = 'translateX(3px)'
                       const lbl = el.querySelector<HTMLElement>('.sub-lbl')
-                      if (lbl) { lbl.style.color = cat.color; lbl.style.fontWeight = '600' }
+                      if (lbl) { lbl.style.color = '#1e293b'; lbl.style.fontWeight = '500' }
                       const chev = el.querySelector<HTMLElement>('.sub-chev')
-                      if (chev) { chev.style.color = cat.color; chev.style.opacity = '1' }
+                      if (chev) { chev.style.color = cat.color }
                     }}
                     onMouseLeave={e => {
                       const el = e.currentTarget as HTMLElement
@@ -493,21 +498,21 @@ function MegaPanelPortal({
                       el.style.borderColor = 'transparent'
                       el.style.transform = 'translateX(0)'
                       const lbl = el.querySelector<HTMLElement>('.sub-lbl')
-                      if (lbl) { lbl.style.color = 'rgba(255,255,255,0.6)'; lbl.style.fontWeight = '400' }
+                      if (lbl) { lbl.style.color = '#475569'; lbl.style.fontWeight = '400' }
                       const chev = el.querySelector<HTMLElement>('.sub-chev')
-                      if (chev) { chev.style.color = 'rgba(255,255,255,0.2)'; chev.style.opacity = '0.5' }
+                      if (chev) { chev.style.color = '#d1d5db' }
                     }}
                   >
-                    <span style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0, flex: 1 }}>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: 7, minWidth: 0, flex: 1 }}>
                       <ChevronRight
                         size={10}
                         className="sub-chev"
-                        style={{ color: 'rgba(255,255,255,0.2)', flexShrink: 0, opacity: 0.5, transition: 'color 0.13s, opacity 0.13s' }}
+                        style={{ color: '#d1d5db', flexShrink: 0, transition: 'color 0.12s' }}
                       />
                       <span className="sub-lbl" style={{
-                        fontSize: 13, color: 'rgba(255,255,255,0.6)', fontWeight: 400,
+                        fontSize: 13, color: '#475569', fontWeight: 400,
                         overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-                        transition: 'color 0.13s, font-weight 0.13s',
+                        transition: 'color 0.12s, font-weight 0.12s',
                       }}>
                         {subLabel}
                       </span>
@@ -519,27 +524,31 @@ function MegaPanelPortal({
             </div>
 
             {/* Bouton voir tout */}
-            <div style={{ marginTop: 14, paddingTop: 14, borderTop: '1px solid rgba(255,255,255,0.07)', display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div style={{
+              marginTop: 14, paddingTop: 14,
+              borderTop: '1px solid #f1f5f9',
+              display: 'flex', alignItems: 'center', gap: 10,
+            }}>
               <button
-                onClick={() => onNavigate(`/search?category=${cat.id}`)}
+                onClick={() => onNavigate(`/search?category=${cat.id}`, cat.id)}
                 style={{
                   display: 'inline-flex', alignItems: 'center', gap: 6,
-                  padding: '8px 18px', borderRadius: 10,
+                  padding: '8px 18px', borderRadius: 9,
                   background: cat.gradient,
                   color: '#fff', border: 'none', cursor: 'pointer',
                   fontSize: 12, fontWeight: 700,
-                  boxShadow: `0 4px 14px ${cat.color}50`,
+                  boxShadow: `0 4px 14px ${cat.color}40`,
                   transition: 'all 0.2s cubic-bezier(0.34,1.56,0.64,1)',
                 }}
                 onMouseEnter={e => {
                   const el = e.currentTarget as HTMLElement
-                  el.style.transform = 'translateY(-2px) scale(1.03)'
-                  el.style.boxShadow = `0 8px 24px ${cat.color}66`
+                  el.style.transform = 'translateY(-2px) scale(1.02)'
+                  el.style.boxShadow = `0 8px 24px ${cat.color}55`
                 }}
                 onMouseLeave={e => {
                   const el = e.currentTarget as HTMLElement
                   el.style.transform = 'translateY(0) scale(1)'
-                  el.style.boxShadow = `0 4px 14px ${cat.color}50`
+                  el.style.boxShadow = `0 4px 14px ${cat.color}40`
                 }}
               >
                 <ArrowRight size={13} />
@@ -569,8 +578,10 @@ interface MegaMenuProps {
 export function MegaMenu({ activeCategoryId, onCategoryClick }: MegaMenuProps) {
   const router = useRouter()
   const { locale } = useI18n()
+
+  // ✅ FIX : openId gère UNIQUEMENT l'état visuel du menu ouvert
+  // activeCategoryId (store) n'influe plus sur is-active dans la barre
   const [openId, setOpenId] = useState<string | null>(null)
-  const [hoverId, setHoverId] = useState<string | null>(null)
   const [mounted, setMounted] = useState(false)
 
   const [showAgeGate, setShowAgeGate] = useState(false)
@@ -579,7 +590,6 @@ export function MegaMenu({ activeCategoryId, onCategoryClick }: MegaMenuProps) {
 
   const navbarRef = useRef<HTMLDivElement>(null)
   const scrollRef = useRef<HTMLElement>(null)
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const [canScrollLeft, setCanScrollLeft] = useState(false)
   const [canScrollRight, setCanScrollRight] = useState(false)
@@ -606,10 +616,15 @@ export function MegaMenu({ activeCategoryId, onCategoryClick }: MegaMenuProps) {
 
   useEffect(() => { setMounted(true) }, [])
 
+  // Fermeture au clic en dehors
   useEffect(() => {
     const h = (e: MouseEvent) => {
       const target = e.target as HTMLElement
-      if (!navbarRef.current?.contains(target) && !target.closest('[data-megamenu-panel]')) {
+      if (
+        !navbarRef.current?.contains(target) &&
+        !target.closest('[data-megamenu-panel]') &&
+        !target.closest('[data-megamenu-overlay]')
+      ) {
         setOpenId(null)
       }
     }
@@ -617,28 +632,14 @@ export function MegaMenu({ activeCategoryId, onCategoryClick }: MegaMenuProps) {
     return () => document.removeEventListener('mousedown', h)
   }, [])
 
+  // Fermeture avec Échap
   useEffect(() => {
     const h = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpenId(null) }
     document.addEventListener('keydown', h)
     return () => document.removeEventListener('keydown', h)
   }, [])
 
-  useEffect(() => () => { if (timerRef.current) clearTimeout(timerRef.current) }, [])
-
-  const scheduleClose = useCallback(() => {
-    timerRef.current = setTimeout(() => { setOpenId(null); setHoverId(null) }, 280)
-  }, [])
-
-  const cancelClose = useCallback(() => {
-    if (timerRef.current) clearTimeout(timerRef.current)
-  }, [])
-
-  function handleTabEnter(cat: MegaCat) {
-    cancelClose()
-    setHoverId(cat.id)
-    if (cat.subs.length) setOpenId(cat.id)
-  }
-
+  // Clic sur un onglet
   function handleTabClick(cat: MegaCat) {
     if (cat.isAdult && !isAgeVerified()) {
       setPendingUrl(`/search?category=${cat.id}`)
@@ -647,24 +648,19 @@ export function MegaMenu({ activeCategoryId, onCategoryClick }: MegaMenuProps) {
       setShowAgeGate(true)
       return
     }
+
     if (!cat.subs.length) {
       setOpenId(null)
       onCategoryClick(cat.id)
       router.push(`/search?category=${cat.id}`)
     } else {
+      // Toggle : ouvert → fermer, fermé → ouvrir
       setOpenId(prev => prev === cat.id ? null : cat.id)
     }
   }
 
+  // Navigation depuis le panel (sous-cat ou "voir tout")
   function handleNavigate(url: string, catId: string) {
-    const cat = MEGA_CATS.find(c => c.id === catId)
-    if (cat?.isAdult && !isAgeVerified()) {
-      setPendingUrl(url)
-      setPendingCatId(catId)
-      setOpenId(null)
-      setShowAgeGate(true)
-      return
-    }
     setOpenId(null)
     onCategoryClick(catId)
     router.push(url)
@@ -681,11 +677,7 @@ export function MegaMenu({ activeCategoryId, onCategoryClick }: MegaMenuProps) {
             onCategoryClick(pendingCatId)
             router.push(pendingUrl)
           }}
-          onRefuse={() => {
-            setShowAgeGate(false)
-            setPendingUrl('')
-            setPendingCatId('')
-          }}
+          onRefuse={() => { setShowAgeGate(false); setPendingUrl(''); setPendingCatId('') }}
         />
       )}
 
@@ -696,35 +688,34 @@ export function MegaMenu({ activeCategoryId, onCategoryClick }: MegaMenuProps) {
           font-size: 12.5px; font-weight: 500;
           color: rgba(255,255,255,0.55);
           white-space: nowrap; background: transparent; border: none;
-          border-bottom: 2.5px solid transparent; cursor: pointer; flex-shrink: 0;
-          transition: color .15s, background .15s, border-color .15s; z-index: 1;
+          border-bottom: 2.5px solid transparent;
+          cursor: pointer; flex-shrink: 0;
+          transition: color .15s, background .15s, border-color .15s;
+          z-index: 1;
         }
-        .mm-tab:hover { color: #ffffff; background: rgba(255,255,255,0.07); }
-        .mm-tab.is-active { color: #F97316; border-bottom-color: #F97316; font-weight: 700; background: rgba(249,115,22,0.08); }
+        .mm-tab:hover     { color: #ffffff; background: rgba(255,255,255,0.07); }
         .mm-tab.is-open   { color: #F97316; background: rgba(249,115,22,0.08); border-bottom-color: #F97316; font-weight: 700; }
-        .mm-chev { width: 10px; height: 10px; color: rgba(255,255,255,0.25); margin-left: 1px; transition: transform .2s, color .15s; }
-        .mm-tab.is-open   .mm-chev { transform: rotate(180deg); color: #F97316; }
-        .mm-tab.is-active .mm-chev { color: #F97316; }
-        .mm-dot { position: absolute; top: 7px; right: 6px; width: 5px; height: 5px; border-radius: 50%; animation: mmPulse 2s ease-in-out infinite; }
-        .mm-adult-badge { font-size: 9px; font-weight: 800; background: #f43f5e; color: #fff; padding: 2px 5px; border-radius: 10px; margin-left: 3px; }
+        .mm-chev          { width: 10px; height: 10px; color: rgba(255,255,255,0.25); margin-left: 1px; transition: transform .2s, color .15s; }
+        .mm-tab.is-open .mm-chev { transform: rotate(180deg); color: #F97316; }
+        .mm-dot           { position: absolute; top: 7px; right: 6px; width: 5px; height: 5px; border-radius: 50%; animation: mmPulse 2s ease-in-out infinite; }
+        .mm-adult-badge   { font-size: 9px; font-weight: 800; background: #f43f5e; color: #fff; padding: 2px 5px; border-radius: 10px; margin-left: 3px; }
         @keyframes mmPulse { 0%, 100% { opacity:1; transform:scale(1) } 50% { opacity:.5; transform:scale(.7) } }
       `}</style>
 
       <div
         ref={navbarRef}
-        onMouseLeave={scheduleClose}
-        onMouseEnter={cancelClose}
         style={{ position: 'relative', display: 'flex', alignItems: 'stretch' }}
       >
         {/* Flèche gauche */}
         {canScrollLeft && (
           <button
             onClick={() => scroll('left')}
+            aria-label="Défiler à gauche"
             style={{
               position: 'absolute', left: 0, top: 0, bottom: 0, zIndex: 10,
               width: 36, display: 'flex', alignItems: 'center', justifyContent: 'center',
               background: 'linear-gradient(to right, #0F1117 60%, transparent)',
-              border: 'none', cursor: 'pointer', flexShrink: 0,
+              border: 'none', cursor: 'pointer',
             }}
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="2.5">
@@ -733,9 +724,10 @@ export function MegaMenu({ activeCategoryId, onCategoryClick }: MegaMenuProps) {
           </button>
         )}
 
-        {/* Carrousel */}
+        {/* Carrousel scrollable */}
         <nav
           ref={scrollRef}
+          aria-label="Catégories"
           onScroll={checkScroll}
           style={{
             display: 'flex', alignItems: 'stretch',
@@ -747,7 +739,9 @@ export function MegaMenu({ activeCategoryId, onCategoryClick }: MegaMenuProps) {
           }}
         >
           {MEGA_CATS.map(cat => {
-            const isActive = cat.id === activeCategoryId
+            // ✅ FIX PRINCIPAL : is-open seul détermine le style actif
+            // is-active (lié au store) supprimé — évite que High-Tech reste
+            // visuellement actif après navigation vers une autre catégorie
             const isOpen = cat.id === openId
             const hasSubs = cat.subs.length > 0
             const label = getLabel(cat.labelKey, locale)
@@ -756,26 +750,21 @@ export function MegaMenu({ activeCategoryId, onCategoryClick }: MegaMenuProps) {
             return (
               <button
                 key={cat.id}
-                className={`mm-tab${isActive ? ' is-active' : ''}${isOpen ? ' is-open' : ''}`}
-                onMouseEnter={() => handleTabEnter(cat)}
+                className={`mm-tab${isOpen ? ' is-open' : ''}`}
                 onClick={() => handleTabClick(cat)}
                 aria-expanded={isOpen}
-                aria-haspopup={hasSubs || undefined}
+                aria-haspopup={hasSubs ? 'true' : undefined}
               >
-                {hasNew && (
-                  <span className="mm-dot" style={{ background: cat.color }} />
-                )}
+                {hasNew && <span className="mm-dot" style={{ background: cat.color }} />}
                 <span style={{
                   fontSize: 15, lineHeight: 1,
-                  transition: 'filter 0.15s, transform 0.15s',
-                  transform: isOpen || hoverId === cat.id ? 'scale(1.15)' : 'scale(1)',
+                  transition: 'transform 0.15s',
+                  transform: isOpen ? 'scale(1.15)' : 'scale(1)',
                 }}>
                   {cat.icon}
                 </span>
                 {label}
-                {cat.isAdult && (
-                  <span className="mm-adult-badge">18+</span>
-                )}
+                {cat.isAdult && <span className="mm-adult-badge">18+</span>}
                 {hasSubs && (
                   <svg className="mm-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                     <polyline points="6 9 12 15 18 9" />
@@ -790,11 +779,12 @@ export function MegaMenu({ activeCategoryId, onCategoryClick }: MegaMenuProps) {
         {canScrollRight && (
           <button
             onClick={() => scroll('right')}
+            aria-label="Défiler à droite"
             style={{
               position: 'absolute', right: 0, top: 0, bottom: 0, zIndex: 10,
               width: 36, display: 'flex', alignItems: 'center', justifyContent: 'center',
               background: 'linear-gradient(to left, #0F1117 60%, transparent)',
-              border: 'none', cursor: 'pointer', flexShrink: 0,
+              border: 'none', cursor: 'pointer',
             }}
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="2.5">
@@ -804,14 +794,14 @@ export function MegaMenu({ activeCategoryId, onCategoryClick }: MegaMenuProps) {
         )}
       </div>
 
+      {/* Panel mega menu */}
       {mounted && openId && openCat && (
         <MegaPanelPortal
           cat={openCat}
           locale={locale}
           navbarRef={navbarRef}
-          onNavigate={url => handleNavigate(url, openCat.id)}
-          onMouseEnter={cancelClose}
-          onMouseLeave={scheduleClose}
+          onNavigate={handleNavigate}
+          onClose={() => setOpenId(null)}
         />
       )}
     </>
