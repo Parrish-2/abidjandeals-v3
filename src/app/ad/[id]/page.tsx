@@ -11,7 +11,10 @@ import toast, { Toaster } from 'react-hot-toast'
 export default function AdDetailPage() {
     const params = useParams()
     const router = useRouter()
+
+    // Correction : S'assurer que l'ID est bien récupéré
     const adId = params?.id as string
+
     const [ad, setAd] = useState<any>(null)
     const [found, setFound] = useState<boolean | null>(null)
     const [sessionUid, setSessionUid] = useState<string | null>(null)
@@ -20,54 +23,103 @@ export default function AdDetailPage() {
     const [deleting, setDeleting] = useState(false)
 
     useEffect(() => {
-        if (!adId) return
-        supabase.auth.getSession().then(({ data: { session } }) => {
-            setSessionUid(session?.user?.id ?? null)
-        })
-        supabase.from('ads')
-            .select('*')
-            .eq('id', adId)
-            .single()
-            .then(({ data, error }) => {
-                if (error || !data) { setFound(false); return }
+        // Correction : Gestion plus robuste du chargement initial
+        async function loadAd() {
+            if (!adId) return
+
+            try {
+                // Récupérer la session
+                const { data: { session } } = await supabase.auth.getSession()
+                setSessionUid(session?.user?.id ?? null)
+
+                // Récupérer l'annonce
+                const { data, error } = await supabase
+                    .from('ads')
+                    .select('*')
+                    .eq('id', adId)
+                    .maybeSingle() // Utilisation de maybeSingle pour éviter l'erreur si non trouvé
+
+                if (error) {
+                    console.error("Erreur Supabase:", error)
+                    setFound(false)
+                    return
+                }
+
+                if (!data) {
+                    setFound(false)
+                    return
+                }
+
                 setAd(data)
                 setFound(true)
+
+                // Incrémenter les vues si active
                 if (data.status === 'active') {
-                    supabase.from('ads').update({ views: (data.views || 0) + 1 }).eq('id', adId).then(() => { })
+                    await supabase
+                        .from('ads')
+                        .update({ views: (data.views || 0) + 1 })
+                        .eq('id', adId)
                 }
-            })
+            } catch (err) {
+                console.error("Erreur inattendue:", err)
+                setFound(false)
+            }
+        }
+
+        loadAd()
     }, [adId])
 
     function formatPrice(p: number) {
+        if (!p && p !== 0) return 'Prix non spécifié'
         return new Intl.NumberFormat('fr-CI').format(p) + ' FCFA'
     }
 
     function timeAgo(iso: string) {
-        const days = Math.floor((Date.now() - new Date(iso).getTime()) / 86400000)
-        if (days === 0) return "Aujourd'hui"
-        if (days === 1) return 'Hier'
-        if (days < 7) return `Il y a ${days} jours`
-        return new Date(iso).toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' })
+        if (!iso) return ''
+        try {
+            const days = Math.floor((Date.now() - new Date(iso).getTime()) / 86400000)
+            if (days === 0) return "Aujourd'hui"
+            if (days === 1) return 'Hier'
+            if (days < 7) return `Il y a ${days} jours`
+            return new Date(iso).toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' })
+        } catch (e) {
+            return ''
+        }
     }
 
     function share() {
-        if (navigator.share) navigator.share({ title: ad?.title, url: window.location.href })
-        else { navigator.clipboard.writeText(window.location.href); toast.success('Lien copie !') }
+        if (!ad) return
+        if (navigator.share) {
+            navigator.share({ title: ad.title, url: window.location.href })
+        } else {
+            navigator.clipboard.writeText(window.location.href)
+            toast.success('Lien copié !')
+        }
     }
 
     async function handleDelete() {
         if (!confirm('Supprimer cette annonce ?')) return
         setDeleting(true)
-        const res = await fetch('/api/admin/ads', {
-            method: 'DELETE',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ id: adId, images: ad?.images || [] }),
-        })
-        if (res.ok) { toast.success('Supprimee'); router.push('/dashboard') }
-        else toast.error('Erreur')
-        setDeleting(false)
+        try {
+            const res = await fetch('/api/admin/ads', {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id: adId, images: ad?.images || [] }),
+            })
+            if (res.ok) {
+                toast.success('Supprimée')
+                router.push('/dashboard')
+            } else {
+                toast.error('Erreur lors de la suppression')
+            }
+        } catch (err) {
+            toast.error('Erreur réseau')
+        } finally {
+            setDeleting(false)
+        }
     }
 
+    // État de chargement
     if (found === null) return (
         <div className="min-h-screen flex flex-col bg-gray-50">
             <Navbar />
@@ -78,12 +130,14 @@ export default function AdDetailPage() {
         </div>
     )
 
-    if (!ad) return (
+    // État non trouvé ou erreur
+    if (found === false || !ad) return (
         <div className="min-h-screen flex flex-col bg-gray-50">
             <Navbar />
             <div className="flex-1 flex flex-col items-center justify-center gap-4">
                 <AlertTriangle size={48} className="text-orange-400" />
                 <h1 className="text-xl font-bold">Annonce introuvable</h1>
+                <p className="text-gray-500">Cette annonce n'existe plus ou a été supprimée.</p>
                 <Link href="/" className="px-5 py-2.5 bg-orange-500 text-white rounded-2xl font-semibold text-sm">
                     Retour accueil
                 </Link>
@@ -128,7 +182,7 @@ export default function AdDetailPage() {
                                     </>
                                 )}
                                 <div className="absolute top-3 right-3 flex gap-2">
-                                    <button onClick={() => { setIsFav(f => !f); toast.success(isFav ? 'Retire' : 'Ajoute aux favoris') }}
+                                    <button onClick={() => { setIsFav(f => !f); toast.success(isFav ? 'Retiré' : 'Ajouté aux favoris') }}
                                         className={`w-9 h-9 rounded-full shadow flex items-center justify-center ${isFav ? 'bg-red-500 text-white' : 'bg-white/90 text-gray-500'}`}>
                                         <Heart size={16} fill={isFav ? 'currentColor' : 'none'} />
                                     </button>
@@ -152,7 +206,7 @@ export default function AdDetailPage() {
                         {/* Video */}
                         {ad.video_url && (
                             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
-                                <h3 className="font-semibold text-gray-800 mb-3">Video</h3>
+                                <h3 className="font-semibold text-gray-800 mb-3">Vidéo</h3>
                                 <video src={ad.video_url} controls className="w-full rounded-xl" style={{ maxHeight: 320 }} />
                             </div>
                         )}
@@ -181,10 +235,10 @@ export default function AdDetailPage() {
                             </div>
                             <div className="flex gap-2 mb-4 flex-wrap">
                                 <span className="text-xs bg-gray-100 text-gray-500 px-3 py-1 rounded-full flex items-center gap-1">
-                                    <Eye size={11} /> {ad.views} vues
+                                    <Eye size={11} /> {ad.views || 0} vues
                                 </span>
                                 {ad.status === 'active' && (
-                                    <span className="text-xs bg-green-50 text-green-600 px-3 py-1 rounded-full">Annonce verifiee</span>
+                                    <span className="text-xs bg-green-50 text-green-600 px-3 py-1 rounded-full">Annonce vérifiée</span>
                                 )}
                                 {ad.marque && (
                                     <span className="text-xs bg-blue-50 text-blue-600 px-3 py-1 rounded-full">{ad.marque}</span>
@@ -195,7 +249,7 @@ export default function AdDetailPage() {
                             )}
                         </div>
 
-                        {/* Actions proprietaire */}
+                        {/* Actions propriétaire */}
                         {isOwner && (
                             <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex items-center gap-3">
                                 <Shield size={16} className="text-amber-600" />
@@ -219,10 +273,10 @@ export default function AdDetailPage() {
                     <div className="space-y-4">
                         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
                             <div className="flex items-center gap-3 mb-4 pb-4 border-b border-gray-100">
-                                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center text-white font-extrabold text-lg">
-                                    V
+                                <div className="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center text-orange-600 font-bold">
+                                    {ad.seller?.[0] || 'V'}
                                 </div>
-                                <p className="font-bold text-gray-900">Vendeur</p>
+                                <p className="font-bold text-gray-900">{ad.seller || 'Vendeur'}</p>
                             </div>
                             <div className="space-y-2.5">
                                 {ad.tel && (
@@ -240,20 +294,20 @@ export default function AdDetailPage() {
                                 )}
                             </div>
                             <p className="text-xs text-gray-400 text-center mt-3">
-                                Ne payez jamais a l avance sans voir le produit
+                                Ne payez jamais à l'avance sans voir le produit
                             </p>
                         </div>
 
                         <div className="bg-blue-50 border border-blue-100 rounded-2xl p-4">
                             <div className="flex items-center gap-2 mb-2">
                                 <Shield size={15} className="text-blue-500" />
-                                <p className="text-sm font-semibold text-blue-700">Conseils de securite</p>
+                                <p className="text-sm font-semibold text-blue-700">Conseils de sécurité</p>
                             </div>
                             <ul className="text-xs text-blue-600 space-y-1">
                                 <li>Rencontrez le vendeur en lieu public</li>
-                                <li>Verifiez le produit avant paiement</li>
-                                <li>Mefiez-vous des prix trop bas</li>
-                                <li>Ne transferez pas d argent a l avance</li>
+                                <li>Vérifiez le produit avant paiement</li>
+                                <li>Méfiez-vous des prix trop bas</li>
+                                <li>Ne transférez pas d'argent à l'avance</li>
                             </ul>
                         </div>
                     </div>
