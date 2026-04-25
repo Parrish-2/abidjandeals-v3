@@ -2,7 +2,8 @@
 import { Footer } from '@/components/Footer'
 import { Navbar } from '@/components/Navbar'
 import { supabase } from '@/lib/supabase'
-import { AlertTriangle, Calendar, ChevronLeft, ChevronRight, Edit, Eye, Heart, Loader2, MapPin, MessageCircle, Phone, Share2, Shield, Trash2 } from 'lucide-react'
+import { AlertTriangle, Calendar, Edit, Eye, Heart, Loader2, MapPin, MessageCircle, Phone, Share2, Shield, Trash2 } from 'lucide-react'
+import { HybridGallery } from '@/components/HybridGallery'
 import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
@@ -15,7 +16,6 @@ export default function AdDetailPage() {
     const [ad, setAd] = useState<any>(null)
     const [found, setFound] = useState<boolean | null>(null)
     const [sessionUid, setSessionUid] = useState<string | null>(null)
-    const [photoIndex, setPhotoIndex] = useState(0)
     const [isFav, setIsFav] = useState(false)
     const [deleting, setDeleting] = useState(false)
 
@@ -130,52 +130,32 @@ export default function AdDetailPage() {
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     <div className="lg:col-span-2 space-y-4">
 
+                        {/* Galerie hybride */}
                         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-                            <div className="relative aspect-[4/3] bg-gray-100">
-                                {images.length > 0
-                                    ? <img src={images[photoIndex]} alt={ad.title} className="w-full h-full object-cover" />
-                                    : <div className="w-full h-full flex items-center justify-center text-6xl text-gray-300">Photo</div>}
-                                {images.length > 1 && (
-                                    <>
-                                        <button onClick={() => setPhotoIndex(i => (i - 1 + images.length) % images.length)}
-                                            className="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white/90 shadow flex items-center justify-center">
-                                            <ChevronLeft size={18} />
-                                        </button>
-                                        <button onClick={() => setPhotoIndex(i => (i + 1) % images.length)}
-                                            className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white/90 shadow flex items-center justify-center">
-                                            <ChevronRight size={18} />
-                                        </button>
-                                    </>
-                                )}
-                                <div className="absolute top-3 right-3 flex gap-2">
-                                    <button onClick={() => { setIsFav(f => !f); toast.success(isFav ? 'Retire' : 'Ajoute aux favoris') }}
-                                        className={`w-9 h-9 rounded-full shadow flex items-center justify-center ${isFav ? 'bg-red-500 text-white' : 'bg-white/90 text-gray-500'}`}>
-                                        <Heart size={16} fill={isFav ? 'currentColor' : 'none'} />
-                                    </button>
-                                    <button onClick={share} className="w-9 h-9 rounded-full bg-white/90 shadow flex items-center justify-center text-gray-500">
-                                        <Share2 size={16} />
-                                    </button>
-                                </div>
-                            </div>
-                            {images.length > 1 && (
-                                <div className="p-3 flex gap-2 overflow-x-auto">
-                                    {images.map((src: string, i: number) => (
-                                        <button key={i} onClick={() => setPhotoIndex(i)}
-                                            className={`flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 ${i === photoIndex ? 'border-orange-500' : 'border-transparent'}`}>
-                                            <img src={src} alt="" className="w-full h-full object-cover" />
-                                        </button>
-                                    ))}
-                                </div>
-                            )}
+                            <HybridGallery
+                                images={images}
+                                videoUrl={ad.video_url}
+                                alt={ad.title}
+                            />
                         </div>
 
-                        {ad.video_url && (
-                            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
-                                <h3 className="font-semibold text-gray-800 mb-3">Video</h3>
-                                <video src={ad.video_url} controls className="w-full rounded-xl" style={{ maxHeight: 320 }} />
-                            </div>
-                        )}
+                        {/* Boutons favoris et partage */}
+                        <div className="flex gap-2 justify-end">
+                            <button
+                                onClick={() => { setIsFav(f => !f); toast.success(isFav ? 'Retire' : 'Ajoute aux favoris') }}
+                                className={`flex items-center gap-2 px-4 py-2 rounded-xl border text-sm font-medium transition ${isFav ? 'bg-red-50 border-red-200 text-red-500' : 'bg-white border-gray-200 text-gray-500 hover:border-red-200'}`}>
+                                <Heart size={15} fill={isFav ? 'currentColor' : 'none'} />
+                                {isFav ? 'Favori' : 'Ajouter aux favoris'}
+                            </button>
+                            <button
+                                onClick={share}
+                                className="flex items-center gap-2 px-4 py-2 rounded-xl border border-gray-200 bg-white text-gray-500 text-sm font-medium hover:border-orange-200 transition">
+                                <Share2 size={15} />
+                                Partager
+                            </button>
+                        </div>
 
+                        {/* Infos */}
                         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
                             <div className="flex items-start justify-between gap-3 mb-4">
                                 <div>
@@ -185,7 +165,7 @@ export default function AdDetailPage() {
                                         <span className="text-sm text-gray-500">
                                             {ad.quartier ? `${ad.quartier}, ` : ''}{ad.city}
                                         </span>
-                                        <span className="text-gray-300">.</span>
+                                        <span className="text-gray-300">·</span>
                                         <Calendar size={13} className="text-gray-400" />
                                         <span className="text-sm text-gray-400">{timeAgo(ad.created_at)}</span>
                                     </div>
@@ -213,6 +193,7 @@ export default function AdDetailPage() {
                             )}
                         </div>
 
+                        {/* Actions proprietaire */}
                         {isOwner && (
                             <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex items-center gap-3">
                                 <Shield size={16} className="text-amber-600" />
@@ -232,6 +213,7 @@ export default function AdDetailPage() {
                         )}
                     </div>
 
+                    {/* Vendeur */}
                     <div className="space-y-4">
                         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
                             <div className="flex items-center gap-3 mb-4 pb-4 border-b border-gray-100">
