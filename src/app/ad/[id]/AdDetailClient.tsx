@@ -102,7 +102,7 @@ export default function AdDetailClient({ id }: Props) {
         </div>
     )
 
-    const images = ad.images?.length ? ad.images : []
+    const images = ad.photos?.length ? ad.photos : (ad.images?.length ? ad.images : [])
     const isOwner = !!(sessionUid && sessionUid === ad.user_id)
 
     return (
