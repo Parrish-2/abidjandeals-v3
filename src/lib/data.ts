@@ -1,13 +1,13 @@
 export const CATEGORIES = [
   {
-    id: 'hightech',
+    id: 'cat_tech',
     name: 'High-Tech',
     icon: '📱',
     color: '#6366f1',
     subcats: ['Téléphones & Accessoires', 'Ordinateurs & Tablettes', 'TV & Audio', 'Jeux vidéo', 'Photo & Vidéo', 'Objets connectés'],
   },
   {
-    id: 'auto',
+    id: 'cat_auto',
     name: 'Automobile & Industrie',
     icon: '🚗',
     color: '#ef4444',
@@ -15,7 +15,7 @@ export const CATEGORIES = [
     requiresCertified: true,
   },
   {
-    id: 'immobilier',
+    id: 'cat_immo',
     name: 'Immobilier',
     icon: '🏠',
     color: '#10b981',
@@ -23,7 +23,7 @@ export const CATEGORIES = [
     requiresCertified: true,
   },
   {
-    id: 'location',
+    id: 'cat_location',
     name: 'Location & Mobilité',
     icon: '🔑',
     color: '#f59e0b',
@@ -31,42 +31,42 @@ export const CATEGORIES = [
     requiresConfirmed: true,
   },
   {
-    id: 'services',
+    id: 'cat_serv',
     name: 'Services & Autres',
     icon: '🔧',
     color: '#8b5cf6',
     subcats: ['Informatique & Tech', 'Beauté & Bien-être', 'Cours & Formation', 'BTP & Artisanat', 'Transport & Livraison', 'Santé'],
   },
   {
-    id: 'electromenager',
+    id: 'cat_elec',
     name: 'Électroménager',
     icon: '📺',
     color: '#06b6d4',
     subcats: ['Réfrigérateurs', 'Climatiseurs', 'Machines à laver', 'Cuisinières', 'Petits appareils'],
   },
   {
-    id: 'bebe',
+    id: 'cat_bebe',
     name: 'Bébé & Mamans',
     icon: '👶',
     color: '#ec4899',
     subcats: ['Vêtements bébé', 'Poussettes & Sièges', 'Jouets', 'Alimentation', 'Chambre bébé'],
   },
   {
-    id: 'pharma',
+    id: 'cat_pharma',
     name: 'Parapharmacie',
     icon: '💊',
     color: '#14b8a6',
     subcats: ['Soins visage', 'Soins corps', 'Compléments alimentaires', 'Hygiène'],
   },
   {
-    id: 'epicerie',
+    id: 'cat_epicerie',
     name: 'Épicerie & Boissons',
     icon: '🛒',
     color: '#f97316',
     subcats: ['Alimentation sèche', 'Boissons', 'Produits locaux CI', 'Bio & Naturel'],
   },
   {
-    id: 'lingerie',
+    id: 'cat_lingerie',
     name: 'Lingerie & Accessoires',
     icon: '👙',
     color: '#f43f5e',
@@ -93,14 +93,10 @@ export const CITIES = [
 ]
 
 export const MOCK_ADS = [
-  { id: 1, title: 'iPhone 15 Pro Max 256Go', price: 750000, category: 'hightech', subcategory: 'Téléphones & Accessoires', city: 'Abidjan', quartier: 'Cocody', etat: 'Neuf', seller: 'Kofi Tech', certified: true, views: 342, badge: 'boost', img: 'https://images.unsplash.com/photo-1696446701796-da61339ab2e4?w=400&h=300&fit=crop', emoji: '📱' },
-  { id: 2, title: 'MacBook Pro M3 14"', price: 1200000, category: 'hightech', subcategory: 'Ordinateurs & Tablettes', city: 'Abidjan', quartier: 'Plateau', etat: 'Bon état', seller: 'DigiStore CI', certified: true, views: 215, badge: 'pro', img: 'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=400&h=300&fit=crop', emoji: '💻' },
-  { id: 3, title: 'Toyota RAV4 2021 Full Options', price: 18500000, category: 'auto', subcategory: 'Voitures', city: 'Abidjan', quartier: 'Marcory', etat: 'Bon état', seller: 'AutoDeal CI', certified: true, views: 892, badge: 'boost', img: 'https://images.unsplash.com/photo-1568605117036-5fe5e7bab0b7?w=400&h=300&fit=crop', emoji: '🚗' },
-  { id: 4, title: 'Villa F5 Cocody Riviera 3', price: 95000000, category: 'immobilier', subcategory: 'Maisons à vendre', city: 'Abidjan', quartier: 'Riviera', etat: 'Neuf', seller: 'ImmoCI Premium', certified: true, views: 654, badge: 'new', img: 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=400&h=300&fit=crop', emoji: '🏠' },
-  { id: 5, title: 'Samsung Galaxy S24 Ultra', price: 620000, category: 'hightech', subcategory: 'Téléphones & Accessoires', city: 'Bouaké', quartier: 'Centre', etat: 'Neuf', seller: 'Mobile Plus', certified: false, views: 178, badge: null, img: 'https://images.unsplash.com/photo-1610945415295-d9bbf067e59c?w=400&h=300&fit=crop', emoji: '📱' },
-  { id: 6, title: 'Climatiseur Midea 1.5CV Inverter', price: 285000, category: 'electromenager', subcategory: 'Climatiseurs', city: 'Abidjan', quartier: 'Yopougon', etat: 'Neuf', seller: 'ElectroCIV', certified: false, views: 412, badge: 'urgent', img: 'https://images.unsplash.com/photo-1585771724684-38269d6639fd?w=400&h=300&fit=crop', emoji: '❄️' },
-  { id: 7, title: 'Salle de fête 300 personnes', price: 350000, category: 'location', subcategory: 'Salles de fête', city: 'Abidjan', quartier: 'Abobo', etat: 'Disponible', seller: 'EventSpace CI', certified: true, views: 267, badge: 'boost', img: 'https://images.unsplash.com/photo-1519167758481-83f550bb49b3?w=400&h=300&fit=crop', emoji: '🎉' },
-  { id: 8, title: 'Cours de Développement Web', price: 150000, category: 'services', subcategory: 'Cours & Formation', city: 'Yamoussoukro', quartier: 'Habitat', etat: 'Disponible', seller: 'TechAcademy CI', certified: false, views: 156, badge: null, img: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=400&h=300&fit=crop', emoji: '💻' },
+  { id: 1, title: 'iPhone 15 Pro Max 256Go', price: 750000, category: 'cat_tech', subcategory: 'Téléphones & Accessoires', city: 'Abidjan', quartier: 'Cocody', etat: 'Neuf', seller: 'Kofi Tech', certified: true, views: 342, badge: 'boost', img: 'https://images.unsplash.com/photo-1696446701796-da61339ab2e4?w=400&h=300&fit=crop', emoji: '📱' },
+  { id: 2, title: 'MacBook Pro M3 14"', price: 1200000, category: 'cat_tech', subcategory: 'Ordinateurs & Tablettes', city: 'Abidjan', quartier: 'Plateau', etat: 'Bon état', seller: 'DigiStore CI', certified: true, views: 215, badge: 'pro', img: 'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=400&h=300&fit=crop', emoji: '💻' },
+  { id: 3, title: 'Toyota RAV4 2021 Full Options', price: 18500000, category: 'cat_auto', subcategory: 'Voitures', city: 'Abidjan', quartier: 'Marcory', etat: 'Bon état', seller: 'AutoDeal CI', certified: true, views: 892, badge: 'boost', img: 'https://images.unsplash.com/photo-1568605117036-5fe5e7bab0b7?w=400&h=300&fit=crop', emoji: '🚗' },
+  { id: 4, title: 'Villa F5 Cocody Riviera 3', price: 95000000, category: 'cat_immo', subcategory: 'Maisons à vendre', city: 'Abidjan', quartier: 'Riviera', etat: 'Neuf', seller: 'ImmoCI Premium', certified: true, views: 654, badge: 'new', img: 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=400&h=300&fit=crop', emoji: '🏠' },
 ]
 
 export function formatPrice(price: number): string {
