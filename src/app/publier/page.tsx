@@ -129,12 +129,18 @@ const EMPTY_FORM = {
   city: '', quartier: '', tel: '', whatsapp: '',
 }
 type MediaFile = { file: File; url: string; type: 'image' | 'video' }
+type Location = { id: string; name: string; parent_id: string | null }
 
 export default function PublierPage() {
   const router = useRouter()
   const fileInputRef = useRef<HTMLInputElement>(null)
   const videoInputRef = useRef<HTMLInputElement>(null)
   const [loading, setLoading] = useState(false)
+  const [villes, setVilles] = useState<Location[]>([])
+  const [communes, setCommunes] = useState<Location[]>([])
+  const [sousQuartiers, setSousQuartiers] = useState<Location[]>([])
+  const [selectedVilleId, setSelectedVilleId] = useState<string>('')
+  const [selectedCommuneId, setSelectedCommuneId] = useState<string>('')
   const [success, setSuccess] = useState(false)
   const [media, setMedia] = useState<MediaFile[]>([])
   const [hasDraft, setHasDraft] = useState(false)
@@ -149,6 +155,52 @@ export default function PublierPage() {
   const selectedCat = CATEGORIES.find(c => c.id === form.category)
   const catConfig: CatConfig = form.category ? (CATEGORY_FIELDS[form.category] ?? DEFAULT_CONFIG) : DEFAULT_CONFIG
   const quartiersForCity = form.city ? (QUARTIERS[form.city] ?? []) : []
+
+  // Charger les villes depuis Supabase
+  useEffect(() => {
+    async function loadVilles() {
+      const { data } = await supabase
+        .from('locations')
+        .select('id, name, parent_id')
+        .is('parent_id', null)
+        .eq('is_active', true)
+        .order('name')
+      if (data) setVilles(data)
+    }
+    loadVilles()
+  }, [])
+
+  // Charger les communes quand une ville est sélectionnée
+  useEffect(() => {
+    if (!selectedVilleId) { setCommunes([]); setSousQuartiers([]); return }
+    async function loadCommunes() {
+      const { data } = await supabase
+        .from('locations')
+        .select('id, name, parent_id')
+        .eq('parent_id', selectedVilleId)
+        .eq('is_active', true)
+        .order('name')
+      if (data) setCommunes(data)
+      setSousQuartiers([])
+      setSelectedCommuneId('')
+    }
+    loadCommunes()
+  }, [selectedVilleId])
+
+  // Charger les sous-quartiers quand une commune est sélectionnée
+  useEffect(() => {
+    if (!selectedCommuneId) { setSousQuartiers([]); return }
+    async function loadSousQuartiers() {
+      const { data } = await supabase
+        .from('locations')
+        .select('id, name, parent_id')
+        .eq('parent_id', selectedCommuneId)
+        .eq('is_active', true)
+        .order('name')
+      if (data) setSousQuartiers(data)
+    }
+    loadSousQuartiers()
+  }, [selectedCommuneId])
 
   useEffect(() => {
     try {
