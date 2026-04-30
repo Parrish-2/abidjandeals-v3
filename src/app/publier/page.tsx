@@ -30,8 +30,6 @@ type CatConfig = { etats: string[]; extraFields: ExtraField[] }
 
 // ── CATEGORY_FIELDS — clés alignées sur les IDs réels de data.ts ─────────────
 const CATEGORY_FIELDS: Record<string, CatConfig> = {
-
-  // ── High-Tech
   cat_tech: {
     etats: ['Neuf', 'Reconditionné', 'Très bon état', 'Bon état', 'À réparer'],
     extraFields: [
@@ -42,8 +40,6 @@ const CATEGORY_FIELDS: Record<string, CatConfig> = {
       { name: 'couleur', label: 'Couleur', placeholder: 'Noir, Blanc, Or...' },
     ],
   },
-
-  // ── Automobile & Industrie
   cat_auto: {
     etats: ['Neuf', 'Très bon état', 'Bon état', 'État correct', 'Pour pièces'],
     extraFields: [
@@ -55,8 +51,6 @@ const CATEGORY_FIELDS: Record<string, CatConfig> = {
       { name: 'boite', label: 'Boîte de vitesse', type: 'select', options: ['Automatique', 'Manuelle'] },
     ],
   },
-
-  // ── Immobilier
   cat_immo: {
     etats: ['Neuf', 'Bon état', 'À rénover'],
     extraFields: [
@@ -66,8 +60,6 @@ const CATEGORY_FIELDS: Record<string, CatConfig> = {
       { name: 'meuble', label: 'Meublé ?', type: 'select', options: ['Oui', 'Non', 'Partiellement'] },
     ],
   },
-
-  // ── Location & Mobilité
   cat_location: {
     etats: ['Disponible', 'Sous réserve'],
     extraFields: [
@@ -76,8 +68,6 @@ const CATEGORY_FIELDS: Record<string, CatConfig> = {
       { name: 'caution', label: 'Caution (FCFA)', type: 'number', placeholder: '50000' },
     ],
   },
-
-  // ── Services
   cat_serv: {
     etats: ['Disponible', 'Sur rendez-vous'],
     extraFields: [
@@ -86,58 +76,42 @@ const CATEGORY_FIELDS: Record<string, CatConfig> = {
       { name: 'delai', label: "Délai d'intervention", placeholder: '24h, 1 semaine...' },
     ],
   },
-
-  // ── Maison & Équipement
   cat_maison: {
     etats: ['Neuf', 'Très bon état', 'Bon état', 'En panne'],
     extraFields: [
-      { name: 'marque', label: 'Marque', placeholder: 'LG, Samsung, IKEA...' },
+      { name: 'marque', label: 'Marque', placeholder: 'LG, Samsung, Ikea...' },
       { name: 'modele', label: 'Modèle / Référence', placeholder: 'Référence du produit' },
-      { name: 'capacite', label: 'Capacité / Dimension', placeholder: '350L, 2m x 1m...' },
       { name: 'couleur', label: 'Couleur', placeholder: 'Blanc, Noir, Bois...' },
     ],
   },
-
-  // ── Mode & Accessoires
   cat_mode: {
     etats: ['Neuf avec étiquette', 'Neuf sans étiquette', 'Très bon état', 'Bon état'],
     extraFields: [
       { name: 'taille', label: 'Taille', type: 'select', options: ['XS', 'S', 'M', 'L', 'XL', 'XXL', '36', '38', '40', '42', '44', '46', 'Autre'] },
       { name: 'couleur', label: 'Couleur', placeholder: 'Noir, Rouge, Blanc...' },
       { name: 'marque', label: 'Marque', placeholder: 'Zara, H&M, Nike...' },
-      { name: 'matiere', label: 'Matière', placeholder: 'Coton, Cuir, Soie...' },
     ],
   },
-
-  // ── Beauté & Bien-être
   cat_beaute: {
-    etats: ['Neuf', 'Non ouvert', 'Entamé'],
+    etats: ['Neuf', 'Ouvert', 'Entamé'],
     extraFields: [
-      { name: 'marque', label: 'Marque / Laboratoire', placeholder: 'LOreal, Nivea...' },
-      { name: 'type_produit', label: 'Type de produit', type: 'select', options: ['Soin visage', 'Soin corps', 'Maquillage', 'Parfum', 'Cheveux', 'Autre'] },
+      { name: 'marque', label: 'Marque', placeholder: 'MAC, L'Oréal, Nivea...' },
       { name: 'date_expiration', label: "Date d'expiration", placeholder: 'MM/AAAA' },
     ],
   },
-
-  // ── Bien-être & Intimité
   cat_adulte: {
-    etats: ['Neuf', 'Non ouvert'],
+    etats: ['Neuf', 'Ouvert', 'Très bon état'],
     extraFields: [
-      { name: 'type_produit', label: 'Type de produit', type: 'select', options: ['Bien-être couple', 'Hygiène intime', 'Massage', 'Accessoire', 'Autre'] },
-      { name: 'marque', label: 'Marque', placeholder: 'Marque du produit' },
+      { name: 'marque', label: 'Marque (optionnel)', placeholder: 'Marque du produit' },
     ],
   },
-
-  // ── Bébé & Maman
   cat_bebe: {
     etats: ['Neuf', 'Très bon état', 'Bon état'],
     extraFields: [
-      { name: 'marque', label: 'Marque', placeholder: 'Chicco, Graco, Pampers...' },
+      { name: 'marque', label: 'Marque', placeholder: 'Chicco, Graco...' },
       { name: 'age_cible', label: 'Âge cible', type: 'select', options: ['0-3 mois', '3-6 mois', '6-12 mois', '1-2 ans', '2-3 ans', '3-5 ans', '5+ ans'] },
     ],
   },
-
-  // ── Épicerie & Boissons
   cat_epicerie: {
     etats: ['Disponible', 'Stock limité'],
     extraFields: [
@@ -146,18 +120,14 @@ const CATEGORY_FIELDS: Record<string, CatConfig> = {
       { name: 'date_expiration', label: "Date d'expiration", placeholder: 'MM/AAAA' },
     ],
   },
-
-  // ── Sport & Loisirs
   cat_sport: {
     etats: ['Neuf', 'Très bon état', 'Bon état'],
     extraFields: [
       { name: 'marque', label: 'Marque', placeholder: 'Nike, Adidas, Decathlon...' },
-      { name: 'sport', label: 'Sport / Activité', type: 'select', options: ['Football', 'Basketball', 'Fitness', 'Natation', 'Tennis', 'Cyclisme', 'Arts martiaux', 'Autre'] },
-      { name: 'taille', label: 'Taille / Pointure', placeholder: 'M, L, 42...' },
+      { name: 'taille', label: 'Taille / Pointure', placeholder: '42, L, XL...' },
     ],
   },
 }
-
 const DEFAULT_CONFIG: CatConfig = {
   etats: ['Neuf', 'Très bon état', 'Bon état', 'État correct'],
   extraFields: [{ name: 'marque', label: 'Marque (optionnel)', placeholder: "Marque de l'article" }],
