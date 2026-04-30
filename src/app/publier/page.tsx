@@ -8,7 +8,6 @@ import { useRouter } from 'next/navigation'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import toast, { Toaster } from 'react-hot-toast'
 
-// ── Quartiers par ville ──────────────────────────────────────────────────────
 const QUARTIERS: Record<string, string[]> = {
   'Abidjan': [
     'Abobo', 'Adjamé', 'Attécoubé', 'Cocody', 'Koumassi', 'Marcory',
@@ -29,9 +28,23 @@ const QUARTIERS: Record<string, string[]> = {
 type ExtraField = { name: string; label: string; type?: string; options?: string[]; placeholder?: string }
 type CatConfig = { etats: string[]; extraFields: ExtraField[] }
 
-// ── Champs dynamiques — IDs alignés sur src/lib/data.ts ─────────────────────
+// ── CATEGORY_FIELDS — clés alignées sur les IDs réels de data.ts ─────────────
 const CATEGORY_FIELDS: Record<string, CatConfig> = {
-  auto: {
+
+  // ── High-Tech
+  cat_tech: {
+    etats: ['Neuf', 'Reconditionné', 'Très bon état', 'Bon état', 'À réparer'],
+    extraFields: [
+      { name: 'marque', label: 'Marque *', placeholder: 'Apple, Samsung, HP...' },
+      { name: 'modele', label: 'Modèle', placeholder: 'iPhone 15, Galaxy S24...' },
+      { name: 'stockage', label: 'Stockage', type: 'select', options: ['32 Go', '64 Go', '128 Go', '256 Go', '512 Go', '1 To', '2 To'] },
+      { name: 'ram', label: 'RAM', type: 'select', options: ['2 Go', '4 Go', '6 Go', '8 Go', '12 Go', '16 Go', '32 Go'] },
+      { name: 'couleur', label: 'Couleur', placeholder: 'Noir, Blanc, Or...' },
+    ],
+  },
+
+  // ── Automobile & Industrie
+  cat_auto: {
     etats: ['Neuf', 'Très bon état', 'Bon état', 'État correct', 'Pour pièces'],
     extraFields: [
       { name: 'marque', label: 'Marque *', placeholder: 'Toyota, Kia, Renault...' },
@@ -42,7 +55,9 @@ const CATEGORY_FIELDS: Record<string, CatConfig> = {
       { name: 'boite', label: 'Boîte de vitesse', type: 'select', options: ['Automatique', 'Manuelle'] },
     ],
   },
-  immobilier: {
+
+  // ── Immobilier
+  cat_immo: {
     etats: ['Neuf', 'Bon état', 'À rénover'],
     extraFields: [
       { name: 'type_bien', label: 'Type de bien', type: 'select', options: ['Appartement', 'Maison', 'Villa', 'Terrain', 'Bureau', 'Entrepôt', 'Chambre'] },
@@ -51,25 +66,9 @@ const CATEGORY_FIELDS: Record<string, CatConfig> = {
       { name: 'meuble', label: 'Meublé ?', type: 'select', options: ['Oui', 'Non', 'Partiellement'] },
     ],
   },
-  hightech: {
-    etats: ['Neuf', 'Reconditionné', 'Très bon état', 'Bon état', 'À réparer'],
-    extraFields: [
-      { name: 'marque', label: 'Marque *', placeholder: 'Apple, Samsung, HP...' },
-      { name: 'modele', label: 'Modèle', placeholder: 'iPhone 15, Galaxy S24...' },
-      { name: 'stockage', label: 'Stockage', type: 'select', options: ['32 Go', '64 Go', '128 Go', '256 Go', '512 Go', '1 To', '2 To'] },
-      { name: 'ram', label: 'RAM', type: 'select', options: ['2 Go', '4 Go', '6 Go', '8 Go', '12 Go', '16 Go', '32 Go'] },
-      { name: 'couleur', label: 'Couleur', placeholder: 'Noir, Blanc, Or...' },
-    ],
-  },
-  electromenager: {
-    etats: ['Neuf', 'Très bon état', 'Bon état', 'En panne'],
-    extraFields: [
-      { name: 'marque', label: 'Marque', placeholder: 'LG, Samsung, Midea...' },
-      { name: 'modele', label: 'Modèle / Référence', placeholder: 'Référence du produit' },
-      { name: 'capacite', label: 'Capacité / Puissance', placeholder: '350L, 1.5CV, 7kg...' },
-    ],
-  },
-  location: {
+
+  // ── Location & Mobilité
+  cat_location: {
     etats: ['Disponible', 'Sous réserve'],
     extraFields: [
       { name: 'capacite', label: 'Capacité / Places', placeholder: '30 personnes, 300 invités...' },
@@ -77,7 +76,9 @@ const CATEGORY_FIELDS: Record<string, CatConfig> = {
       { name: 'caution', label: 'Caution (FCFA)', type: 'number', placeholder: '50000' },
     ],
   },
-  services: {
+
+  // ── Services
+  cat_serv: {
     etats: ['Disponible', 'Sur rendez-vous'],
     extraFields: [
       { name: 'experience', label: 'Expérience', type: 'select', options: ["Moins d'1 an", '1-3 ans', '3-5 ans', '5-10 ans', 'Plus de 10 ans'] },
@@ -85,21 +86,59 @@ const CATEGORY_FIELDS: Record<string, CatConfig> = {
       { name: 'delai', label: "Délai d'intervention", placeholder: '24h, 1 semaine...' },
     ],
   },
-  bebe: {
-    etats: ['Neuf', 'Très bon état', 'Bon état'],
+
+  // ── Maison & Équipement
+  cat_maison: {
+    etats: ['Neuf', 'Très bon état', 'Bon état', 'En panne'],
     extraFields: [
-      { name: 'marque', label: 'Marque', placeholder: 'Chicco, Graco...' },
-      { name: 'age_cible', label: 'Âge cible', type: 'select', options: ['0-3 mois', '3-6 mois', '6-12 mois', '1-2 ans', '2-3 ans', '3-5 ans', '5+ ans'] },
+      { name: 'marque', label: 'Marque', placeholder: 'LG, Samsung, IKEA...' },
+      { name: 'modele', label: 'Modèle / Référence', placeholder: 'Référence du produit' },
+      { name: 'capacite', label: 'Capacité / Dimension', placeholder: '350L, 2m x 1m...' },
+      { name: 'couleur', label: 'Couleur', placeholder: 'Blanc, Noir, Bois...' },
     ],
   },
-  pharma: {
+
+  // ── Mode & Accessoires
+  cat_mode: {
+    etats: ['Neuf avec étiquette', 'Neuf sans étiquette', 'Très bon état', 'Bon état'],
+    extraFields: [
+      { name: 'taille', label: 'Taille', type: 'select', options: ['XS', 'S', 'M', 'L', 'XL', 'XXL', '36', '38', '40', '42', '44', '46', 'Autre'] },
+      { name: 'couleur', label: 'Couleur', placeholder: 'Noir, Rouge, Blanc...' },
+      { name: 'marque', label: 'Marque', placeholder: 'Zara, H&M, Nike...' },
+      { name: 'matiere', label: 'Matière', placeholder: 'Coton, Cuir, Soie...' },
+    ],
+  },
+
+  // ── Beauté & Bien-être
+  cat_beaute: {
     etats: ['Neuf', 'Non ouvert', 'Entamé'],
     extraFields: [
-      { name: 'marque', label: 'Marque / Laboratoire', placeholder: 'Nom du fabricant' },
+      { name: 'marque', label: 'Marque / Laboratoire', placeholder: 'LOreal, Nivea...' },
+      { name: 'type_produit', label: 'Type de produit', type: 'select', options: ['Soin visage', 'Soin corps', 'Maquillage', 'Parfum', 'Cheveux', 'Autre'] },
       { name: 'date_expiration', label: "Date d'expiration", placeholder: 'MM/AAAA' },
     ],
   },
-  epicerie: {
+
+  // ── Bien-être & Intimité
+  cat_adulte: {
+    etats: ['Neuf', 'Non ouvert'],
+    extraFields: [
+      { name: 'type_produit', label: 'Type de produit', type: 'select', options: ['Bien-être couple', 'Hygiène intime', 'Massage', 'Accessoire', 'Autre'] },
+      { name: 'marque', label: 'Marque', placeholder: 'Marque du produit' },
+    ],
+  },
+
+  // ── Bébé & Maman
+  cat_bebe: {
+    etats: ['Neuf', 'Très bon état', 'Bon état'],
+    extraFields: [
+      { name: 'marque', label: 'Marque', placeholder: 'Chicco, Graco, Pampers...' },
+      { name: 'age_cible', label: 'Âge cible', type: 'select', options: ['0-3 mois', '3-6 mois', '6-12 mois', '1-2 ans', '2-3 ans', '3-5 ans', '5+ ans'] },
+    ],
+  },
+
+  // ── Épicerie & Boissons
+  cat_epicerie: {
     etats: ['Disponible', 'Stock limité'],
     extraFields: [
       { name: 'poids', label: 'Poids / Quantité', placeholder: '1kg, 500g, 1L...' },
@@ -107,12 +146,14 @@ const CATEGORY_FIELDS: Record<string, CatConfig> = {
       { name: 'date_expiration', label: "Date d'expiration", placeholder: 'MM/AAAA' },
     ],
   },
-  lingerie: {
-    etats: ['Neuf avec étiquette', 'Neuf sans étiquette', 'Très bon état'],
+
+  // ── Sport & Loisirs
+  cat_sport: {
+    etats: ['Neuf', 'Très bon état', 'Bon état'],
     extraFields: [
-      { name: 'taille', label: 'Taille', type: 'select', options: ['XS', 'S', 'M', 'L', 'XL', 'XXL', '36', '38', '40', '42', '44', '46', 'Autre'] },
-      { name: 'couleur', label: 'Couleur', placeholder: 'Noir, Rouge, Blanc...' },
-      { name: 'marque', label: 'Marque', placeholder: 'Marque...' },
+      { name: 'marque', label: 'Marque', placeholder: 'Nike, Adidas, Decathlon...' },
+      { name: 'sport', label: 'Sport / Activité', type: 'select', options: ['Football', 'Basketball', 'Fitness', 'Natation', 'Tennis', 'Cyclisme', 'Arts martiaux', 'Autre'] },
+      { name: 'taille', label: 'Taille / Pointure', placeholder: 'M, L, 42...' },
     ],
   },
 }
@@ -156,7 +197,6 @@ export default function PublierPage() {
   const catConfig: CatConfig = form.category ? (CATEGORY_FIELDS[form.category] ?? DEFAULT_CONFIG) : DEFAULT_CONFIG
   const quartiersForCity = form.city ? (QUARTIERS[form.city] ?? []) : []
 
-  // Charger les villes depuis Supabase
   useEffect(() => {
     async function loadVilles() {
       const { data } = await supabase
@@ -170,7 +210,6 @@ export default function PublierPage() {
     loadVilles()
   }, [])
 
-  // Charger les communes quand une ville est sélectionnée
   useEffect(() => {
     if (!selectedVilleId) { setCommunes([]); setSousQuartiers([]); return }
     async function loadCommunes() {
@@ -187,7 +226,6 @@ export default function PublierPage() {
     loadCommunes()
   }, [selectedVilleId])
 
-  // Charger les sous-quartiers quand une commune est sélectionnée
   useEffect(() => {
     if (!selectedCommuneId) { setSousQuartiers([]); return }
     async function loadSousQuartiers() {
@@ -276,7 +314,6 @@ export default function PublierPage() {
     if (!form.city) { toast.error('Choisissez une ville'); return }
     setLoading(true)
 
-    // Timeout global de 60 secondes sur toute la soumission
     const globalTimeout = setTimeout(() => {
       setLoading(false)
       toast.error('Délai dépassé. Vérifiez votre connexion et réessayez.')
@@ -306,7 +343,6 @@ export default function PublierPage() {
             const bucket = m.type === 'image' ? 'ad-photos' : 'ad-videos'
             const path = `${user.id}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
 
-            // Timeout par fichier : 15 secondes
             const uploadPromise = supabase.storage.from(bucket).upload(path, m.file, {
               cacheControl: '3600',
               upsert: false,
@@ -333,7 +369,7 @@ export default function PublierPage() {
         if (uploadFailed && uploadedImages.length === 0) {
           toast.error("Photos non uploadées. L'annonce sera publiée sans photos.", { duration: 4000 })
         } else if (uploadFailed) {
-          toast.error('Certaines photos n\'ont pas pu être uploadées.', { duration: 3000 })
+          toast.error("Certaines photos n'ont pas pu être uploadées.", { duration: 3000 })
         }
       }
 
@@ -363,7 +399,6 @@ export default function PublierPage() {
       }
 
       clearTimeout(globalTimeout)
-      // ✅ Effacer le brouillon proprement après publication
       localStorage.removeItem(STORAGE_KEY)
       setHasDraft(false)
       setLastSaved(null)
@@ -375,7 +410,6 @@ export default function PublierPage() {
       console.error('Erreur soumission:', err)
       toast.error('Une erreur est survenue. Réessayez.')
       clearTimeout(globalTimeout)
-      // ✅ Effacer le brouillon après publication réussie
       localStorage.removeItem(STORAGE_KEY)
       setHasDraft(false)
       setLastSaved(null)
@@ -518,17 +552,17 @@ export default function PublierPage() {
                     className="w-full border border-gray-100 bg-gray-50 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-orange-400 focus:bg-white transition font-medium" />
                   <textarea name="description" value={form.description} onChange={handleChange} rows={4}
                     placeholder={
-                      form.category === 'auto' ? "Décrivez la voiture : options, historique d'entretien, raison de vente..." :
-                        form.category === 'immobilier' ? 'Décrivez le bien : équipements, voisinage, accès, charges...' :
-                          form.category === 'hightech' ? 'Décrivez l\'état, les accessoires inclus, raison de vente...' :
-                            form.category === 'services' ? 'Décrivez votre service, vos compétences, vos références...' :
+                      form.category === 'cat_auto' ? "Décrivez la voiture : options, historique d'entretien, raison de vente..." :
+                        form.category === 'cat_immo' ? 'Décrivez le bien : équipements, voisinage, accès, charges...' :
+                          form.category === 'cat_tech' ? "Décrivez l'état, les accessoires inclus, raison de vente..." :
+                            form.category === 'cat_serv' ? 'Décrivez votre service, vos compétences, vos références...' :
                               'Décrivez votre article en détail...'
                     }
                     className="w-full border border-gray-100 bg-gray-50 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-orange-400 focus:bg-white transition resize-none" />
                   <div className="grid grid-cols-2 gap-3">
                     <div className="relative">
                       <input name="price" value={form.price} onChange={handleChange} required type="number" min="0"
-                        placeholder={form.category === 'location' ? 'Prix / jour *' : form.category === 'services' ? 'Tarif *' : 'Prix *'}
+                        placeholder={form.category === 'cat_location' ? 'Prix / jour *' : form.category === 'cat_serv' ? 'Tarif *' : 'Prix *'}
                         className="w-full border border-gray-100 bg-gray-50 rounded-xl pl-4 pr-16 py-3 text-sm focus:outline-none focus:border-orange-400 focus:bg-white transition font-bold" />
                       <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400 font-semibold">FCFA</span>
                     </div>
@@ -574,7 +608,6 @@ export default function PublierPage() {
                     <option value="">Ville *</option>
                     {CITIES.map(c => { const name = c.replace(/^[^\s]+\s/, ''); return <option key={name} value={name}>{name}</option> })}
                   </select>
-
                   {quartiersForCity.length > 0 ? (
                     <select name="quartier" value={form.quartier} onChange={handleChange}
                       className="border border-gray-100 bg-gray-50 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-orange-400 focus:bg-white transition">
@@ -613,7 +646,7 @@ export default function PublierPage() {
               </div>
             </div>
 
-            {/* Colonne droite sticky — desktop uniquement */}
+            {/* Colonne droite sticky */}
             <div className="hidden lg:block">
               <div className="sticky top-4 space-y-4">
                 <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
@@ -637,13 +670,13 @@ export default function PublierPage() {
 
                 <div className="bg-orange-50 border border-orange-100 rounded-2xl p-4">
                   <p className="text-xs font-bold text-orange-600 mb-2">
-                    💡 {form.category === 'auto' ? 'Conseils vente voiture' : form.category === 'immobilier' ? 'Conseils immobilier' : 'Conseils pour vendre vite'}
+                    💡 {form.category === 'cat_auto' ? 'Conseils vente voiture' : form.category === 'cat_immo' ? 'Conseils immobilier' : 'Conseils pour vendre vite'}
                   </p>
                   <ul className="text-xs text-orange-600/80 space-y-1.5">
-                    {form.category === 'auto' ? <>
+                    {form.category === 'cat_auto' ? <>
                       <li className="flex gap-1.5"><ChevronRight size={10} className="mt-0.5 flex-shrink-0" />Photographiez l'extérieur, l'intérieur et le moteur</li>
                       <li className="flex gap-1.5"><ChevronRight size={10} className="mt-0.5 flex-shrink-0" />Mentionnez si la vignette est à jour</li>
-                    </> : form.category === 'immobilier' ? <>
+                    </> : form.category === 'cat_immo' ? <>
                       <li className="flex gap-1.5"><ChevronRight size={10} className="mt-0.5 flex-shrink-0" />Montrez toutes les pièces en photos</li>
                       <li className="flex gap-1.5"><ChevronRight size={10} className="mt-0.5 flex-shrink-0" />Précisez l'accès eau et électricité</li>
                     </> : <>
@@ -668,7 +701,7 @@ export default function PublierPage() {
           </div>
         </form>
 
-        {/* ── Barre flottante mobile ── */}
+        {/* Barre flottante mobile */}
         <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-100 shadow-2xl px-4 py-3">
           <div className="flex items-center gap-3 max-w-lg mx-auto">
             <div className="flex-1 min-w-0">
@@ -682,10 +715,7 @@ export default function PublierPage() {
                 {form.city || '—'}{form.quartier ? `, ${form.quartier}` : ''}
               </p>
             </div>
-            <button
-              type="submit"
-              form="publier-form"
-              disabled={loading}
+            <button type="submit" form="publier-form" disabled={loading}
               className="flex-shrink-0 px-5 py-3 bg-orange-500 hover:bg-orange-600 text-white font-bold rounded-xl transition flex items-center gap-2 disabled:opacity-60 shadow-lg shadow-orange-200">
               {loading ? <Loader2 size={16} className="animate-spin" /> : <span>🚀</span>}
               <span>Publier</span>
