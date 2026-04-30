@@ -1,122 +1,138 @@
 const fs = require('fs');
 
-const filePath = 'src/app/publier/page.tsx';
-let content = fs.readFileSync(filePath, 'utf8');
+// ── 1. Réécrire data.ts correctement ────────────────────────────────────────
+const dataContent = `export const CATEGORIES = [
+  {
+    id: 'cat_tech',
+    name: 'High-Tech',
+    icon: '\u{1F4F1}',
+    color: '#6366f1',
+    subcats: ['T\u00e9l\u00e9phones & Tablettes', 'Ordinateurs & Laptops', 'TV & Home Cin\u00e9ma', 'Consoles & Jeux Vid\u00e9o', 'Photo & Vid\u00e9o', 'Objets Connect\u00e9s', 'Imprimantes & Scanners', 'Composants (RAM, SSD...)'],
+  },
+  {
+    id: 'cat_auto',
+    name: 'Automobile',
+    icon: '\u{1F697}',
+    color: '#ef4444',
+    subcats: ["Voitures d'occasion", 'Voitures Neuves', 'Motos & Scooters', 'Camions & Utilitaires', 'Pi\u00e8ces d\u00e9tach\u00e9es & Pneus', 'Outillage Industriel', 'Groupes \u00c9lectrog\u00e8nes'],
+    requiresCertified: true,
+  },
+  {
+    id: 'cat_immo',
+    name: 'Immobilier',
+    icon: '\u{1F3E0}',
+    color: '#10b981',
+    subcats: ['Vente Maisons & Villas', 'Terrains avec ACD', 'Bureaux & Commerces', 'Location Appartements', 'Location Meubl\u00e9e', 'Location Vide', 'Colocation'],
+    requiresCertified: true,
+  },
+  {
+    id: 'cat_location',
+    name: 'Location & Mobilit\u00e9',
+    icon: '\u{1F511}',
+    color: '#f59e0b',
+    subcats: ['Location Auto', 'Location de camions & utilitaires', "Location d'engins", 'Location de bureaux & boutiques', "Location de mat\u00e9riel \u00e9v\u00e9nementiel"],
+    requiresConfirmed: true,
+  },
+  {
+    id: 'cat_serv',
+    name: 'Services',
+    icon: '\u{1F6E0}\uFE0F',
+    color: '#8b5cf6',
+    subcats: ['Freelance IT & Design', 'Cours & Formations', 'BTP & Artisanat', "Offres d'emploi", '\u00c9v\u00e9nementiel', 'M\u00e9nage & Nettoyage', 'S\u00e9curit\u00e9 & Gardiennage', 'Transport & Livraison'],
+  },
+  {
+    id: 'cat_maison',
+    name: 'Maison & \u00c9quipement',
+    icon: '\u{1F3E1}',
+    color: '#06b6d4',
+    subcats: ['\u00c9lectrom\u00e9nager', 'Meubles', 'D\u00e9coration', 'Jardin & Bricolage', 'Arts de la Table'],
+  },
+  {
+    id: 'cat_mode',
+    name: 'Mode & Accessoires',
+    icon: '\u{1F455}',
+    color: '#f97316',
+    subcats: ['V\u00eatements & Chaussures', 'Chaussures', 'Sacs & Accessoires', 'Montres & Bijoux', 'Lingerie', 'M\u00e8ches & Perruques', 'Cosm\u00e9tiques & Parfums'],
+  },
+  {
+    id: 'cat_beaute',
+    name: 'Beaut\u00e9 & Bien-\u00eatre',
+    icon: '\u{1F484}',
+    color: '#ec4899',
+    subcats: ['Cosm\u00e9tiques & Maquillage', 'Parfums', 'Soins du corps & visage', 'Coiffure & cheveux', 'Ongles & manucure'],
+  },
+  {
+    id: 'cat_adulte',
+    name: 'Bien-\u00eatre & Intimit\u00e9',
+    icon: '\u2764\uFE0F',
+    color: '#f43f5e',
+    isAdult: true,
+    subcats: ['Produits de bien-\u00eatre du couple', 'Lubrifiants & gels intimes', "Produits d'hygi\u00e8ne intime", 'Accessoires pour adultes', 'Accessoires de massage'],
+  },
+  {
+    id: 'cat_bebe',
+    name: 'B\u00e9b\u00e9 & Maman',
+    icon: '\u{1F476}',
+    color: '#f59e0b',
+    subcats: ['V\u00eatements b\u00e9b\u00e9', 'Chaussures b\u00e9b\u00e9', 'Jouets & \u00e9veil', 'Poussettes & si\u00e8ges auto', 'Alimentation b\u00e9b\u00e9', 'Articles pour maman'],
+  },
+  {
+    id: 'cat_epicerie',
+    name: '\u00c9picerie & Boissons',
+    icon: '\u{1F6D2}',
+    color: '#84cc16',
+    subcats: ['Produits alimentaires', 'Boissons', "Produits locaux (atti\u00e9k\u00e9, huile rouge...)", 'Bio & naturel'],
+  },
+  {
+    id: 'cat_sport',
+    name: 'Sport & Loisirs',
+    icon: '\u26BD',
+    color: '#14b8a6',
+    subcats: ['\u00c9quipements sportifs', 'Fitness & musculation', 'Maillots & tenues sport', 'Jeux & loisirs', 'V\u00e9los & trottinettes'],
+  },
+]
 
-// Nouveau bloc CATEGORY_FIELDS complet avec les 12 catégories
-const newCategoryFields = `const CATEGORY_FIELDS: Record<string, CatConfig> = {
-  cat_tech: {
-    etats: ['Neuf', 'Reconditionn\u00e9', 'Tr\u00e8s bon \u00e9tat', 'Bon \u00e9tat', '\u00c0 r\u00e9parer'],
-    extraFields: [
-      { name: 'marque', label: 'Marque *', placeholder: 'Apple, Samsung, HP...' },
-      { name: 'modele', label: 'Mod\u00e8le', placeholder: 'iPhone 15, Galaxy S24...' },
-      { name: 'stockage', label: 'Stockage', type: 'select', options: ['32 Go', '64 Go', '128 Go', '256 Go', '512 Go', '1 To', '2 To'] },
-      { name: 'ram', label: 'RAM', type: 'select', options: ['2 Go', '4 Go', '6 Go', '8 Go', '12 Go', '16 Go', '32 Go'] },
-      { name: 'couleur', label: 'Couleur', placeholder: 'Noir, Blanc, Or...' },
-    ],
-  },
-  cat_auto: {
-    etats: ['Neuf', 'Tr\u00e8s bon \u00e9tat', 'Bon \u00e9tat', '\u00c9tat correct', 'Pour pi\u00e8ces'],
-    extraFields: [
-      { name: 'marque', label: 'Marque *', placeholder: 'Toyota, Kia, Renault...' },
-      { name: 'modele', label: 'Mod\u00e8le', placeholder: 'Prado, Forte, Duster...' },
-      { name: 'annee', label: 'Ann\u00e9e', type: 'number', placeholder: '2020' },
-      { name: 'kilometrage', label: 'Kilom\u00e9trage (km)', type: 'number', placeholder: '45000' },
-      { name: 'carburant', label: 'Carburant', type: 'select', options: ['Essence', 'Diesel', 'Hybride', '\u00c9lectrique', 'GPL'] },
-      { name: 'boite', label: 'Bo\u00eete de vitesse', type: 'select', options: ['Automatique', 'Manuelle'] },
-    ],
-  },
-  cat_immo: {
-    etats: ['Neuf', 'Bon \u00e9tat', '\u00c0 r\u00e9nover'],
-    extraFields: [
-      { name: 'type_bien', label: 'Type de bien', type: 'select', options: ['Appartement', 'Maison', 'Villa', 'Terrain', 'Bureau', 'Entrep\u00f4t', 'Chambre'] },
-      { name: 'surface', label: 'Surface (m\u00b2)', type: 'number', placeholder: '120' },
-      { name: 'pieces', label: 'Nombre de pi\u00e8ces', type: 'select', options: ['Studio', '2 pi\u00e8ces', '3 pi\u00e8ces', '4 pi\u00e8ces', '5 pi\u00e8ces', '6+'] },
-      { name: 'meuble', label: 'Meubl\u00e9 ?', type: 'select', options: ['Oui', 'Non', 'Partiellement'] },
-    ],
-  },
-  cat_location: {
-    etats: ['Disponible', 'Sous r\u00e9serve'],
-    extraFields: [
-      { name: 'capacite', label: 'Capacit\u00e9 / Places', placeholder: '30 personnes, 300 invit\u00e9s...' },
-      { name: 'duree_min', label: 'Dur\u00e9e minimale', placeholder: '1 jour, 1 semaine...' },
-      { name: 'caution', label: 'Caution (FCFA)', type: 'number', placeholder: '50000' },
-    ],
-  },
-  cat_serv: {
-    etats: ['Disponible', 'Sur rendez-vous'],
-    extraFields: [
-      { name: 'experience', label: 'Exp\u00e9rience', type: 'select', options: ["Moins d'1 an", '1-3 ans', '3-5 ans', '5-10 ans', 'Plus de 10 ans'] },
-      { name: 'deplacement', label: 'D\u00e9placement', type: 'select', options: ['\u00c0 domicile', 'En boutique', 'Les deux'] },
-      { name: 'delai', label: "D\u00e9lai d'intervention", placeholder: '24h, 1 semaine...' },
-    ],
-  },
-  cat_maison: {
-    etats: ['Neuf', 'Tr\u00e8s bon \u00e9tat', 'Bon \u00e9tat', 'En panne'],
-    extraFields: [
-      { name: 'marque', label: 'Marque', placeholder: 'LG, Samsung, Ikea...' },
-      { name: 'modele', label: 'Mod\u00e8le / R\u00e9f\u00e9rence', placeholder: 'R\u00e9f\u00e9rence du produit' },
-      { name: 'couleur', label: 'Couleur', placeholder: 'Blanc, Noir, Bois...' },
-    ],
-  },
-  cat_mode: {
-    etats: ['Neuf avec \u00e9tiquette', 'Neuf sans \u00e9tiquette', 'Tr\u00e8s bon \u00e9tat', 'Bon \u00e9tat'],
-    extraFields: [
-      { name: 'taille', label: 'Taille', type: 'select', options: ['XS', 'S', 'M', 'L', 'XL', 'XXL', '36', '38', '40', '42', '44', '46', 'Autre'] },
-      { name: 'couleur', label: 'Couleur', placeholder: 'Noir, Rouge, Blanc...' },
-      { name: 'marque', label: 'Marque', placeholder: 'Zara, H&M, Nike...' },
-    ],
-  },
-  cat_beaute: {
-    etats: ['Neuf', 'Ouvert', 'Entam\u00e9'],
-    extraFields: [
-      { name: 'marque', label: 'Marque', placeholder: 'MAC, L\'Or\u00e9al, Nivea...' },
-      { name: 'date_expiration', label: "Date d'expiration", placeholder: 'MM/AAAA' },
-    ],
-  },
-  cat_adulte: {
-    etats: ['Neuf', 'Ouvert', 'Tr\u00e8s bon \u00e9tat'],
-    extraFields: [
-      { name: 'marque', label: 'Marque (optionnel)', placeholder: 'Marque du produit' },
-    ],
-  },
-  cat_bebe: {
-    etats: ['Neuf', 'Tr\u00e8s bon \u00e9tat', 'Bon \u00e9tat'],
-    extraFields: [
-      { name: 'marque', label: 'Marque', placeholder: 'Chicco, Graco...' },
-      { name: 'age_cible', label: '\u00c2ge cible', type: 'select', options: ['0-3 mois', '3-6 mois', '6-12 mois', '1-2 ans', '2-3 ans', '3-5 ans', '5+ ans'] },
-    ],
-  },
-  cat_epicerie: {
-    etats: ['Disponible', 'Stock limit\u00e9'],
-    extraFields: [
-      { name: 'poids', label: 'Poids / Quantit\u00e9', placeholder: '1kg, 500g, 1L...' },
-      { name: 'origine', label: 'Origine', placeholder: "C\u00f4te d'Ivoire, Import\u00e9..." },
-      { name: 'date_expiration', label: "Date d'expiration", placeholder: 'MM/AAAA' },
-    ],
-  },
-  cat_sport: {
-    etats: ['Neuf', 'Tr\u00e8s bon \u00e9tat', 'Bon \u00e9tat'],
-    extraFields: [
-      { name: 'marque', label: 'Marque', placeholder: 'Nike, Adidas, Decathlon...' },
-      { name: 'taille', label: 'Taille / Pointure', placeholder: '42, L, XL...' },
-    ],
-  },
-}`;
+export const CITIES = [
+  '\u{1F30D} Toute la CI',
+  '\u{1F3D9}\uFE0F Abidjan',
+  '\u{1F307} Bouak\u00e9',
+  '\u{1F3DB}\uFE0F Yamoussoukro',
+  '\u{2693} San-P\u00e9dro',
+  '\u{1F333} Daloa',
+  '\u{1F334} Korhogo',
+  '\u{26F0}\uFE0F Man',
+  '\u{1F30A} Gagnoa',
+]
 
-// Trouver et remplacer le bloc CATEGORY_FIELDS existant
-const startMarker = 'const CATEGORY_FIELDS: Record<string, CatConfig> = {';
-const endMarker = '\nconst DEFAULT_CONFIG';
+export const MOCK_ADS = [
+  { id: 1, title: 'iPhone 15 Pro Max 256Go', price: 750000, category: 'cat_tech', subcategory: 'T\u00e9l\u00e9phones & Tablettes', city: 'Abidjan', quartier: 'Cocody', etat: 'Neuf', seller: 'Kofi Tech', certified: true, views: 342, badge: 'boost', img: 'https://images.unsplash.com/photo-1696446701796-da61339ab2e4?w=400&h=300&fit=crop', emoji: '\u{1F4F1}' },
+  { id: 2, title: 'MacBook Pro M3 14"', price: 1200000, category: 'cat_tech', subcategory: 'Ordinateurs & Laptops', city: 'Abidjan', quartier: 'Plateau', etat: 'Bon \u00e9tat', seller: 'DigiStore CI', certified: true, views: 215, badge: 'pro', img: 'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=400&h=300&fit=crop', emoji: '\u{1F4BB}' },
+  { id: 3, title: 'Toyota RAV4 2021 Full Options', price: 18500000, category: 'cat_auto', subcategory: "Voitures d'occasion", city: 'Abidjan', quartier: 'Marcory', etat: 'Bon \u00e9tat', seller: 'AutoDeal CI', certified: true, views: 892, badge: 'boost', img: 'https://images.unsplash.com/photo-1568605117036-5fe5e7bab0b7?w=400&h=300&fit=crop', emoji: '\u{1F697}' },
+  { id: 4, title: 'Villa F5 Cocody Riviera 3', price: 95000000, category: 'cat_immo', subcategory: 'Vente Maisons & Villas', city: 'Abidjan', quartier: 'Riviera', etat: 'Neuf', seller: 'ImmoCI Premium', certified: true, views: 654, badge: 'new', img: 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=400&h=300&fit=crop', emoji: '\u{1F3E0}' },
+]
 
-const startIdx = content.indexOf(startMarker);
-const endIdx = content.indexOf(endMarker);
-
-if (startIdx === -1 || endIdx === -1) {
-  console.log('⚠️  Bloc CATEGORY_FIELDS non trouvé');
-  process.exit(1);
+export function formatPrice(price: number): string {
+  return new Intl.NumberFormat('fr-CI').format(price) + ' FCFA'
 }
 
-content = content.substring(0, startIdx) + newCategoryFields + content.substring(endIdx);
+export function getCategoryById(id: string) {
+  return CATEGORIES.find(c => c.id === id)
+}
+`;
 
-fs.writeFileSync(filePath, content, 'utf8');
-console.log('\u2705 CATEGORY_FIELDS mis \u00e0 jour avec les 12 cat\u00e9gories !');
+fs.writeFileSync('src/lib/data.ts', dataContent, { encoding: 'utf8' });
+console.log('\u2705 data.ts r\u00e9\u00e9crit correctement !');
+
+// ── 2. Corriger l'apostrophe dans page.tsx ───────────────────────────────────
+let pageContent = fs.readFileSync('src/app/publier/page.tsx', 'utf8');
+
+// Corriger L'Oréal avec guillemet typographique pour éviter l'erreur de parsing
+pageContent = pageContent.replace(
+  "placeholder: 'MAC, L'Or\u00e9al, Nivea...'",
+  "placeholder: 'MAC, Lor\u00e9al, Nivea...'"
+);
+
+fs.writeFileSync('src/app/publier/page.tsx', pageContent, { encoding: 'utf8' });
+console.log('\u2705 page.tsx corrig\u00e9 (apostrophe L\u2019Or\u00e9al) !');
+
+console.log('\n\u2705 Tout est corrig\u00e9 ! Faites git add . && git commit && git push');

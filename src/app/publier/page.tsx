@@ -95,7 +95,7 @@ const CATEGORY_FIELDS: Record<string, CatConfig> = {
   cat_beaute: {
     etats: ['Neuf', 'Ouvert', 'Entamé'],
     extraFields: [
-      { name: 'marque', label: 'Marque', placeholder: 'MAC, L'Oréal, Nivea...' },
+      { name: 'marque', label: 'Marque', placeholder: 'MAC, Loréal, Nivea...' },
       { name: 'date_expiration', label: "Date d'expiration", placeholder: 'MM/AAAA' },
     ],
   },
