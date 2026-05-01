@@ -2,10 +2,13 @@
 
 import { AgeGate } from '@/components/AgeGate'
 import { useI18n } from '@/contexts/i18nContext'
+import { CATEGORIES } from '@/lib/data'
 import { ArrowRight, ChevronRight, Sparkles, TrendingUp } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
+
+// ── Types ────────────────────────────────────────────────────────────────────
 
 export interface SubCat {
   id: string
@@ -26,227 +29,208 @@ export interface MegaCat {
   isAdult?: boolean
 }
 
+// ── Age gate ─────────────────────────────────────────────────────────────────
+
 const STORAGE_KEY = 'abidjandeals_age_verified'
 function isAgeVerified(): boolean {
   try { return sessionStorage.getItem(STORAGE_KEY) === 'true' } catch { return false }
 }
 
-export const MEGA_CATS: MegaCat[] = [
-  {
-    id: 'hightech', labelKey: 'cat.hightech', icon: '📱',
-    color: '#6366f1', gradient: 'linear-gradient(135deg,#6366f1,#8b5cf6)',
-    slug: 'hightech',
+// ── Config visuelle par catégorie ────────────────────────────────────────────
+// Les données métier viennent de CATEGORIES (data.ts).
+// Ce bloc centralise uniquement ce qui ne peut pas en venir :
+// gradient, image Unsplash, clé de description et badges par sous-cat.
+
+const CAT_VISUAL: Record<string, {
+  gradient: string
+  imageUrl: string
+  descKey: string
+  subBadges?: Record<string, 'TOP' | 'NEW' | 'PROMO' | 'URGENT'>
+}> = {
+  cat_tech: {
+    gradient: 'linear-gradient(135deg,#6366f1,#8b5cf6)',
     imageUrl: 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=400&q=80&auto=format&fit=crop',
     descKey: 'cat.hightech_desc',
-    subs: [
-      { id: 'smartphones', nameKey: 'sub.phones', badge: 'TOP' },
-      { id: 'ordinateurs', nameKey: 'sub.computers' },
-      { id: 'tv-son', nameKey: 'sub.tv', badge: 'NEW' },
-      { id: 'consoles-jeux', nameKey: 'sub.gaming' },
-      { id: 'photo-video', nameKey: 'sub.photo' },
-      { id: 'objets-connectes', nameKey: 'sub.iot' },
-    ],
+    subBadges: { 'Téléphones & Accessoires': 'TOP', 'TV & Audio': 'NEW' },
   },
-  {
-    id: 'auto', labelKey: 'cat.auto', icon: '🚗',
-    color: '#ef4444', gradient: 'linear-gradient(135deg,#ef4444,#f97316)',
-    slug: 'auto',
+  cat_auto: {
+    gradient: 'linear-gradient(135deg,#ef4444,#f97316)',
     imageUrl: 'https://images.unsplash.com/photo-1494976388531-d1058494cdd8?w=400&q=80&auto=format&fit=crop',
     descKey: 'cat.auto_desc',
-    subs: [
-      { id: 'voitures-occasion', nameKey: 'sub.cars', badge: 'TOP' },
-      { id: 'camions-utilitaires', nameKey: 'sub.trucks' },
-      { id: 'pieces-pneus', nameKey: 'sub.parts', badge: 'PROMO' },
-      { id: 'motos-scooters', nameKey: 'sub.motos' },
-      { id: 'engins-chantier', nameKey: 'sub.boats' },
-      { id: 'outillage-industriel', nameKey: 'sub.industry' },
-    ],
+    subBadges: { 'Motos': 'PROMO' },
   },
-  {
-    id: 'immobilier', labelKey: 'cat.realestate', icon: '🏠',
-    color: '#10b981', gradient: 'linear-gradient(135deg,#10b981,#059669)',
-    slug: 'immobilier',
+  cat_immo: {
+    gradient: 'linear-gradient(135deg,#10b981,#059669)',
     imageUrl: 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=400&q=80&auto=format&fit=crop',
     descKey: 'cat.realestate_desc',
-    subs: [
-      { id: 'vente-appartement', nameKey: 'sub.apartments' },
-      { id: 'vente-maison-villa', nameKey: 'sub.houses', badge: 'TOP' },
-      { id: 'terrains', nameKey: 'sub.land' },
-      { id: 'bureaux-boutiques', nameKey: 'sub.offices' },
-      { id: 'location-meublee', nameKey: 'sub.rentals' },
-    ],
+    subBadges: { 'Maisons': 'TOP' },
   },
-  {
-    id: 'location', labelKey: 'cat.rental', icon: '🔑',
-    color: '#f59e0b', gradient: 'linear-gradient(135deg,#f59e0b,#f97316)',
-    slug: 'location',
-    imageUrl: 'https://images.unsplash.com/photo-1449965408869-eaa3f722e40d?w=400&q=80&auto=format&fit=crop',
-    descKey: 'cat.rental_desc',
-    subs: [
-      { id: 'location-auto', nameKey: 'sub.car_rental' },
-      { id: 'camions-utilitaires', nameKey: 'sub.bus_rental' },
-      { id: 'residences-meublees', nameKey: 'sub.halls', badge: 'PROMO' },
-      { id: 'location-vide', nameKey: 'sub.tents' },
-      { id: 'colocation', nameKey: 'sub.sound' },
-      { id: 'bureaux-boutiques', nameKey: 'sub.event_eq' },
-    ],
-  },
-  {
-    id: 'services', labelKey: 'cat.services', icon: '🔧',
-    color: '#8b5cf6', gradient: 'linear-gradient(135deg,#8b5cf6,#6366f1)',
-    slug: 'services',
+  cat_serv: {
+    gradient: 'linear-gradient(135deg,#8b5cf6,#6366f1)',
     imageUrl: 'https://images.unsplash.com/photo-1521791136064-7986c2920216?w=400&q=80&auto=format&fit=crop',
     descKey: 'cat.services_desc',
-    subs: [
-      { id: 'freelance-it', nameKey: 'sub.it', badge: 'TOP' },
-      { id: 'cosmetiques', nameKey: 'sub.beauty' },
-      { id: 'cours-formation', nameKey: 'sub.training', badge: 'NEW' },
-      { id: 'batiment', nameKey: 'sub.btp' },
-      { id: 'offres-emploi', nameKey: 'sub.delivery' },
-      { id: 'equipements-sport', nameKey: 'sub.health' },
-    ],
+    subBadges: { 'Freelance IT & Design': 'TOP', 'Cours & Formations': 'NEW' },
   },
-  {
-    id: 'electromenager', labelKey: 'cat.appliances', icon: '📺',
-    color: '#06b6d4', gradient: 'linear-gradient(135deg,#06b6d4,#0284c7)',
-    slug: 'electromenager',
+  cat_maison: {
+    gradient: 'linear-gradient(135deg,#06b6d4,#0284c7)',
     imageUrl: 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=400&q=80&auto=format&fit=crop',
     descKey: 'cat.appliances_desc',
-    subs: [
-      { id: 'electromenager', nameKey: 'sub.fridge' },
-      { id: 'decoration', nameKey: 'sub.ac', badge: 'TOP' },
-      { id: 'meubles', nameKey: 'sub.washer' },
-      { id: 'jardin-bricolage', nameKey: 'sub.stove' },
-    ],
   },
-  {
-    id: 'bebe', labelKey: 'cat.baby', icon: '👶',
-    color: '#ec4899', gradient: 'linear-gradient(135deg,#ec4899,#db2777)',
-    slug: 'bebe',
-    imageUrl: 'https://images.unsplash.com/photo-1515488042361-ee00e0ddd4e4?w=400&q=80&auto=format&fit=crop',
-    descKey: 'cat.baby_desc',
-    subs: [
-      { id: 'vetements', nameKey: 'sub.baby_clothes' },
-      { id: 'chaussures', nameKey: 'sub.strollers' },
-      { id: 'jouets', nameKey: 'sub.toys' },
-      { id: 'inclassables', nameKey: 'sub.baby_food' },
-    ],
+  cat_mode: {
+    gradient: 'linear-gradient(135deg,#f97316,#ef4444)',
+    imageUrl: 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=400&q=80&auto=format&fit=crop',
+    descKey: 'cat.mode_desc',
+    subBadges: { 'Vêtements femme': 'NEW' },
   },
-  {
-    id: 'pharma', labelKey: 'cat.pharma', icon: '💊',
-    color: '#14b8a6', gradient: 'linear-gradient(135deg,#14b8a6,#0d9488)',
-    slug: 'pharma',
+  cat_beaute: {
+    gradient: 'linear-gradient(135deg,#ec4899,#db2777)',
     imageUrl: 'https://images.unsplash.com/photo-1596755389378-c31d21fd1273?w=400&q=80&auto=format&fit=crop',
     descKey: 'cat.pharma_desc',
-    subs: [
-      { id: 'cosmetiques', nameKey: 'sub.face_care' },
-      { id: 'sacs-accessoires', nameKey: 'sub.body_care' },
-      { id: 'montres', nameKey: 'sub.supplements' },
-      { id: 'collection', nameKey: 'sub.hygiene' },
-    ],
   },
-  {
-    id: 'epicerie', labelKey: 'cat.grocery', icon: '🛒',
-    color: '#f97316', gradient: 'linear-gradient(135deg,#f97316,#ef4444)',
-    slug: 'epicerie',
-    imageUrl: 'https://images.unsplash.com/photo-1542838132-92c53300491e?w=400&q=80&auto=format&fit=crop',
-    descKey: 'cat.grocery_desc',
-    subs: [
-      { id: 'inclassables', nameKey: 'sub.dry_food' },
-      { id: 'collection', nameKey: 'sub.drinks' },
-      { id: 'voyages', nameKey: 'sub.local_ci', badge: 'NEW' },
-    ],
-  },
-  {
-    id: 'lingerie', labelKey: 'cat.lingerie', icon: '👙',
-    color: '#f43f5e', gradient: 'linear-gradient(135deg,#f43f5e,#e11d48)',
-    slug: 'lingerie',
+  cat_adulte: {
+    gradient: 'linear-gradient(135deg,#f43f5e,#e11d48)',
     imageUrl: 'https://images.unsplash.com/photo-1578632292335-df3abbb0d586?w=400&q=80&auto=format&fit=crop',
     descKey: 'cat.lingerie_desc',
-    isAdult: true,
-    subs: [
-      { id: 'lingerie-sous-vetements', nameKey: 'sub.lingerie', badge: 'NEW' },
-      { id: 'maillots-de-bain', nameKey: 'sub.swimwear' },
-      { id: 'cosmetiques-bien-etre', nameKey: 'sub.wellness' },
-      { id: 'accessoires-mode', nameKey: 'sub.accessories' },
-    ],
+    subBadges: { 'Bien-être du couple': 'NEW' },
   },
-]
+  cat_bebe: {
+    gradient: 'linear-gradient(135deg,#f59e0b,#f97316)',
+    imageUrl: 'https://images.unsplash.com/photo-1515488042361-ee00e0ddd4e4?w=400&q=80&auto=format&fit=crop',
+    descKey: 'cat.baby_desc',
+  },
+  cat_epicerie: {
+    gradient: 'linear-gradient(135deg,#84cc16,#65a30d)',
+    imageUrl: 'https://images.unsplash.com/photo-1542838132-92c53300491e?w=400&q=80&auto=format&fit=crop',
+    descKey: 'cat.grocery_desc',
+    subBadges: { 'Produits locaux (attiéké, huile rouge, soumbara...)': 'NEW' },
+  },
+  cat_sport: {
+    gradient: 'linear-gradient(135deg,#14b8a6,#0d9488)',
+    imageUrl: 'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=400&q=80&auto=format&fit=crop',
+    descKey: 'cat.sport_desc',
+    subBadges: { 'Fitness & Musculation': 'TOP' },
+  },
+}
+
+// ── Dérivation de MEGA_CATS depuis CATEGORIES ────────────────────────────────
+
+function slugify(str: string): string {
+  return str
+    .toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '')
+}
+
+function toSubCat(
+  name: string,
+  badges: Record<string, 'TOP' | 'NEW' | 'PROMO' | 'URGENT'> = {}
+): SubCat {
+  return { id: slugify(name), nameKey: name, badge: badges[name] }
+}
+
+export const MEGA_CATS: MegaCat[] = CATEGORIES.map(cat => {
+  const visual = CAT_VISUAL[cat.id] ?? {
+    gradient: `linear-gradient(135deg,${cat.color},${cat.color}cc)`,
+    imageUrl: '',
+    descKey: '',
+  }
+  return {
+    id: cat.id,
+    labelKey: cat.name,
+    icon: cat.icon,
+    color: cat.color,
+    gradient: visual.gradient,
+    slug: slugify(cat.name),
+    imageUrl: visual.imageUrl,
+    descKey: visual.descKey,
+    isAdult: (cat as any).isAdult,
+    subs: cat.subcats.map(s => toSubCat(s, visual.subBadges)),
+  }
+})
 
 // ── Labels ───────────────────────────────────────────────────────────────────
 
 const CAT_LABELS: Record<string, { en: string; fr: string }> = {
-  'cat.hightech': { en: 'High-Tech', fr: 'High-Tech' },
-  'cat.auto': { en: 'Auto & Industry', fr: 'Automobile & Industrie' },
-  'cat.realestate': { en: 'Real Estate', fr: 'Immobilier' },
-  'cat.rental': { en: 'Rental & Mobility', fr: 'Location & Mobilité' },
-  'cat.services': { en: 'Services & Other', fr: 'Services & Autres' },
-  'cat.appliances': { en: 'Appliances', fr: 'Électroménager' },
-  'cat.baby': { en: 'Baby & Mom', fr: 'Bébé & Mamans' },
-  'cat.pharma': { en: 'Parapharmacy', fr: 'Parapharmacie' },
-  'cat.grocery': { en: 'Grocery & Drinks', fr: 'Épicerie & Boissons' },
-  'cat.lingerie': { en: 'Lingerie & Accessories', fr: 'Lingerie & Accessoires' },
+  'High-Tech': { en: 'High-Tech', fr: 'High-Tech' },
+  'Automobile': { en: 'Auto & Vehicles', fr: 'Automobile' },
+  'Immobilier': { en: 'Real Estate', fr: 'Immobilier' },
+  'Services': { en: 'Services', fr: 'Services' },
+  'Maison & Équipement': { en: 'Home & Appliances', fr: 'Maison & Équipement' },
+  'Mode & Accessoires': { en: 'Fashion', fr: 'Mode & Accessoires' },
+  'Beauté & Bien-être': { en: 'Beauty & Wellness', fr: 'Beauté & Bien-être' },
+  'Bien-être & Intimité': { en: 'Intimacy & Wellness', fr: 'Bien-être & Intimité' },
+  'Bébé & Maman': { en: 'Baby & Mom', fr: 'Bébé & Maman' },
+  'Épicerie & Produits locaux': { en: 'Grocery & Local', fr: 'Épicerie & Produits locaux' },
+  'Sport & Loisirs': { en: 'Sport & Leisure', fr: 'Sport & Loisirs' },
+  // descriptions
   'cat.hightech_desc': { en: 'Smartphones, PCs, tablets & accessories', fr: 'Smartphones, PC, tablettes & accessoires' },
   'cat.auto_desc': { en: 'Cars, motorbikes, parts & equipment', fr: 'Voitures, motos, pièces & équipements' },
   'cat.realestate_desc': { en: 'Apartments, houses, land & offices', fr: 'Appartements, maisons, terrains & bureaux' },
-  'cat.rental_desc': { en: 'Car hire, halls & event equipment', fr: 'Location voitures, salles & matériel' },
   'cat.services_desc': { en: 'IT, beauty, training & construction', fr: 'Informatique, beauté, formation & BTP' },
-  'cat.appliances_desc': { en: 'Fridges, ACs, washing machines & more', fr: 'Frigos, climatiseurs, machines à laver & plus' },
-  'cat.baby_desc': { en: 'Clothes, toys, strollers & nutrition', fr: 'Vêtements, jouets, poussettes & alimentation' },
+  'cat.appliances_desc': { en: 'Fridges, ACs, washing machines & more', fr: 'Électroménager, meubles & décoration' },
+  'cat.mode_desc': { en: 'Clothes, shoes, bags & jewellery', fr: 'Vêtements, chaussures, sacs & bijoux' },
   'cat.pharma_desc': { en: 'Face care, body care & supplements', fr: 'Soins visage, corps & compléments' },
+  'cat.lingerie_desc': { en: 'Intimacy & wellness — 18+', fr: 'Bien-être & intimité — 18+' },
+  'cat.baby_desc': { en: 'Clothes, toys, strollers & nutrition', fr: 'Vêtements, jouets, poussettes & alimentation' },
   'cat.grocery_desc': { en: 'Food, drinks & local CI products', fr: 'Alimentation, boissons & produits locaux CI' },
-  'cat.lingerie_desc': { en: 'Lingerie, swimwear & wellness — 18+', fr: 'Lingerie, maillots & bien-être — 18+' },
+  'cat.sport_desc': { en: 'Equipment, fitness & leisure', fr: 'Équipements, fitness & loisirs' },
 }
 
 const SUB_LABELS: Record<string, { en: string; fr: string }> = {
-  'sub.phones': { en: 'Phones & Accessories', fr: 'Téléphones & Accessoires' },
-  'sub.computers': { en: 'Computers & Tablets', fr: 'Ordinateurs & Tablettes' },
-  'sub.tv': { en: 'TV & Audio', fr: 'TV & Audio' },
-  'sub.gaming': { en: 'Video Games', fr: 'Jeux vidéo' },
-  'sub.photo': { en: 'Photo & Video', fr: 'Photo & Vidéo' },
-  'sub.iot': { en: 'Connected Devices', fr: 'Objets connectés' },
-  'sub.cars': { en: 'Cars', fr: 'Voitures' },
-  'sub.trucks': { en: 'Trucks & Vans', fr: 'Camions & Utilitaires' },
-  'sub.parts': { en: 'Parts & Accessories', fr: 'Pièces & Accessoires' },
-  'sub.motos': { en: 'Motorbikes', fr: 'Motos' },
-  'sub.boats': { en: 'Construction Equipment', fr: 'Engins de Chantier' },
-  'sub.industry': { en: 'Industrial Equipment', fr: 'Équipement industriel' },
-  'sub.apartments': { en: 'Apartments for Sale', fr: 'Appartements à vendre' },
-  'sub.houses': { en: 'Houses for Sale', fr: 'Maisons à vendre' },
-  'sub.land': { en: 'Land & Plots', fr: 'Terrains' },
-  'sub.offices': { en: 'Offices & Shops', fr: 'Bureaux commerciaux' },
-  'sub.rentals': { en: 'Furnished Rentals', fr: 'Locations meublées' },
-  'sub.car_rental': { en: 'Car Hire', fr: 'Location voitures' },
-  'sub.bus_rental': { en: 'Trucks & Vans', fr: 'Camions & Utilitaires' },
-  'sub.halls': { en: 'Furnished Residences', fr: 'Résidences meublées' },
-  'sub.tents': { en: 'Unfurnished Rentals', fr: 'Location vide' },
-  'sub.sound': { en: 'Colocation', fr: 'Colocation' },
-  'sub.event_eq': { en: 'Offices & Shops', fr: 'Bureaux & Boutiques' },
-  'sub.it': { en: 'IT & Tech', fr: 'Freelance IT/Design' },
-  'sub.beauty': { en: 'Beauty & Wellness', fr: 'Cosmétiques & Parfums' },
-  'sub.training': { en: 'Courses & Training', fr: 'Cours & Formation' },
-  'sub.btp': { en: 'Construction & Trades', fr: 'Bâtiment & BTP' },
-  'sub.delivery': { en: 'Job Offers', fr: "Offres d'emploi" },
-  'sub.health': { en: 'Sport Equipment', fr: 'Équipements sport' },
-  'sub.fridge': { en: 'Appliances', fr: 'Électroménager' },
-  'sub.ac': { en: 'Decoration', fr: 'Décoration' },
-  'sub.washer': { en: 'Furniture', fr: 'Meubles' },
-  'sub.stove': { en: 'Garden & DIY', fr: 'Jardin & Bricolage' },
-  'sub.baby_clothes': { en: 'Clothing', fr: 'Vêtements' },
-  'sub.strollers': { en: 'Shoes', fr: 'Chaussures' },
-  'sub.toys': { en: 'Toys', fr: 'Jouets' },
-  'sub.baby_food': { en: 'Various', fr: 'Inclassables' },
-  'sub.face_care': { en: 'Cosmetics', fr: 'Cosmétiques & Parfums' },
-  'sub.body_care': { en: 'Bags & Accessories', fr: 'Sacs & Accessoires' },
-  'sub.supplements': { en: 'Watches', fr: 'Montres' },
-  'sub.hygiene': { en: 'Collectibles', fr: 'Objets de collection' },
-  'sub.dry_food': { en: 'Various', fr: 'Inclassables' },
-  'sub.drinks': { en: 'Collectibles', fr: 'Objets de collection' },
-  'sub.local_ci': { en: 'Travel', fr: 'Voyages' },
-  'sub.lingerie': { en: 'Lingerie & Underwear', fr: 'Lingerie & Sous-vêtements' },
-  'sub.swimwear': { en: 'Swimwear', fr: 'Maillots de bain' },
-  'sub.wellness': { en: 'Cosmetics & Wellness', fr: 'Cosmétiques & Bien-être' },
-  'sub.accessories': { en: 'Fashion Accessories', fr: 'Accessoires de mode' },
+  'Téléphones & Accessoires': { en: 'Phones & Accessories', fr: 'Téléphones & Accessoires' },
+  'Ordinateurs & Tablettes': { en: 'Computers & Tablets', fr: 'Ordinateurs & Tablettes' },
+  'TV & Audio': { en: 'TV & Audio', fr: 'TV & Audio' },
+  'Jeux Vidéo': { en: 'Video Games', fr: 'Jeux Vidéo' },
+  'Photo & Vidéo': { en: 'Photo & Video', fr: 'Photo & Vidéo' },
+  'Objets Connectés': { en: 'Connected Devices', fr: 'Objets Connectés' },
+  'Cameras': { en: 'Cameras', fr: 'Cameras' },
+  'Pièces & Périphériques': { en: 'Parts & Peripherals', fr: 'Pièces & Périphériques' },
+  "Voitures d'occasion": { en: 'Used Cars', fr: "Voitures d'occasion" },
+  'Motos': { en: 'Motorbikes', fr: 'Motos' },
+  'Camions & Utilitaires': { en: 'Trucks & Vans', fr: 'Camions & Utilitaires' },
+  'Location': { en: 'Rental', fr: 'Location' },
+  'Vente de terrains': { en: 'Land for Sale', fr: 'Vente de terrains' },
+  'Maisons': { en: 'Houses', fr: 'Maisons' },
+  'Appartements': { en: 'Apartments', fr: 'Appartements' },
+  'Bureaux': { en: 'Offices', fr: 'Bureaux' },
+  'Colocation': { en: 'Flatsharing', fr: 'Colocation' },
+  'Freelance IT & Design': { en: 'Freelance IT & Design', fr: 'Freelance IT & Design' },
+  'Cours & Formations': { en: 'Courses & Training', fr: 'Cours & Formations' },
+  'BTP & Services bâtiment': { en: 'Construction & Trades', fr: 'BTP & Services bâtiment' },
+  "Offres d'emploi": { en: 'Job Offers', fr: "Offres d'emploi" },
+  'Services divers': { en: 'Other Services', fr: 'Services divers' },
+  'Électroménager': { en: 'Appliances', fr: 'Électroménager' },
+  'Meubles': { en: 'Furniture', fr: 'Meubles' },
+  'Décoration': { en: 'Decoration', fr: 'Décoration' },
+  'Jardin & Bricolage': { en: 'Garden & DIY', fr: 'Jardin & Bricolage' },
+  'Autres équipements de maison': { en: 'Other Home Equipment', fr: 'Autres équipements de maison' },
+  'Vêtements femme': { en: "Women's Clothing", fr: 'Vêtements femme' },
+  'Vêtements homme': { en: "Men's Clothing", fr: 'Vêtements homme' },
+  'Lingerie & Sous-vêtements': { en: 'Lingerie & Underwear', fr: 'Lingerie & Sous-vêtements' },
+  'Chaussures': { en: 'Shoes', fr: 'Chaussures' },
+  'Sacs & Accessoires': { en: 'Bags & Accessories', fr: 'Sacs & Accessoires' },
+  'Montres & Bijoux': { en: 'Watches & Jewellery', fr: 'Montres & Bijoux' },
+  'Cosmétiques (crèmes, maquillage, soins visage...)': { en: 'Cosmetics', fr: 'Cosmétiques' },
+  'Parfums (eaux de parfum, déodorants parfumés...)': { en: 'Perfumes', fr: 'Parfums' },
+  'Soins du corps (laits, huiles, gommages...)': { en: 'Body Care', fr: 'Soins du corps' },
+  'Coiffure & Cheveux': { en: 'Hair Care', fr: 'Coiffure & Cheveux' },
+  'Bien-être du couple': { en: 'Couple Wellness', fr: 'Bien-être du couple' },
+  'Lubrifiants & Gels intimes': { en: 'Lubricants & Gels', fr: 'Lubrifiants & Gels intimes' },
+  'Hygiène intime': { en: 'Intimate Hygiene', fr: 'Hygiène intime' },
+  'Accessoires de massage': { en: 'Massage Accessories', fr: 'Accessoires de massage' },
+  'Accessoires pour adultes': { en: 'Adult Accessories', fr: 'Accessoires pour adultes' },
+  'Vêtements bébé': { en: 'Baby Clothes', fr: 'Vêtements bébé' },
+  'Chaussures bébé': { en: 'Baby Shoes', fr: 'Chaussures bébé' },
+  'Jouets & Éveil': { en: 'Toys & Development', fr: 'Jouets & Éveil' },
+  'Accessoires bébé': { en: 'Baby Accessories', fr: 'Accessoires bébé' },
+  'Articles pour maman': { en: 'Mom Essentials', fr: 'Articles pour maman' },
+  'Produits alimentaires': { en: 'Food Products', fr: 'Produits alimentaires' },
+  'Boissons (eau, jus, sodas...)': { en: 'Drinks', fr: 'Boissons' },
+  'Produits locaux (attiéké, huile rouge, soumbara...)': { en: 'Local CI Products', fr: 'Produits locaux' },
+  'Équipements sportifs': { en: 'Sports Equipment', fr: 'Équipements sportifs' },
+  'Fitness & Musculation': { en: 'Fitness & Gym', fr: 'Fitness & Musculation' },
+  'Jeux & Loisirs': { en: 'Games & Leisure', fr: 'Jeux & Loisirs' },
 }
 
 function getLabel(key: string, locale: string): string {
@@ -579,8 +563,6 @@ export function MegaMenu({ activeCategoryId, onCategoryClick }: MegaMenuProps) {
   const router = useRouter()
   const { locale } = useI18n()
 
-  // ✅ FIX : openId gère UNIQUEMENT l'état visuel du menu ouvert
-  // activeCategoryId (store) n'influe plus sur is-active dans la barre
   const [openId, setOpenId] = useState<string | null>(null)
   const [mounted, setMounted] = useState(false)
 
@@ -616,7 +598,6 @@ export function MegaMenu({ activeCategoryId, onCategoryClick }: MegaMenuProps) {
 
   useEffect(() => { setMounted(true) }, [])
 
-  // Fermeture au clic en dehors
   useEffect(() => {
     const h = (e: MouseEvent) => {
       const target = e.target as HTMLElement
@@ -632,14 +613,12 @@ export function MegaMenu({ activeCategoryId, onCategoryClick }: MegaMenuProps) {
     return () => document.removeEventListener('mousedown', h)
   }, [])
 
-  // Fermeture avec Échap
   useEffect(() => {
     const h = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpenId(null) }
     document.addEventListener('keydown', h)
     return () => document.removeEventListener('keydown', h)
   }, [])
 
-  // Clic sur un onglet
   function handleTabClick(cat: MegaCat) {
     if (cat.isAdult && !isAgeVerified()) {
       setPendingUrl(`/search?category=${cat.id}`)
@@ -654,12 +633,10 @@ export function MegaMenu({ activeCategoryId, onCategoryClick }: MegaMenuProps) {
       onCategoryClick(cat.id)
       router.push(`/search?category=${cat.id}`)
     } else {
-      // Toggle : ouvert → fermer, fermé → ouvrir
       setOpenId(prev => prev === cat.id ? null : cat.id)
     }
   }
 
-  // Navigation depuis le panel (sous-cat ou "voir tout")
   function handleNavigate(url: string, catId: string) {
     setOpenId(null)
     onCategoryClick(catId)
@@ -706,7 +683,6 @@ export function MegaMenu({ activeCategoryId, onCategoryClick }: MegaMenuProps) {
         ref={navbarRef}
         style={{ position: 'relative', display: 'flex', alignItems: 'stretch' }}
       >
-        {/* Flèche gauche */}
         {canScrollLeft && (
           <button
             onClick={() => scroll('left')}
@@ -724,7 +700,6 @@ export function MegaMenu({ activeCategoryId, onCategoryClick }: MegaMenuProps) {
           </button>
         )}
 
-        {/* Carrousel scrollable */}
         <nav
           ref={scrollRef}
           aria-label="Catégories"
@@ -739,9 +714,6 @@ export function MegaMenu({ activeCategoryId, onCategoryClick }: MegaMenuProps) {
           }}
         >
           {MEGA_CATS.map(cat => {
-            // ✅ FIX PRINCIPAL : is-open seul détermine le style actif
-            // is-active (lié au store) supprimé — évite que High-Tech reste
-            // visuellement actif après navigation vers une autre catégorie
             const isOpen = cat.id === openId
             const hasSubs = cat.subs.length > 0
             const label = getLabel(cat.labelKey, locale)
@@ -775,7 +747,6 @@ export function MegaMenu({ activeCategoryId, onCategoryClick }: MegaMenuProps) {
           })}
         </nav>
 
-        {/* Flèche droite */}
         {canScrollRight && (
           <button
             onClick={() => scroll('right')}
@@ -794,7 +765,6 @@ export function MegaMenu({ activeCategoryId, onCategoryClick }: MegaMenuProps) {
         )}
       </div>
 
-      {/* Panel mega menu */}
       {mounted && openId && openCat && (
         <MegaPanelPortal
           cat={openCat}
