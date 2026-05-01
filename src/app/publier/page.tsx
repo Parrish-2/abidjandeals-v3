@@ -3,6 +3,7 @@ import { Footer } from '@/components/Footer'
 import { Navbar } from '@/components/Navbar'
 import { CATEGORIES, CITIES } from '@/lib/data'
 import { supabase } from '@/lib/supabase'
+import { useStore } from '@/lib/store'
 import { CheckCircle, ChevronRight, Loader2, MapPin, Phone, Save, Upload, Video, X } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useCallback, useEffect, useRef, useState } from 'react'
@@ -144,6 +145,7 @@ type Location = { id: string; name: string; parent_id: string | null }
 
 export default function PublierPage() {
   const router = useRouter()
+  const { user: storeUser } = useStore()
   const fileInputRef = useRef<HTMLInputElement>(null)
   const videoInputRef = useRef<HTMLInputElement>(null)
   const [loading, setLoading] = useState(false)
@@ -287,12 +289,17 @@ export default function PublierPage() {
     const globalTimeout = setTimeout(() => {
       setLoading(false)
       toast.error('Délai dépassé. Vérifiez votre connexion et réessayez.')
-    }, 60000)
+    }, 25000)
 
     try {
-      const { data: { session }, error: authError } = await supabase.auth.getSession()
-      const user = session?.user
-      if (authError || !user) {
+      let userId = storeUser?.id
+      if (!userId) {
+        const sessionPromise = supabase.auth.getSession()
+        const timeoutPromise = new Promise<null>((resolve) => setTimeout(() => resolve(null), 5000))
+        const result = await Promise.race([sessionPromise, timeoutPromise])
+        userId = (result as any)?.data?.session?.user?.id ?? null
+      }
+      if (!userId) {
         toast.error('Connectez-vous pour publier')
         clearTimeout(globalTimeout)
         setLoading(false)
@@ -311,7 +318,7 @@ export default function PublierPage() {
             toast.loading(`Upload des médias (${i + 1}/${media.length})...`, { id: 'upload' })
             const ext = m.file.name.split('.').pop()
             const bucket = m.type === 'image' ? 'ad-photos' : 'ad-videos'
-            const path = `${user.id}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
+            const path = `${userId}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
 
             const uploadPromise = supabase.storage.from(bucket).upload(path, m.file, {
               cacheControl: '3600',
@@ -343,8 +350,8 @@ export default function PublierPage() {
         }
       }
 
-      const { error } = await supabase.from('ads').insert({
-        user_id: user.id,
+      const insertPromise = supabase.from('ads').insert({
+        user_id: userId,
         title: form.title,
         description: form.description,
         price: parseInt(form.price),
@@ -361,6 +368,10 @@ export default function PublierPage() {
         status: 'pending',
         views: 0,
       })
+      const insertTimeout = new Promise<{ error: { message: string } }>((resolve) =>
+        setTimeout(() => resolve({ error: { message: 'Délai dépassé pour la publication' } }), 15000)
+      )
+      const { error } = await Promise.race([insertPromise, insertTimeout])
 
       if (error) {
         toast.error('Erreur: ' + error.message)
