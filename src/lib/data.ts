@@ -1,4 +1,4 @@
-export const CATEGORIES = [
+﻿export const CATEGORIES = [
   {
     id: 'cat_tech',
     name: 'High-Tech',
@@ -95,20 +95,6 @@ export const CATEGORIES = [
     ],
   },
   {
-    id: 'cat_adulte',
-    name: 'Bien-être & Intimité',
-    icon: '❤️',
-    color: '#f43f5e',
-    isAdult: true,
-    subcats: [
-      'Bien-être du couple',
-      'Lubrifiants & Gels intimes',
-      'Hygiène intime',
-      'Accessoires de massage',
-      'Accessoires pour adultes',
-    ],
-  },
-  {
     id: 'cat_bebe',
     name: 'Bébé & Maman',
     icon: '👶',
@@ -141,6 +127,20 @@ export const CATEGORIES = [
       'Équipements sportifs',
       'Fitness & Musculation',
       'Jeux & Loisirs',
+    ],
+  },
+  {
+    id: 'cat_adulte',
+    name: 'Bien-être & Intimité',
+    icon: '❤️',
+    color: '#f43f5e',
+    isAdult: true,
+    subcats: [
+      'Bien-être du couple',
+      'Lubrifiants & Gels intimes',
+      'Hygiène intime',
+      'Accessoires de massage',
+      'Accessoires pour adultes',
     ],
   },
 ]
