@@ -34,19 +34,8 @@ const SLUG_TO_DB_CATEGORY: Record<string, string> = {
   'cat_loisir': 'cat_loisir', 'cat_autres': 'cat_autres', 'cat_agri': 'cat_agri',
 }
 
-const SUBCAT_SLUG_TO_UUID: Record<string, string> = {
-  'objets-connectes': 'c252dd5b-5c15-4569-b05a-d4611d46332b',
-  'telephones-accessoires': '72a255f1-eb6c-4b45-860a-2d2c0fce414c',
-  'smartphones': '72a255f1-eb6c-4b45-860a-2d2c0fce414c',
-  'tablettes': '72a255f1-eb6c-4b45-860a-2d2c0fce414c',
-  'ordinateurs': '0f43b598-2074-402a-b668-1b0075d1f402',
-  'tv-son': '79ebedca-7c9e-4814-b21f-5c817fc9c3ea',
-  'photo-video': '10faa947-0980-42c9-8470-6f3a21b0826f',
-  'consoles-jeux': '8d374966-a304-441b-b901-45f3d85d7806',
-  'composants': 'a23fe8aa-3bd0-4a67-ab7d-fc4e7870e2f5',
-  'cameras': 'ae9e3a77-e197-43c1-ba29-250d841b10a8',
-  'imprimantes': 'a23fe8aa-3bd0-4a67-ab7d-fc4e7870e2f5',
-}
+// ✅ DEPRECATED - No longer needed, will fetch from DB
+const SUBCAT_SLUG_TO_DB_NAME: Record<string, string> = {}
 
 function resolveDbCategoryId(slug: string | null): string | null {
   if (!slug) return null
@@ -155,7 +144,7 @@ function AdCard({ ad, view = "grid" }: { ad: Ad; view?: "grid" | "list" }) {
           <div className="relative w-36 h-28 flex-shrink-0 bg-gray-50">
             {img ? <img src={img} alt={ad.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" loading="lazy" />
               : <div className="w-full h-full flex items-center justify-center text-3xl bg-gradient-to-br from-orange-50 to-amber-50">{getCatEmoji(ad.category_id)}</div>}
-            {isBoosted && <span className="absolute top-2 left-2 bg-amber-400 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase flex items-center gap-1"><Zap size={8} fill="white" /> Boosté</span>}
+            {isBoosted && <span className="absolute top-2 left-2 bg-amber-400 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase flex items-center gap-1"><Zap size={8} fill="white" /></span>}
           </div>
           <div className="flex-1 py-3 pr-4 min-w-0">
             <p className="text-[10px] text-orange-500 font-bold uppercase tracking-wider mb-1">{getLabel(ad.category_id)}</p>
@@ -183,7 +172,7 @@ function AdCard({ ad, view = "grid" }: { ad: Ad; view?: "grid" | "list" }) {
           </div>
         )}
         <div className={`relative overflow-hidden bg-gray-50 ${isBoosted ? "pt-6" : ""}`} style={{ height: 188 }}>
-          {img ? <img src={img} alt={ad.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" onError={(e) => { (e.target as HTMLImageElement).style.display = "none" }} />
+          {img ? <img src={img} alt={ad.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }} />
             : <div className="w-full h-full flex flex-col items-center justify-center gap-2 bg-gradient-to-br from-orange-50 via-amber-50 to-yellow-50">
               <span className="text-5xl opacity-60">{getCatEmoji(ad.category_id)}</span>
               <span className="text-[10px] text-gray-400 font-medium">Pas de photo</span>
@@ -220,7 +209,7 @@ function EmptyState({ query, label }: { query: string; label: string }) {
           {query ? "Essayez d'autres mots-clés ou explorez les catégories." : "Soyez le premier à publier dans cette catégorie !"}
         </p>
         <div className="flex flex-wrap gap-2 justify-center mb-6">
-          {suggestions.map((s) => <Link key={s} href={`/search?q=${encodeURIComponent(s)}`} className="px-3 py-1.5 bg-white border border-gray-200 text-gray-600 text-xs font-medium rounded-full hover:border-orange-400 hover:text-orange-500 transition-colors">{s}</Link>)}
+          {suggestions.map((s) => <Link key={s} href={`/search?q=${encodeURIComponent(s)}`} className="px-3 py-1.5 bg-white border border-gray-200 text-gray-600 text-xs font-medium rounded-full hover:border-orange-300 transition-colors">{s}</Link>)}
         </div>
         <div className="flex gap-3">
           <Link href="/" className="px-5 py-2.5 bg-white border border-gray-200 text-gray-700 text-sm font-semibold rounded-xl hover:bg-gray-50 transition-colors">Accueil</Link>
@@ -253,7 +242,42 @@ function SearchContent() {
 
   // ✅ Résolution immédiate et stable des IDs
   const dbCategoryId = resolveDbCategoryId(categorySlug)
-  const subCatUuid = subcategorySlug ? (SUBCAT_SLUG_TO_UUID[subcategorySlug] ?? null) : null
+  const subCategoryId = useRef<string | null>(null)
+  const [subCategoryIdResolved, setSubCategoryIdResolved] = useState<string | null>(null)
+
+  // ✅ FIXED: Query Supabase to get subcategory ID from slug
+  const supabase = useMemo(() => createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  ), [])
+
+  // ✅ Resolve subcategory ID on mount or when subcategorySlug changes
+  useEffect(() => {
+    if (!subcategorySlug || !dbCategoryId) {
+      setSubCategoryIdResolved(null)
+      return
+    }
+
+    const resolveSubcategory = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('categories')
+          .select('id')
+          .eq('slug', subcategorySlug)
+          .eq('parent_id', dbCategoryId)
+          .maybeSingle()
+
+        if (error) throw error
+        setSubCategoryIdResolved(data?.id ?? null)
+        console.log('[resolveSubcategory] Resolved slug:', subcategorySlug, '→ ID:', data?.id)
+      } catch (err) {
+        console.error('[resolveSubcategory] Error:', err)
+        setSubCategoryIdResolved(null)
+      }
+    }
+
+    resolveSubcategory()
+  }, [subcategorySlug, dbCategoryId, supabase])
 
   const isAdultCategory = ADULT_CATEGORIES.some((a) => a === categorySlug || a === dbCategoryId)
   const [ageCleared, setAgeCleared] = useState<boolean>(!isAdultCategory || isAgeVerified())
@@ -278,16 +302,10 @@ function SearchContent() {
   const [priceMax, setPriceMax] = useState("")
   const [selectedEtat, setSelectedEtat] = useState("")
 
-  const supabase = useMemo(() => createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  ), [])
-
-  // ✅ CORRECTION PRINCIPALE : fetchAds reçoit tous les paramètres directement
-  // Élimine le problème de stale closure — plus de dépendance à fetchKey
+  // ✅ FIXED: fetchAds now receives resolved subcategory ID
   const fetchAds = useMemo(() => async (params: {
     dbCategoryId: string | null
-    subCatUuid: string | null
+    subCategoryId: string | null
     q: string
     sort: string
     priceMin: string
@@ -305,14 +323,17 @@ function SearchContent() {
         .select(`id, title, price, category_id, sub_category_id, etat, marque, city, quartier, images, boost_level, views, status, created_at`, { count: "exact" })
         .in("status", ["active", "approved"])
 
-      // ✅ Filtre strict : les deux conditions sont obligatoires ensemble
-      if (params.subCatUuid && params.dbCategoryId) {
-        console.log('[fetchAds] Filtre sous-catégorie:', params.subCatUuid, '+ catégorie:', params.dbCategoryId)
+      // ✅ CORRECTED FILTER:
+      // If both category AND subcategory are provided, filter by BOTH
+      if (params.subCategoryId && params.dbCategoryId) {
+        console.log('[fetchAds] Filtre: catégorie=', params.dbCategoryId, '+ sous-catégorie=', params.subCategoryId)
         query = query
-          .eq("sub_category_id", params.subCatUuid)
           .eq("category_id", params.dbCategoryId)
-      } else if (params.dbCategoryId) {
-        console.log('[fetchAds] Filtre catégorie seule:', params.dbCategoryId)
+          .eq("sub_category_id", params.subCategoryId)
+      }
+      // If only category is provided, filter by category only
+      else if (params.dbCategoryId) {
+        console.log('[fetchAds] Filtre: catégorie seule=', params.dbCategoryId)
         query = query.eq("category_id", params.dbCategoryId)
       }
 
@@ -330,7 +351,7 @@ function SearchContent() {
 
       const { data, error: sbError, count } = await query.limit(48)
 
-      console.log('[fetchAds] Résultat:', { count, ids: (data as Ad[])?.map(a => ({ id: a.id, title: a.title, sub_category_id: a.sub_category_id })) })
+      console.log('[fetchAds] Résultat:', { count, data: (data as Ad[])?.map(a => ({ id: a.id, title: a.title, category_id: a.category_id, sub_category_id: a.sub_category_id })) })
 
       if (sbError) throw sbError
       setAds((data as Ad[]) ?? [])
@@ -345,12 +366,12 @@ function SearchContent() {
   // ✅ useEffect déclenche fetchAds avec les valeurs ACTUELLES à chaque changement
   useEffect(() => {
     if (!ageCleared) return
-    fetchAds({ dbCategoryId, subCatUuid, q, sort, priceMin, priceMax, selectedEtat })
-  }, [ageCleared, dbCategoryId, subCatUuid, q, sort, priceMin, priceMax, selectedEtat, fetchAds])
+    fetchAds({ dbCategoryId, subCategoryId: subCategoryIdResolved, q, sort, priceMin, priceMax, selectedEtat })
+  }, [ageCleared, dbCategoryId, subCategoryIdResolved, q, sort, priceMin, priceMax, selectedEtat, fetchAds])
 
   const handleApplyFilters = () => {
     if (!ageCleared) return
-    fetchAds({ dbCategoryId, subCatUuid, q, sort, priceMin, priceMax, selectedEtat })
+    fetchAds({ dbCategoryId, subCategoryId: subCategoryIdResolved, q, sort, priceMin, priceMax, selectedEtat })
     setShowFilters(false)
   }
 
@@ -394,7 +415,7 @@ function SearchContent() {
                 </p>
               )}
             </div>
-            <form onSubmit={(e) => { e.preventDefault(); const val = (new FormData(e.currentTarget).get("q") as string); if (val?.trim()) { const p = new URLSearchParams(searchParams.toString()); p.set("q", val.trim()); router.push(`/search?${p.toString()}`) } }} className="flex items-center gap-2 flex-1 max-w-sm">
+            <form onSubmit={(e) => { e.preventDefault(); const val = (new FormData(e.currentTarget).get("q") as string); if (val?.trim()) { const p = new URLSearchParams(searchParams.toString()); p.set("q", val); router.push(`/search?${p.toString()}`); } }}>
               <div className="flex-1 flex items-center bg-white/10 border border-white/15 rounded-xl overflow-hidden backdrop-blur-sm">
                 <Search size={16} className="ml-3 text-white/40 flex-shrink-0" />
                 <input name="q" defaultValue={q} placeholder={`Rechercher dans ${pageLabel}...`} className="flex-1 px-3 py-2.5 bg-transparent text-white placeholder:text-white/30 text-sm outline-none" />
@@ -408,18 +429,18 @@ function SearchContent() {
       <div className="sticky top-0 z-30 bg-white border-b border-gray-100 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 md:px-8">
           <div className="flex items-center gap-2 py-2.5 overflow-x-auto">
-            <button onClick={() => setShowFilters(!showFilters)} className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold border transition-all flex-shrink-0 ${hasActiveFilters || showFilters ? "bg-orange-500 text-white border-orange-500" : "bg-white text-gray-600 border-gray-200 hover:border-orange-300 hover:text-orange-500"}`}>
+            <button onClick={() => setShowFilters(!showFilters)} className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold border transition-all flex-shrink-0 ${hasActiveFilters ? 'bg-orange-50 border-orange-300 text-orange-600' : 'bg-white border-gray-200 text-gray-600 hover:border-gray-300'}`}>
               <SlidersHorizontal size={13} /> Filtres
             </button>
             <div className="w-px h-5 bg-gray-200 flex-shrink-0" />
             {sortOptions.map((s) => {
               const params = new URLSearchParams(searchParams.toString()); params.set("sort", s.value)
               const isActive = sort === s.value; const Icon = s.icon
-              return <Link key={s.value} href={`/search?${params.toString()}`} className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold transition-all flex-shrink-0 ${isActive ? "bg-gray-900 text-white" : "bg-white border border-gray-200 text-gray-500 hover:border-orange-300 hover:text-orange-500"}`}><Icon size={11} />{s.label}</Link>
+              return <Link key={s.value} href={`/search?${params.toString()}`} className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold transition-all flex-shrink-0 ${isActive ? 'bg-orange-100 text-orange-600' : 'text-gray-600 hover:bg-gray-100'}`}><Icon size={13} /> {s.label}</Link>
             })}
             <div className="ml-auto flex items-center gap-1.5 flex-shrink-0">
-              <button onClick={() => setView("grid")} className={`p-2 rounded-lg transition-colors ${view === "grid" ? "bg-orange-100 text-orange-500" : "text-gray-400 hover:text-gray-600"}`}><GridIcon size={15} /></button>
-              <button onClick={() => setView("list")} className={`p-2 rounded-lg transition-colors ${view === "list" ? "bg-orange-100 text-orange-500" : "text-gray-400 hover:text-gray-600"}`}><LayoutList size={15} /></button>
+              <button onClick={() => setView("grid")} className={`p-2 rounded-lg transition-colors ${view === "grid" ? "bg-orange-100 text-orange-500" : "text-gray-400 hover:text-gray-600"}`}><GridIcon size={16} /></button>
+              <button onClick={() => setView("list")} className={`p-2 rounded-lg transition-colors ${view === "list" ? "bg-orange-100 text-orange-500" : "text-gray-400 hover:text-gray-600"}`}><LayoutList size={16} /></button>
             </div>
           </div>
         </div>
@@ -430,19 +451,19 @@ function SearchContent() {
                 <div>
                   <label className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5 block">Prix (FCFA)</label>
                   <div className="flex items-center gap-2">
-                    <input type="number" placeholder="Min" value={priceMin} onChange={(e) => setPriceMin(e.target.value)} className="w-28 px-3 py-2 text-sm border border-gray-200 rounded-xl outline-none focus:border-orange-400" />
+                    <input type="number" placeholder="Min" value={priceMin} onChange={(e) => setPriceMin(e.target.value)} className="w-28 px-3 py-2 text-sm border border-gray-200 rounded-xl outline-none focus:border-orange-400 focus:ring-1 focus:ring-orange-100" />
                     <span className="text-gray-400 text-sm">—</span>
-                    <input type="number" placeholder="Max" value={priceMax} onChange={(e) => setPriceMax(e.target.value)} className="w-28 px-3 py-2 text-sm border border-gray-200 rounded-xl outline-none focus:border-orange-400" />
+                    <input type="number" placeholder="Max" value={priceMax} onChange={(e) => setPriceMax(e.target.value)} className="w-28 px-3 py-2 text-sm border border-gray-200 rounded-xl outline-none focus:border-orange-400 focus:ring-1 focus:ring-orange-100" />
                   </div>
                 </div>
                 <div>
                   <label className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5 block">État</label>
                   <div className="flex flex-wrap gap-1.5">
-                    {etats.map((e) => <button key={e} onClick={() => setSelectedEtat(selectedEtat === e ? "" : e)} className={`px-3 py-1.5 text-xs font-medium rounded-xl border transition-all ${selectedEtat === e ? "bg-orange-500 text-white border-orange-500" : "bg-white text-gray-600 border-gray-200 hover:border-orange-300"}`}>{e}</button>)}
+                    {etats.map((e) => <button key={e} onClick={() => setSelectedEtat(selectedEtat === e ? "" : e)} className={`px-3 py-1.5 text-xs font-medium rounded-xl border transition-all ${selectedEtat === e ? 'bg-orange-100 border-orange-400 text-orange-600' : 'bg-white border-gray-200 text-gray-600 hover:border-gray-300'}`}>{e}</button>)}
                   </div>
                 </div>
                 <div className="flex gap-2 ml-auto">
-                  {hasActiveFilters && <button onClick={() => { setPriceMin(""); setPriceMax(""); setSelectedEtat("") }} className="px-4 py-2 text-xs font-semibold text-gray-500 hover:text-gray-700 transition-colors">Réinitialiser</button>}
+                  {hasActiveFilters && <button onClick={() => { setPriceMin(""); setPriceMax(""); setSelectedEtat("") }} className="px-4 py-2 text-xs font-semibold text-gray-500 hover:text-gray-700 bg-white border border-gray-200 rounded-xl transition-colors">Réinitialiser</button>}
                   <button onClick={handleApplyFilters} className="px-5 py-2 bg-orange-500 hover:bg-orange-600 text-white text-xs font-bold rounded-xl transition-colors">Appliquer</button>
                 </div>
               </div>
@@ -454,13 +475,13 @@ function SearchContent() {
       <div className="max-w-7xl mx-auto px-4 py-6 md:px-8">
         {!loading && !error && ads.length > 0 && ageCleared && (
           <div className="flex items-center justify-between mb-5">
-            <p className="text-sm text-gray-500"><span className="font-semibold text-gray-800">{ads.length}</span> annonce{ads.length > 1 ? "s" : ""} affichée{ads.length > 1 ? "s" : ""}{total > 48 && <span className="text-gray-400"> sur {total.toLocaleString("fr-CI")}</span>}</p>
+            <p className="text-sm text-gray-500"><span className="font-semibold text-gray-800">{ads.length}</span> annonce{ads.length > 1 ? "s" : ""} affichée{ads.length > 1 ? "s" : ""}{total > ads.length ? ` sur ${total.toLocaleString("fr-CI")}` : ""}</p>
             {(categorySlug || subcategorySlug || q) && <Link href="/search" className="text-xs text-gray-400 hover:text-orange-500 transition-colors flex items-center gap-1"><X size={11} /> Effacer les filtres</Link>}
           </div>
         )}
 
         {!ageCleared ? (
-          <div className="flex flex-col items-center justify-center py-32 text-center"><span className="text-6xl mb-4">🔞</span><p className="text-gray-400 text-sm">Vérification de l'âge en cours…</p></div>
+          <div className="flex flex-col items-center justify-center py-32 text-center"><span className="text-6xl mb-4">🔞</span><p className="text-gray-400 text-sm">Vérification de l'âge en cours...</p></div>
         ) : loading ? (
           <div className={view === "grid" ? "grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4" : "flex flex-col gap-3"}>
             {Array.from({ length: 10 }).map((_, i) => view === "grid" ? <AdCardSkeleton key={i} /> : <div key={i} className="h-28 bg-white rounded-2xl border border-gray-100 animate-pulse" />)}
