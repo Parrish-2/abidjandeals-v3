@@ -4,10 +4,76 @@ import { Navbar } from '@/components/Navbar'
 import { CATEGORIES, CITIES } from '@/lib/data'
 import { useStore } from '@/lib/store'
 import { supabase } from '@/lib/supabase'
-import { CheckCircle, ChevronRight, Loader2, MapPin, Phone, Save, Upload, Video, X } from 'lucide-react'
+import { CheckCircle, ChevronRight, Loader2, Lock, MapPin, Phone, Save, Shield, Upload, Video, X } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import toast, { Toaster } from 'react-hot-toast'
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CONFIGURATION DU VERROU — à maintenir ici uniquement
+// ─────────────────────────────────────────────────────────────────────────────
+//
+// LOGIQUE :
+//   - Si une catégorie n'est pas dans LOCK_CONFIG → accessible à tous, pas de verrou.
+//   - Si elle est dans LOCK_CONFIG avec exemptSubcats vide → toute la catégorie est verrouillée.
+//   - Si elle a des exemptSubcats → seules ces sous-catégories sont libres, le reste est verrouillé.
+//   - Un utilisateur 'confirmed' ou 'certified' passe toujours, quelle que soit la config.
+//
+const LOCK_CONFIG: Record<string, { exemptSubcats: string[] }> = {
+  cat_tech: {
+    exemptSubcats: [
+      'Jeux Vidéo',             // risque faible, valeur modérée
+      'Objets Connectés',       // montres connectées, trackers
+      'Pièces & Périphériques', // câbles, claviers, souris
+    ],
+    // Verrouillés : Téléphones & Accessoires, Ordinateurs & Tablettes,
+    //               TV & Audio, Photo & Vidéo, Cameras
+  },
+  cat_auto: {
+    exemptSubcats: [],
+    // Tout verrouillé : les subcats actuelles ne contiennent que des véhicules.
+    // Si tu ajoutes 'Pièces détachées' dans data.ts plus tard, ajoute-la ici.
+  },
+  cat_immo: {
+    exemptSubcats: [],
+    // Tout verrouillé sans exception.
+  },
+}
+
+// Dérivé automatiquement depuis LOCK_CONFIG — ne pas modifier manuellement
+const EXCLUSIVE_CAT_IDS = Object.keys(LOCK_CONFIG)
+
+/**
+ * Retourne true si l'utilisateur doit voir le verrou pour cette combinaison
+ * catégorie + sous-catégorie + niveau de compte.
+ *
+ * @param catId      - ID de la catégorie (ex: 'cat_tech')
+ * @param subcatName - Nom de la sous-catégorie sélectionnée, ou '' si aucune
+ * @param level      - Niveau du compte utilisateur
+ */
+function isLocked(
+  catId: string,
+  subcatName: string,
+  level: 'basic' | 'confirmed' | 'certified'
+): boolean {
+  // Confirmed/certified : accès total, jamais de verrou
+  if (level === 'confirmed' || level === 'certified') return false
+
+  // Catégorie non sensible : libre
+  const config = LOCK_CONFIG[catId]
+  if (!config) return false
+
+  // Catégorie sensible sans subcat choisie → verrou préventif dès la sélection
+  if (!subcatName) return true
+
+  // Sous-catégorie dans la liste d'exemptions → libre même en BASIC
+  if (config.exemptSubcats.includes(subcatName)) return false
+
+  // Tout le reste de la catégorie sensible → verrou
+  return true
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 
 const QUARTIERS: Record<string, string[]> = {
   'Abidjan': [
@@ -135,17 +201,140 @@ const DEFAULT_CONFIG: CatConfig = {
 }
 
 const STORAGE_KEY = 'abidjandeals_draft'
-const EMPTY_FORM = {
+const EMPTY_FORM: Record<string, string> = {
   title: '', description: '', price: '',
   category: '', subcategory: '', etat: '',
   city: '', quartier: '', tel: '', whatsapp: '',
 }
+
 type MediaFile = { file: File; url: string; type: 'image' | 'video' }
 type Location = { id: string; name: string; parent_id: string | null }
 
+// ─── Carte de verrou ──────────────────────────────────────────────────────────
+function CategoryLockCard({
+  categoryName,
+  categoryIcon,
+  subcatName,
+  exemptSubcats,
+  onGoBack,
+  onUpgrade,
+}: {
+  categoryName: string
+  categoryIcon: string
+  subcatName: string
+  exemptSubcats: string[]
+  onGoBack: () => void
+  onUpgrade: () => void
+}) {
+  return (
+    <div className="bg-white rounded-2xl border border-orange-100 shadow-sm overflow-hidden">
+      {/* Bandeau */}
+      <div className="bg-gradient-to-r from-orange-500 to-amber-500 px-5 py-3 flex items-center gap-2">
+        <Shield size={14} className="text-white/90" />
+        <span className="text-white text-xs font-bold tracking-wide uppercase">
+          Réservé aux membres certifiés
+        </span>
+      </div>
+
+      <div className="p-5">
+        {/* En-tête */}
+        <div className="flex items-start gap-3 mb-4">
+          <div className="w-12 h-12 rounded-xl bg-orange-50 border border-orange-100 flex items-center justify-center text-xl flex-shrink-0">
+            {categoryIcon}
+          </div>
+          <div>
+            <p className="text-[10px] font-bold text-orange-500 uppercase tracking-widest mb-0.5">
+              {categoryName}{subcatName ? ` › ${subcatName}` : ''}
+            </p>
+            <h3 className="text-gray-900 font-extrabold text-base leading-tight">
+              Passez au statut CONFIRMÉ pour publier ici
+            </h3>
+          </div>
+        </div>
+
+        {/* Argumentaire */}
+        <div className="bg-amber-50 border border-amber-100 rounded-xl px-4 py-3 mb-4 flex gap-2.5">
+          <Lock size={13} className="text-amber-600 flex-shrink-0 mt-0.5" />
+          <p className="text-amber-800 text-xs leading-relaxed">
+            Pour garantir la sécurité et lutter contre le recel, les catégories{' '}
+            <strong>High-Tech</strong>, <strong>Véhicules</strong> et <strong>Immobilier</strong>{' '}
+            sont réservées à nos membres certifiés. La vérification de votre CNI est rapide et sécurisée.
+          </p>
+        </div>
+
+        {/* Sous-catégories libres disponibles dans cette catégorie */}
+        {exemptSubcats.length > 0 && (
+          <div className="mb-4">
+            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">
+              Accessibles sans vérification dans {categoryName} :
+            </p>
+            <div className="flex flex-wrap gap-1.5">
+              {exemptSubcats.map(s => (
+                <span key={s} className="text-xs bg-green-50 text-green-700 border border-green-100 rounded-lg px-2.5 py-1 font-medium">
+                  ✓ {s}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Bénéfices */}
+        <div className="space-y-2 mb-5">
+          {[
+            'Badge vendeur CONFIRMÉ visible sur toutes vos annonces',
+            'Annonces illimitées + vidéos HD',
+            'Accès High-Tech, Véhicules & Immobilier complets',
+            'Vérification CNI en moins de 5 minutes',
+          ].map(b => (
+            <div key={b} className="flex items-center gap-2">
+              <CheckCircle size={12} className="text-green-500 flex-shrink-0" />
+              <span className="text-gray-600 text-xs">{b}</span>
+            </div>
+          ))}
+        </div>
+
+        {/* Actions */}
+        <button
+          type="button"
+          onClick={onUpgrade}
+          className="w-full py-3 bg-orange-500 hover:bg-orange-600 active:scale-[0.98] text-white font-bold rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-orange-200 text-sm mb-2.5"
+        >
+          <Shield size={14} />
+          Devenir Confirmé — Vérifier mon CNI
+        </button>
+        <button
+          type="button"
+          onClick={onGoBack}
+          className="w-full py-2 text-gray-500 hover:text-gray-700 text-xs font-medium rounded-xl border border-gray-100 hover:border-gray-200 hover:bg-gray-50 transition-all"
+        >
+          ← Choisir une autre catégorie ou sous-catégorie
+        </button>
+      </div>
+    </div>
+  )
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PAGE PRINCIPALE
+// ─────────────────────────────────────────────────────────────────────────────
 export default function PublierPage() {
   const router = useRouter()
   const { user: storeUser } = useStore()
+
+  // ── Dérivation du plan depuis Profile.level (défini dans src/lib/supabase.ts)
+  // 'basic' | 'confirmed' | 'certified' — branché directement sur le store existant
+  const userLevel = storeUser?.level ?? 'basic'
+
+  // ── État du verrou ────────────────────────────────────────────────────────
+  // null = aucun verrou affiché
+  const [lockState, setLockState] = useState<{
+    catId: string
+    catName: string
+    catIcon: string
+    subcatName: string       // sous-catégorie qui a déclenché le verrou ('' = catégorie entière)
+    exemptSubcats: string[]  // sous-catégories libres à afficher dans la carte
+  } | null>(null)
+
   const fileInputRef = useRef<HTMLInputElement>(null)
   const videoInputRef = useRef<HTMLInputElement>(null)
   const [loading, setLoading] = useState(false)
@@ -158,25 +347,18 @@ export default function PublierPage() {
   const [media, setMedia] = useState<MediaFile[]>([])
   const [hasDraft, setHasDraft] = useState(false)
   const [lastSaved, setLastSaved] = useState<string | null>(null)
-
-  const [form, setForm] = useState<Record<string, string>>({
-    title: '', description: '', price: '',
-    category: '', subcategory: '', etat: '',
-    city: '', quartier: '', tel: '', whatsapp: '',
-  })
+  const [form, setForm] = useState<Record<string, string>>({ ...EMPTY_FORM })
 
   const selectedCat = CATEGORIES.find(c => c.id === form.category)
   const catConfig: CatConfig = form.category ? (CATEGORY_FIELDS[form.category] ?? DEFAULT_CONFIG) : DEFAULT_CONFIG
   const quartiersForCity = form.city ? (QUARTIERS[form.city] ?? []) : []
+  const showLock = lockState !== null
 
   useEffect(() => {
     async function loadVilles() {
       const { data } = await supabase
-        .from('locations')
-        .select('id, name, parent_id')
-        .is('parent_id', null)
-        .eq('is_active', true)
-        .order('name')
+        .from('locations').select('id, name, parent_id')
+        .is('parent_id', null).eq('is_active', true).order('name')
       if (data) setVilles(data)
     }
     loadVilles()
@@ -186,11 +368,8 @@ export default function PublierPage() {
     if (!selectedVilleId) { setCommunes([]); setSousQuartiers([]); return }
     async function loadCommunes() {
       const { data } = await supabase
-        .from('locations')
-        .select('id, name, parent_id')
-        .eq('parent_id', selectedVilleId)
-        .eq('is_active', true)
-        .order('name')
+        .from('locations').select('id, name, parent_id')
+        .eq('parent_id', selectedVilleId).eq('is_active', true).order('name')
       if (data) setCommunes(data)
       setSousQuartiers([])
       setSelectedCommuneId('')
@@ -202,16 +381,14 @@ export default function PublierPage() {
     if (!selectedCommuneId) { setSousQuartiers([]); return }
     async function loadSousQuartiers() {
       const { data } = await supabase
-        .from('locations')
-        .select('id, name, parent_id')
-        .eq('parent_id', selectedCommuneId)
-        .eq('is_active', true)
-        .order('name')
+        .from('locations').select('id, name, parent_id')
+        .eq('parent_id', selectedCommuneId).eq('is_active', true).order('name')
       if (data) setSousQuartiers(data)
     }
     loadSousQuartiers()
   }, [selectedCommuneId])
 
+  // Restauration du brouillon
   useEffect(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY)
@@ -224,6 +401,7 @@ export default function PublierPage() {
     } catch { }
   }, [])
 
+  // Sauvegarde auto du brouillon (3s après la dernière frappe)
   useEffect(() => {
     const hasContent = form.title || form.description || form.price || form.category
     if (!hasContent) return
@@ -242,8 +420,9 @@ export default function PublierPage() {
     localStorage.removeItem(STORAGE_KEY)
     setHasDraft(false)
     setLastSaved(null)
-    setForm({ title: '', description: '', price: '', category: '', subcategory: '', etat: '', city: '', quartier: '', tel: '', whatsapp: '' })
+    setForm({ ...EMPTY_FORM })
     setMedia([])
+    setLockState(null)
     toast.success('Brouillon effacé')
   }
 
@@ -256,8 +435,79 @@ export default function PublierPage() {
     })
   }
 
+  // ── Sélection de catégorie ────────────────────────────────────────────────
+  // Déclenche le verrou immédiatement si la catégorie est sensible et l'user est BASIC.
+  // La sous-catégorie affinera ensuite si besoin (ex: cat_tech a des subcats libres).
   function handleCategoryChange(catId: string) {
+    const cat = CATEGORIES.find(c => c.id === catId)
+    if (!cat) return
+
+    // Catégorie non sensible → accès direct, ferme le verrou si ouvert
+    if (!EXCLUSIVE_CAT_IDS.includes(catId)) {
+      setLockState(null)
+      setForm(f => ({ ...f, category: catId, subcategory: '', etat: '' }))
+      return
+    }
+
+    // Catégorie sensible + BASIC → verrou préventif sans sous-catégorie
+    if (isLocked(catId, '', userLevel)) {
+      setLockState({
+        catId,
+        catName: cat.name,
+        catIcon: cat.icon,
+        subcatName: '',
+        exemptSubcats: LOCK_CONFIG[catId]?.exemptSubcats ?? [],
+      })
+      // form.category n'est PAS mis à jour — l'utilisateur n'a pas encore accès
+      return
+    }
+
+    // Confirmed/certified → accès direct
+    setLockState(null)
     setForm(f => ({ ...f, category: catId, subcategory: '', etat: '' }))
+  }
+
+  // ── Sélection de sous-catégorie ───────────────────────────────────────────
+  // Vérifie la subcat spécifique : 'Jeux Vidéo' est libre, 'Téléphones' est verrouillé.
+  // C'est ici que se joue la granularité subcat-level.
+  function handleSubcatChange(e: React.ChangeEvent<HTMLSelectElement>) {
+    const subcatName = e.target.value
+
+    if (!subcatName) {
+      setForm(f => ({ ...f, subcategory: '' }))
+      // Si on était sur une cat sensible sans subcat, le verrou préventif reste
+      return
+    }
+
+    if (isLocked(form.category, subcatName, userLevel)) {
+      const cat = CATEGORIES.find(c => c.id === form.category)
+      setLockState({
+        catId: form.category,
+        catName: cat?.name ?? '',
+        catIcon: cat?.icon ?? '',
+        subcatName,
+        exemptSubcats: LOCK_CONFIG[form.category]?.exemptSubcats ?? [],
+      })
+      // subcategory remise à vide — la sélection verrouillée n'est pas appliquée
+      setForm(f => ({ ...f, subcategory: '' }))
+      return
+    }
+
+    // Subcat libre → ferme le verrou, applique la sélection, active le formulaire
+    setLockState(null)
+    setForm(f => ({ ...f, subcategory: subcatName }))
+  }
+
+  // Retour depuis le verrou → remet à zéro catégorie + subcat pour choix propre
+  function handleLockGoBack() {
+    setLockState(null)
+    setForm(f => ({ ...f, category: '', subcategory: '', etat: '' }))
+  }
+
+  // Redirection vers la page KYC / sélection des plans
+  // Adapte l'URL selon ta structure de routes (/kyc, /plans, /vendeur...)
+  function handleUpgrade() {
+    router.push('/vendeur')
   }
 
   function addMedia(files: FileList | null, type: 'image' | 'video') {
@@ -284,6 +534,28 @@ export default function PublierPage() {
     e.preventDefault()
     if (!form.category) { toast.error('Choisissez une catégorie'); return }
     if (!form.city) { toast.error('Choisissez une ville'); return }
+
+    // ── Protection serveur ────────────────────────────────────────────────────
+    // Le verrou visuel est de l'UX. Cette vérification re-interroge Supabase
+    // directement avant l'insert pour qu'aucune manipulation client ne passe.
+    if (EXCLUSIVE_CAT_IDS.includes(form.category)) {
+      const exempts = LOCK_CONFIG[form.category]?.exemptSubcats ?? []
+      const subcatIsExempt = form.subcategory !== '' && exempts.includes(form.subcategory)
+
+      if (!subcatIsExempt) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('level')
+          .eq('id', storeUser?.id ?? '')
+          .single()
+
+        if (!profile || (profile.level !== 'confirmed' && profile.level !== 'certified')) {
+          toast.error('Cette catégorie est réservée aux membres CONFIRMÉ')
+          return
+        }
+      }
+    }
+
     setLoading(true)
 
     const globalTimeout = setTimeout(() => {
@@ -319,46 +591,29 @@ export default function PublierPage() {
             const ext = m.file.name.split('.').pop()
             const bucket = m.type === 'image' ? 'ad-photos' : 'ad-videos'
             const path = `${userId}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
-
-            const uploadPromise = supabase.storage.from(bucket).upload(path, m.file, {
-              cacheControl: '3600',
-              upsert: false,
-            })
-            const timeoutPromise = new Promise<never>((_, reject) =>
-              setTimeout(() => reject(new Error('timeout')), 15000)
-            )
+            const uploadPromise = supabase.storage.from(bucket).upload(path, m.file, { cacheControl: '3600', upsert: false })
+            const timeoutPromise = new Promise<never>((_, reject) => setTimeout(() => reject(new Error('timeout')), 15000))
             const result = await Promise.race([uploadPromise, timeoutPromise]) as any
-
-            if (result.error) {
-              console.warn('Upload échoué:', result.error.message)
-              uploadFailed = true
-            } else {
+            if (result.error) { uploadFailed = true }
+            else {
               const { data } = supabase.storage.from(bucket).getPublicUrl(path)
               if (m.type === 'image') uploadedImages.push(data.publicUrl)
               else videoUrl = data.publicUrl
             }
-          } catch (err) {
-            console.warn('Upload ignoré (timeout):', err)
-            uploadFailed = true
-          }
+          } catch { uploadFailed = true }
         }
         toast.dismiss('upload')
-        if (uploadFailed && uploadedImages.length === 0) {
+        if (uploadFailed && uploadedImages.length === 0)
           toast.error("Photos non uploadées. L'annonce sera publiée sans photos.", { duration: 4000 })
-        } else if (uploadFailed) {
+        else if (uploadFailed)
           toast.error("Certaines photos n'ont pas pu être uploadées.", { duration: 3000 })
-        }
       }
 
-      // ✅ Résoudre sub_category_id depuis le nom de sous-catégorie
       let subCategoryUuid: string | null = null
       if (form.subcategory && form.category) {
         const { data: subCat } = await supabase
-          .from('sub_categories')
-          .select('id')
-          .eq('category_id', form.category)
-          .ilike('name', form.subcategory)
-          .maybeSingle()
+          .from('sub_categories').select('id')
+          .eq('category_id', form.category).ilike('name', form.subcategory).maybeSingle()
         subCategoryUuid = subCat?.id ?? null
       }
 
@@ -378,13 +633,11 @@ export default function PublierPage() {
         whatsapp: form.whatsapp || form.tel,
         images: uploadedImages,
         video_url: videoUrl || null,
-        // ✅ CORRECTION : status active pour que l'annonce soit visible immédiatement
         status: 'active',
         views: 0,
       })
-
       const insertTimeout = new Promise<{ error: { message: string } }>((resolve) =>
-        setTimeout(() => resolve({ error: { message: 'Délai dépassé pour la publication' } }), 15000)
+        setTimeout(() => resolve({ error: { message: 'Délai dépassé' } }), 15000)
       )
       const { error } = await Promise.race([insertPromise, insertTimeout])
 
@@ -399,8 +652,9 @@ export default function PublierPage() {
       localStorage.removeItem(STORAGE_KEY)
       setHasDraft(false)
       setLastSaved(null)
-      setForm(EMPTY_FORM)
+      setForm({ ...EMPTY_FORM })
       setMedia([])
+      setLockState(null)
       setSuccess(true)
       setTimeout(() => router.push('/dashboard'), 2500)
     } catch (err) {
@@ -410,7 +664,7 @@ export default function PublierPage() {
       localStorage.removeItem(STORAGE_KEY)
       setHasDraft(false)
       setLastSaved(null)
-      setForm(EMPTY_FORM)
+      setForm({ ...EMPTY_FORM })
       setMedia([])
     } finally {
       setLoading(false)
@@ -425,7 +679,6 @@ export default function PublierPage() {
           <CheckCircle size={48} className="text-green-500" />
         </div>
         <h1 className="text-2xl font-extrabold text-gray-900">Annonce publiée ! 🎉</h1>
-        {/* ✅ CORRECTION : message mis à jour */}
         <p className="text-gray-500">Votre annonce est maintenant en ligne et visible par tous !</p>
         <p className="text-xs text-gray-400">Redirection vers votre tableau de bord...</p>
       </div>
@@ -438,12 +691,30 @@ export default function PublierPage() {
       <Toaster position="top-center" />
       <Navbar />
       <main className="flex-1 w-full max-w-6xl mx-auto px-4 py-8 pb-28 lg:pb-8">
+
+        {/* En-tête */}
         <div className="flex items-start justify-between mb-8">
           <div>
             <h1 className="text-3xl font-extrabold text-gray-900">Publier une annonce</h1>
             <p className="text-gray-400 mt-1">Le formulaire s'adapte automatiquement à votre article</p>
           </div>
           <div className="flex items-center gap-3">
+            {/* Badge plan utilisateur */}
+            {userLevel === 'basic' && (
+              <span className="text-[10px] font-bold bg-gray-100 text-gray-500 rounded-full px-2.5 py-1 flex items-center gap-1">
+                <Lock size={9} /> Plan BASIC
+              </span>
+            )}
+            {userLevel === 'confirmed' && (
+              <span className="text-[10px] font-bold bg-green-100 text-green-600 rounded-full px-2.5 py-1 flex items-center gap-1">
+                <Shield size={9} /> CONFIRMÉ
+              </span>
+            )}
+            {userLevel === 'certified' && (
+              <span className="text-[10px] font-bold bg-blue-100 text-blue-600 rounded-full px-2.5 py-1 flex items-center gap-1">
+                <Shield size={9} /> CERTIFIÉ
+              </span>
+            )}
             {lastSaved && (
               <span className="text-xs text-gray-400 flex items-center gap-1">
                 <Save size={11} /> Sauvegardé à {lastSaved}
@@ -469,257 +740,356 @@ export default function PublierPage() {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="lg:col-span-2 space-y-5">
 
-              {/* Étape 1 — Catégorie */}
+              {/* ── Étape 1 — Catégorie ──────────────────────────────────── */}
               <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
                 <div className="flex items-center gap-2 mb-4">
                   <div className="w-7 h-7 rounded-full bg-orange-500 text-white text-xs font-bold flex items-center justify-center">1</div>
                   <h2 className="font-bold text-gray-800">Choisissez une catégorie</h2>
                 </div>
+
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                  {CATEGORIES.map(cat => (
-                    <button key={cat.id} type="button" onClick={() => handleCategoryChange(cat.id)}
-                      className={`flex items-center gap-2 px-3 py-2.5 rounded-xl border text-xs font-medium transition-all ${form.category === cat.id ? 'border-orange-500 bg-orange-50 text-orange-600 shadow-sm' : 'border-gray-100 text-gray-600 hover:border-orange-200 hover:bg-orange-50/50'}`}>
-                      <span className="text-base">{cat.icon}</span>
-                      <span className="truncate">{cat.name}</span>
-                    </button>
-                  ))}
+                  {CATEGORIES.map(cat => {
+                    const isSensitive = EXCLUSIVE_CAT_IDS.includes(cat.id)
+                    const allLocked = isSensitive && (LOCK_CONFIG[cat.id]?.exemptSubcats.length === 0)
+                    const partiallyFree = isSensitive && ((LOCK_CONFIG[cat.id]?.exemptSubcats.length ?? 0) > 0)
+                    const isSelected = form.category === cat.id && !showLock
+
+                    return (
+                      <button
+                        key={cat.id}
+                        type="button"
+                        onClick={() => handleCategoryChange(cat.id)}
+                        className={`
+                          flex items-center gap-2 px-3 py-2.5 rounded-xl border text-xs font-medium transition-all
+                          ${isSelected
+                            ? 'border-orange-500 bg-orange-50 text-orange-600 shadow-sm'
+                            : isSensitive && userLevel === 'basic'
+                              ? 'border-gray-100 text-gray-400 hover:border-amber-200 hover:bg-amber-50/40'
+                              : 'border-gray-100 text-gray-600 hover:border-orange-200 hover:bg-orange-50/50'
+                          }
+                        `}
+                      >
+                        <span className="text-base">{cat.icon}</span>
+                        <span className="truncate">{cat.name}</span>
+                        {/* Icône verrou total */}
+                        {userLevel === 'basic' && allLocked && (
+                          <Lock size={9} className="ml-auto flex-shrink-0 text-amber-500" />
+                        )}
+                        {/* Badge "PARTIEL" pour cat_tech qui a des subcats libres */}
+                        {userLevel === 'basic' && partiallyFree && (
+                          <span className="ml-auto text-[8px] bg-amber-100 text-amber-600 rounded px-1 font-bold flex-shrink-0">
+                            PARTIEL
+                          </span>
+                        )}
+                      </button>
+                    )
+                  })}
                 </div>
-                {selectedCat && (
-                  <select name="subcategory" value={form.subcategory} onChange={handleChange}
-                    className="mt-3 w-full border border-gray-100 bg-gray-50 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-orange-400 focus:bg-white transition">
+
+                {/* Select sous-catégorie — visible seulement si cat sélectionnée et pas de verrou */}
+                {selectedCat && !showLock && (
+                  <select
+                    name="subcategory"
+                    value={form.subcategory}
+                    onChange={handleSubcatChange}
+                    className="mt-3 w-full border border-gray-100 bg-gray-50 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-orange-400 focus:bg-white transition"
+                  >
                     <option value="">Sous-catégorie (optionnel)</option>
-                    {selectedCat.subcats.map(s => <option key={s} value={s}>{s}</option>)}
+                    {selectedCat.subcats.map(s => {
+                      const subcatLocked = isLocked(form.category, s, userLevel)
+                      return (
+                        <option key={s} value={s}>
+                          {subcatLocked ? `🔒 ${s}` : s}
+                        </option>
+                      )
+                    })}
                   </select>
+                )}
+
+                {/* Carte de verrou — remplace le select quand verrou actif */}
+                {showLock && lockState && (
+                  <div className="mt-4">
+                    <CategoryLockCard
+                      categoryName={lockState.catName}
+                      categoryIcon={lockState.catIcon}
+                      subcatName={lockState.subcatName}
+                      exemptSubcats={lockState.exemptSubcats}
+                      onGoBack={handleLockGoBack}
+                      onUpgrade={handleUpgrade}
+                    />
+                  </div>
                 )}
               </div>
 
-              {/* Étape 2 — Photos & Vidéo */}
-              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-                <div className="px-5 pt-5 pb-3 border-b border-gray-50 flex items-center gap-2">
-                  <div className="w-7 h-7 rounded-full bg-orange-500 text-white text-xs font-bold flex items-center justify-center">2</div>
-                  <h2 className="font-bold text-gray-800">Photos & Vidéo</h2>
-                  <span className="ml-auto text-xs text-gray-400">{media.length}/6</span>
-                </div>
-                <div className="p-5">
-                  <div onDrop={onDrop} onDragOver={e => e.preventDefault()}
-                    className="border-2 border-dashed border-gray-200 rounded-2xl p-6 text-center hover:border-orange-400 transition-colors cursor-pointer mb-4 group"
-                    onClick={() => fileInputRef.current?.click()}>
-                    <Upload size={28} className="mx-auto text-gray-300 group-hover:text-orange-400 transition mb-2" />
-                    <p className="font-semibold text-gray-600 text-sm">Glissez vos photos ou cliquez</p>
-                    <p className="text-xs text-gray-400 mt-1">JPG, PNG, WEBP · Max 5 photos + 1 vidéo</p>
-                    <input ref={fileInputRef} type="file" accept="image/*" multiple className="hidden" onChange={e => addMedia(e.target.files, 'image')} />
-                  </div>
-                  {media.length > 0 && (
-                    <div className="grid grid-cols-4 gap-2 mb-3">
-                      {media.map((m, i) => (
-                        <div key={i} className={`relative rounded-xl overflow-hidden border-2 aspect-square ${i === 0 ? 'border-orange-400' : 'border-gray-100'}`}>
-                          {m.type === 'image'
-                            ? <img src={m.url} alt="" className="w-full h-full object-cover" />
-                            : <video src={m.url} className="w-full h-full object-cover" muted />}
-                          {i === 0 && <span className="absolute bottom-0 left-0 right-0 bg-orange-500 text-white text-[9px] font-bold text-center py-0.5">PRINCIPALE</span>}
-                          {m.type === 'video' && <span className="absolute top-1 left-1 bg-black/60 text-white text-[9px] px-1 rounded">📹</span>}
-                          <button type="button" onClick={() => removeMedia(i)}
-                            className="absolute top-1 right-1 w-5 h-5 rounded-full bg-black/60 text-white flex items-center justify-center hover:bg-red-500 transition">
-                            <X size={10} />
-                          </button>
+              {/* ── Étapes 2–5 masquées pendant le verrou ─────────────────── */}
+              {!showLock && (
+                <>
+                  {/* Étape 2 — Photos & Vidéo */}
+                  <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                    <div className="px-5 pt-5 pb-3 border-b border-gray-50 flex items-center gap-2">
+                      <div className="w-7 h-7 rounded-full bg-orange-500 text-white text-xs font-bold flex items-center justify-center">2</div>
+                      <h2 className="font-bold text-gray-800">Photos & Vidéo</h2>
+                      <span className="ml-auto text-xs text-gray-400">{media.length}/6</span>
+                    </div>
+                    <div className="p-5">
+                      <div onDrop={onDrop} onDragOver={e => e.preventDefault()}
+                        className="border-2 border-dashed border-gray-200 rounded-2xl p-6 text-center hover:border-orange-400 transition-colors cursor-pointer mb-4 group"
+                        onClick={() => fileInputRef.current?.click()}>
+                        <Upload size={28} className="mx-auto text-gray-300 group-hover:text-orange-400 transition mb-2" />
+                        <p className="font-semibold text-gray-600 text-sm">Glissez vos photos ou cliquez</p>
+                        <p className="text-xs text-gray-400 mt-1">JPG, PNG, WEBP · Max 5 photos + 1 vidéo</p>
+                        <input ref={fileInputRef} type="file" accept="image/*" multiple className="hidden"
+                          onChange={e => addMedia(e.target.files, 'image')} />
+                      </div>
+                      {media.length > 0 && (
+                        <div className="grid grid-cols-4 gap-2 mb-3">
+                          {media.map((m, i) => (
+                            <div key={i} className={`relative rounded-xl overflow-hidden border-2 aspect-square ${i === 0 ? 'border-orange-400' : 'border-gray-100'}`}>
+                              {m.type === 'image'
+                                ? <img src={m.url} alt="" className="w-full h-full object-cover" />
+                                : <video src={m.url} className="w-full h-full object-cover" muted />}
+                              {i === 0 && <span className="absolute bottom-0 left-0 right-0 bg-orange-500 text-white text-[9px] font-bold text-center py-0.5">PRINCIPALE</span>}
+                              {m.type === 'video' && <span className="absolute top-1 left-1 bg-black/60 text-white text-[9px] px-1 rounded">📹</span>}
+                              <button type="button" onClick={() => removeMedia(i)}
+                                className="absolute top-1 right-1 w-5 h-5 rounded-full bg-black/60 text-white flex items-center justify-center hover:bg-red-500 transition">
+                                <X size={10} />
+                              </button>
+                            </div>
+                          ))}
                         </div>
-                      ))}
+                      )}
+                      {!media.find(m => m.type === 'video') && (
+                        <button type="button" onClick={() => videoInputRef.current?.click()}
+                          className="flex items-center gap-2 text-sm text-gray-500 hover:text-orange-500 border border-dashed border-gray-200 hover:border-orange-300 rounded-xl px-4 py-2.5 w-full justify-center transition">
+                          <Video size={15} /> Ajouter une vidéo (booste les contacts ×3)
+                        </button>
+                      )}
+                      <input ref={videoInputRef} type="file" accept="video/*" className="hidden"
+                        onChange={e => addMedia(e.target.files, 'video')} />
                     </div>
-                  )}
-                  {!media.find(m => m.type === 'video') && (
-                    <button type="button" onClick={() => videoInputRef.current?.click()}
-                      className="flex items-center gap-2 text-sm text-gray-500 hover:text-orange-500 border border-dashed border-gray-200 hover:border-orange-300 rounded-xl px-4 py-2.5 w-full justify-center transition">
-                      <Video size={15} /> Ajouter une vidéo (booste les contacts ×3)
-                    </button>
-                  )}
-                  <input ref={videoInputRef} type="file" accept="video/*" className="hidden" onChange={e => addMedia(e.target.files, 'video')} />
-                </div>
-              </div>
-
-              {/* Étape 3 — Détails dynamiques */}
-              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-                <div className="flex items-center gap-2 mb-4">
-                  <div className="w-7 h-7 rounded-full bg-orange-500 text-white text-xs font-bold flex items-center justify-center">3</div>
-                  <h2 className="font-bold text-gray-800">
-                    {form.category ? `Détails — ${selectedCat?.name}` : "Détails de l'annonce"}
-                  </h2>
-                </div>
-                <div className="space-y-3">
-                  <input name="title" value={form.title} onChange={handleChange} required
-                    placeholder={selectedCat ? `Titre — ex: ${selectedCat.name} à vendre...` : "Titre de l'annonce *"}
-                    className="w-full border border-gray-100 bg-gray-50 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-orange-400 focus:bg-white transition font-medium" />
-                  <textarea name="description" value={form.description} onChange={handleChange} rows={4}
-                    placeholder={
-                      form.category === 'cat_auto' ? "Décrivez la voiture : options, historique d'entretien, raison de vente..." :
-                        form.category === 'cat_immo' ? 'Décrivez le bien : équipements, voisinage, accès, charges...' :
-                          form.category === 'cat_tech' ? "Décrivez l'état, les accessoires inclus, raison de vente..." :
-                            form.category === 'cat_serv' ? 'Décrivez votre service, vos compétences, vos références...' :
-                              'Décrivez votre article en détail...'
-                    }
-                    className="w-full border border-gray-100 bg-gray-50 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-orange-400 focus:bg-white transition resize-none" />
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="relative">
-                      <input name="price" value={form.price} onChange={handleChange} required type="number" min="0"
-                        placeholder={form.category === 'cat_location' ? 'Prix / jour *' : form.category === 'cat_serv' ? 'Tarif *' : 'Prix *'}
-                        className="w-full border border-gray-100 bg-gray-50 rounded-xl pl-4 pr-16 py-3 text-sm focus:outline-none focus:border-orange-400 focus:bg-white transition font-bold" />
-                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400 font-semibold">FCFA</span>
-                    </div>
-                    <select name="etat" value={form.etat} onChange={handleChange}
-                      className="border border-gray-100 bg-gray-50 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-orange-400 focus:bg-white transition">
-                      <option value="">État</option>
-                      {catConfig.etats.map(e => <option key={e} value={e}>{e}</option>)}
-                    </select>
                   </div>
 
-                  {catConfig.extraFields.length > 0 && (
-                    <div className="grid grid-cols-2 gap-3 pt-3 border-t border-gray-50">
-                      {catConfig.extraFields.map(field => (
-                        <div key={field.name}>
-                          {field.type === 'select' ? (
-                            <select name={field.name} value={form[field.name] || ''} onChange={handleChange}
-                              className="w-full border border-gray-100 bg-gray-50 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-orange-400 focus:bg-white transition">
-                              <option value="">{field.label}</option>
-                              {field.options?.map(o => <option key={o} value={o}>{o}</option>)}
-                            </select>
-                          ) : (
-                            <input name={field.name} value={form[field.name] || ''} onChange={handleChange}
-                              type={field.type || 'text'} placeholder={field.label}
-                              className="w-full border border-gray-100 bg-gray-50 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-orange-400 focus:bg-white transition" />
-                          )}
-                        </div>
-                      ))}
+                  {/* Étape 3 — Détails dynamiques */}
+                  <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+                    <div className="flex items-center gap-2 mb-4">
+                      <div className="w-7 h-7 rounded-full bg-orange-500 text-white text-xs font-bold flex items-center justify-center">3</div>
+                      <h2 className="font-bold text-gray-800">
+                        {form.category ? `Détails — ${selectedCat?.name}` : "Détails de l'annonce"}
+                      </h2>
                     </div>
-                  )}
-                </div>
-              </div>
+                    <div className="space-y-3">
+                      <input name="title" value={form.title} onChange={handleChange} required
+                        placeholder={selectedCat ? `Titre — ex: ${selectedCat.name} à vendre...` : "Titre de l'annonce *"}
+                        className="w-full border border-gray-100 bg-gray-50 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-orange-400 focus:bg-white transition font-medium" />
+                      <textarea name="description" value={form.description} onChange={handleChange} rows={4}
+                        placeholder={
+                          form.category === 'cat_auto' ? "Décrivez la voiture : options, historique d'entretien, raison de vente..." :
+                            form.category === 'cat_immo' ? 'Décrivez le bien : équipements, voisinage, accès, charges...' :
+                              form.category === 'cat_tech' ? "Décrivez l'état, les accessoires inclus, raison de vente..." :
+                                form.category === 'cat_serv' ? 'Décrivez votre service, vos compétences, vos références...' :
+                                  'Décrivez votre article en détail...'
+                        }
+                        className="w-full border border-gray-100 bg-gray-50 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-orange-400 focus:bg-white transition resize-none" />
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="relative">
+                          <input name="price" value={form.price} onChange={handleChange} required type="number" min="0"
+                            placeholder={form.category === 'cat_location' ? 'Prix / jour *' : form.category === 'cat_serv' ? 'Tarif *' : 'Prix *'}
+                            className="w-full border border-gray-100 bg-gray-50 rounded-xl pl-4 pr-16 py-3 text-sm focus:outline-none focus:border-orange-400 focus:bg-white transition font-bold" />
+                          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400 font-semibold">FCFA</span>
+                        </div>
+                        <select name="etat" value={form.etat} onChange={handleChange}
+                          className="border border-gray-100 bg-gray-50 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-orange-400 focus:bg-white transition">
+                          <option value="">État</option>
+                          {catConfig.etats.map(e => <option key={e} value={e}>{e}</option>)}
+                        </select>
+                      </div>
+                      {catConfig.extraFields.length > 0 && (
+                        <div className="grid grid-cols-2 gap-3 pt-3 border-t border-gray-50">
+                          {catConfig.extraFields.map(field => (
+                            <div key={field.name}>
+                              {field.type === 'select' ? (
+                                <select name={field.name} value={form[field.name] || ''} onChange={handleChange}
+                                  className="w-full border border-gray-100 bg-gray-50 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-orange-400 focus:bg-white transition">
+                                  <option value="">{field.label}</option>
+                                  {field.options?.map(o => <option key={o} value={o}>{o}</option>)}
+                                </select>
+                              ) : (
+                                <input name={field.name} value={form[field.name] || ''} onChange={handleChange}
+                                  type={field.type || 'text'} placeholder={field.label}
+                                  className="w-full border border-gray-100 bg-gray-50 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-orange-400 focus:bg-white transition" />
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
 
-              {/* Étape 4 — Localisation */}
-              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-                <div className="flex items-center gap-2 mb-4">
-                  <div className="w-7 h-7 rounded-full bg-orange-500 text-white text-xs font-bold flex items-center justify-center">4</div>
-                  <MapPin size={16} className="text-orange-500" />
-                  <h2 className="font-bold text-gray-800">Localisation</h2>
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <select name="city" value={form.city} onChange={handleChange} required
-                    className="border border-gray-100 bg-gray-50 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-orange-400 focus:bg-white transition">
-                    <option value="">Ville *</option>
-                    {CITIES.map(c => { const name = c.replace(/^[^\s]+\s/, ''); return <option key={name} value={name}>{name}</option> })}
-                  </select>
-                  {quartiersForCity.length > 0 ? (
-                    <select name="quartier" value={form.quartier} onChange={handleChange}
-                      className="border border-gray-100 bg-gray-50 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-orange-400 focus:bg-white transition">
-                      <option value="">Quartier (optionnel)</option>
-                      {quartiersForCity.map(q => <option key={q} value={q}>{q}</option>)}
-                      <option value="Autre">Autre quartier</option>
-                    </select>
-                  ) : (
-                    <input name="quartier" value={form.quartier} onChange={handleChange}
-                      placeholder="Quartier (optionnel)"
-                      className="border border-gray-100 bg-gray-50 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-orange-400 focus:bg-white transition" />
-                  )}
-                </div>
-                {form.quartier === 'Autre' && (
-                  <input onChange={e => setForm(f => ({ ...f, quartier: e.target.value }))}
-                    placeholder="Précisez votre quartier"
-                    className="mt-3 w-full border border-gray-100 bg-gray-50 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-orange-400 focus:bg-white transition" />
-                )}
-              </div>
+                  {/* Étape 4 — Localisation */}
+                  <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+                    <div className="flex items-center gap-2 mb-4">
+                      <div className="w-7 h-7 rounded-full bg-orange-500 text-white text-xs font-bold flex items-center justify-center">4</div>
+                      <MapPin size={16} className="text-orange-500" />
+                      <h2 className="font-bold text-gray-800">Localisation</h2>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <select name="city" value={form.city} onChange={handleChange} required
+                        className="border border-gray-100 bg-gray-50 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-orange-400 focus:bg-white transition">
+                        <option value="">Ville *</option>
+                        {CITIES.map(c => { const name = c.replace(/^[^\s]+\s/, ''); return <option key={name} value={name}>{name}</option> })}
+                      </select>
+                      {quartiersForCity.length > 0 ? (
+                        <select name="quartier" value={form.quartier} onChange={handleChange}
+                          className="border border-gray-100 bg-gray-50 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-orange-400 focus:bg-white transition">
+                          <option value="">Quartier (optionnel)</option>
+                          {quartiersForCity.map(q => <option key={q} value={q}>{q}</option>)}
+                          <option value="Autre">Autre quartier</option>
+                        </select>
+                      ) : (
+                        <input name="quartier" value={form.quartier} onChange={handleChange}
+                          placeholder="Quartier (optionnel)"
+                          className="border border-gray-100 bg-gray-50 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-orange-400 focus:bg-white transition" />
+                      )}
+                    </div>
+                    {form.quartier === 'Autre' && (
+                      <input onChange={e => setForm(f => ({ ...f, quartier: e.target.value }))}
+                        placeholder="Précisez votre quartier"
+                        className="mt-3 w-full border border-gray-100 bg-gray-50 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-orange-400 focus:bg-white transition" />
+                    )}
+                  </div>
 
-              {/* Étape 5 — Contact */}
-              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-                <div className="flex items-center gap-2 mb-4">
-                  <div className="w-7 h-7 rounded-full bg-orange-500 text-white text-xs font-bold flex items-center justify-center">5</div>
-                  <Phone size={16} className="text-orange-500" />
-                  <h2 className="font-bold text-gray-800">Contact</h2>
-                </div>
-                <div className="space-y-3">
-                  <input name="tel" value={form.tel} onChange={handleChange} required
-                    placeholder="Téléphone * (+225 07 12 34 56 78)"
-                    className="w-full border border-gray-100 bg-gray-50 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-orange-400 focus:bg-white transition" />
-                  <input name="whatsapp" value={form.whatsapp || ''} onChange={handleChange}
-                    placeholder="WhatsApp si différent du téléphone"
-                    className="w-full border border-gray-100 bg-gray-50 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-orange-400 focus:bg-white transition" />
-                </div>
-              </div>
+                  {/* Étape 5 — Contact */}
+                  <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+                    <div className="flex items-center gap-2 mb-4">
+                      <div className="w-7 h-7 rounded-full bg-orange-500 text-white text-xs font-bold flex items-center justify-center">5</div>
+                      <Phone size={16} className="text-orange-500" />
+                      <h2 className="font-bold text-gray-800">Contact</h2>
+                    </div>
+                    <div className="space-y-3">
+                      <input name="tel" value={form.tel} onChange={handleChange} required
+                        placeholder="Téléphone * (+225 07 12 34 56 78)"
+                        className="w-full border border-gray-100 bg-gray-50 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-orange-400 focus:bg-white transition" />
+                      <input name="whatsapp" value={form.whatsapp || ''} onChange={handleChange}
+                        placeholder="WhatsApp si différent du téléphone"
+                        className="w-full border border-gray-100 bg-gray-50 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-orange-400 focus:bg-white transition" />
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
 
-            {/* Colonne droite sticky */}
+            {/* ── Colonne droite sticky ──────────────────────────────────── */}
             <div className="hidden lg:block">
               <div className="sticky top-4 space-y-4">
-                <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-                  <h3 className="font-bold text-gray-800 mb-4">Résumé</h3>
-                  <div className="space-y-2.5">
-                    {[
-                      { label: 'Catégorie', value: selectedCat ? `${selectedCat.icon} ${selectedCat.name}` : '—' },
-                      { label: 'Photos', value: `${media.filter(m => m.type === 'image').length}/5` },
-                      { label: 'Vidéo', value: media.find(m => m.type === 'video') ? '✅' : '—' },
-                      { label: 'Prix', value: form.price ? `${parseInt(form.price).toLocaleString('fr')} FCFA` : '—' },
-                      { label: 'Ville', value: form.city || '—' },
-                      { label: 'Quartier', value: form.quartier || '—' },
-                    ].map(item => (
-                      <div key={item.label} className="flex items-center justify-between text-sm">
-                        <span className="text-gray-400">{item.label}</span>
-                        <span className="font-semibold text-gray-700">{item.value}</span>
-                      </div>
-                    ))}
+                {showLock ? (
+                  <div className="bg-amber-50 border border-amber-200 rounded-2xl p-5 text-center">
+                    <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center mx-auto mb-3">
+                      <Lock size={18} className="text-amber-600" />
+                    </div>
+                    <p className="text-sm font-bold text-gray-900 mb-1">Accès restreint</p>
+                    <p className="text-xs text-gray-500 mb-4 leading-relaxed">
+                      Cette catégorie est réservée aux membres CONFIRMÉ avec vérification CNI.
+                    </p>
+                    <button type="button" onClick={handleUpgrade}
+                      className="w-full py-2.5 bg-orange-500 hover:bg-orange-600 text-white text-xs font-bold rounded-xl transition flex items-center justify-center gap-1.5">
+                      <Shield size={12} /> Devenir Confirmé
+                    </button>
                   </div>
-                </div>
+                ) : (
+                  <>
+                    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+                      <h3 className="font-bold text-gray-800 mb-4">Résumé</h3>
+                      <div className="space-y-2.5">
+                        {[
+                          { label: 'Catégorie', value: selectedCat ? `${selectedCat.icon} ${selectedCat.name}` : '—' },
+                          { label: 'Sous-catégorie', value: form.subcategory || '—' },
+                          { label: 'Photos', value: `${media.filter(m => m.type === 'image').length}/5` },
+                          { label: 'Vidéo', value: media.find(m => m.type === 'video') ? '✅' : '—' },
+                          { label: 'Prix', value: form.price ? `${parseInt(form.price).toLocaleString('fr')} FCFA` : '—' },
+                          { label: 'Ville', value: form.city || '—' },
+                          { label: 'Quartier', value: form.quartier || '—' },
+                        ].map(item => (
+                          <div key={item.label} className="flex items-center justify-between text-sm">
+                            <span className="text-gray-400">{item.label}</span>
+                            <span className="font-semibold text-gray-700 text-right max-w-[60%] truncate">{item.value}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
 
-                <div className="bg-orange-50 border border-orange-100 rounded-2xl p-4">
-                  <p className="text-xs font-bold text-orange-600 mb-2">
-                    💡 {form.category === 'cat_auto' ? 'Conseils vente voiture' : form.category === 'cat_immo' ? 'Conseils immobilier' : 'Conseils pour vendre vite'}
-                  </p>
-                  <ul className="text-xs text-orange-600/80 space-y-1.5">
-                    {form.category === 'cat_auto' ? <>
-                      <li className="flex gap-1.5"><ChevronRight size={10} className="mt-0.5 flex-shrink-0" />Photographiez l'extérieur, l'intérieur et le moteur</li>
-                      <li className="flex gap-1.5"><ChevronRight size={10} className="mt-0.5 flex-shrink-0" />Mentionnez si la vignette est à jour</li>
-                    </> : form.category === 'cat_immo' ? <>
-                      <li className="flex gap-1.5"><ChevronRight size={10} className="mt-0.5 flex-shrink-0" />Montrez toutes les pièces en photos</li>
-                      <li className="flex gap-1.5"><ChevronRight size={10} className="mt-0.5 flex-shrink-0" />Précisez l'accès eau et électricité</li>
-                    </> : <>
-                      <li className="flex gap-1.5"><ChevronRight size={10} className="mt-0.5 flex-shrink-0" />Ajoutez au moins 3 photos de qualité</li>
-                      <li className="flex gap-1.5"><ChevronRight size={10} className="mt-0.5 flex-shrink-0" />Une vidéo augmente les contacts de ×3</li>
-                    </>}
-                  </ul>
-                </div>
+                    <div className="bg-orange-50 border border-orange-100 rounded-2xl p-4">
+                      <p className="text-xs font-bold text-orange-600 mb-2">
+                        💡 {form.category === 'cat_auto' ? 'Conseils vente voiture' : form.category === 'cat_immo' ? 'Conseils immobilier' : 'Conseils pour vendre vite'}
+                      </p>
+                      <ul className="text-xs text-orange-600/80 space-y-1.5">
+                        {form.category === 'cat_auto' ? <>
+                          <li className="flex gap-1.5"><ChevronRight size={10} className="mt-0.5 flex-shrink-0" />Photographiez l'extérieur, l'intérieur et le moteur</li>
+                          <li className="flex gap-1.5"><ChevronRight size={10} className="mt-0.5 flex-shrink-0" />Mentionnez si la vignette est à jour</li>
+                        </> : form.category === 'cat_immo' ? <>
+                          <li className="flex gap-1.5"><ChevronRight size={10} className="mt-0.5 flex-shrink-0" />Montrez toutes les pièces en photos</li>
+                          <li className="flex gap-1.5"><ChevronRight size={10} className="mt-0.5 flex-shrink-0" />Précisez l'accès eau et électricité</li>
+                        </> : <>
+                          <li className="flex gap-1.5"><ChevronRight size={10} className="mt-0.5 flex-shrink-0" />Ajoutez au moins 3 photos de qualité</li>
+                          <li className="flex gap-1.5"><ChevronRight size={10} className="mt-0.5 flex-shrink-0" />Une vidéo augmente les contacts de ×3</li>
+                        </>}
+                      </ul>
+                    </div>
 
-                <div className="bg-blue-50 border border-blue-100 rounded-xl px-4 py-3 flex items-center gap-2">
-                  <Save size={14} className="text-blue-500 flex-shrink-0" />
-                  <p className="text-xs text-blue-600">Sauvegarde automatique activée — vos données ne seront pas perdues</p>
-                </div>
+                    <div className="bg-blue-50 border border-blue-100 rounded-xl px-4 py-3 flex items-center gap-2">
+                      <Save size={14} className="text-blue-500 flex-shrink-0" />
+                      <p className="text-xs text-blue-600">Sauvegarde automatique activée</p>
+                    </div>
 
-                <button type="submit" disabled={loading}
-                  className="w-full py-4 bg-orange-500 hover:bg-orange-600 active:scale-[0.98] text-white font-bold rounded-2xl transition-all flex items-center justify-center gap-2 disabled:opacity-60 shadow-lg shadow-orange-200 text-base">
-                  {loading ? <><Loader2 size={18} className="animate-spin" /> Publication...</> : '🚀 Publier mon annonce'}
-                </button>
-                <p className="text-center text-xs text-gray-400">Gratuit · Visible immédiatement</p>
+                    <button type="submit" disabled={loading}
+                      className="w-full py-4 bg-orange-500 hover:bg-orange-600 active:scale-[0.98] text-white font-bold rounded-2xl transition-all flex items-center justify-center gap-2 disabled:opacity-60 shadow-lg shadow-orange-200 text-base">
+                      {loading ? <><Loader2 size={18} className="animate-spin" /> Publication...</> : '🚀 Publier mon annonce'}
+                    </button>
+                    <p className="text-center text-xs text-gray-400">Gratuit · Visible immédiatement</p>
+                  </>
+                )}
               </div>
             </div>
           </div>
         </form>
 
-        {/* Barre flottante mobile */}
+        {/* ── Barre mobile flottante ─────────────────────────────────────── */}
         <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-100 shadow-2xl px-4 py-3">
           <div className="flex items-center gap-3 max-w-lg mx-auto">
-            <div className="flex-1 min-w-0">
-              <p className="text-xs text-gray-400 truncate">
-                {selectedCat ? `${selectedCat.icon} ${selectedCat.name}` : 'Aucune catégorie sélectionnée'}
-              </p>
-              <p className="font-extrabold text-orange-500 text-base leading-tight">
-                {form.price ? `${parseInt(form.price).toLocaleString('fr')} FCFA` : 'Prix non défini'}
-              </p>
-              <p className="text-xs text-gray-400 truncate">
-                {form.city || '—'}{form.quartier ? `, ${form.quartier}` : ''}
-              </p>
-            </div>
-            <button type="submit" form="publier-form" disabled={loading}
-              className="flex-shrink-0 px-5 py-3 bg-orange-500 hover:bg-orange-600 text-white font-bold rounded-xl transition flex items-center gap-2 disabled:opacity-60 shadow-lg shadow-orange-200">
-              {loading ? <Loader2 size={16} className="animate-spin" /> : <span>🚀</span>}
-              <span>Publier</span>
-            </button>
+            {showLock ? (
+              <div className="flex-1 flex items-center gap-3">
+                <Lock size={16} className="text-amber-500 flex-shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs text-amber-700 font-semibold truncate">Catégorie réservée CONFIRMÉ</p>
+                  <p className="text-[10px] text-gray-400">Vérifiez votre CNI pour accéder</p>
+                </div>
+                <button type="button" onClick={handleUpgrade}
+                  className="flex-shrink-0 px-4 py-2.5 bg-orange-500 hover:bg-orange-600 text-white text-xs font-bold rounded-xl transition flex items-center gap-1.5 shadow-lg shadow-orange-200">
+                  <Shield size={12} /> Devenir Confirmé
+                </button>
+              </div>
+            ) : (
+              <>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs text-gray-400 truncate">
+                    {selectedCat ? `${selectedCat.icon} ${selectedCat.name}` : 'Aucune catégorie'}
+                    {form.subcategory ? ` › ${form.subcategory}` : ''}
+                  </p>
+                  <p className="font-extrabold text-orange-500 text-base leading-tight">
+                    {form.price ? `${parseInt(form.price).toLocaleString('fr')} FCFA` : 'Prix non défini'}
+                  </p>
+                  <p className="text-xs text-gray-400 truncate">
+                    {form.city || '—'}{form.quartier ? `, ${form.quartier}` : ''}
+                  </p>
+                </div>
+                <button type="submit" form="publier-form" disabled={loading}
+                  className="flex-shrink-0 px-5 py-3 bg-orange-500 hover:bg-orange-600 text-white font-bold rounded-xl transition flex items-center gap-2 disabled:opacity-60 shadow-lg shadow-orange-200">
+                  {loading ? <Loader2 size={16} className="animate-spin" /> : <span>🚀</span>}
+                  <span>Publier</span>
+                </button>
+              </>
+            )}
           </div>
-          {lastSaved && (
+          {lastSaved && !showLock && (
             <p className="text-[10px] text-gray-400 text-center mt-1 flex items-center justify-center gap-1">
               <Save size={9} /> Sauvegardé à {lastSaved}
             </p>
