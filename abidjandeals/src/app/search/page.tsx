@@ -9,7 +9,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 
 const ADULT_CATEGORIES = ['lingerie', 'cat_lingerie']
 const STORAGE_KEY = 'abidjandeals_age_verified'
@@ -18,7 +18,6 @@ function isAgeVerified(): boolean {
   try { return localStorage.getItem(STORAGE_KEY) === 'true' } catch { return false }
 }
 
-// ─── MAPPING slug URL → category_id réel en DB ───────────────────────────────
 const SLUG_TO_DB_CATEGORY: Record<string, string> = {
   'auto': 'cat_auto', 'automobile': 'cat_auto', 'vehicules-equipements': 'cat_auto', 'vehicules': 'cat_auto',
   'hightech': 'cat_tech', 'high-tech': 'cat_tech', 'hightech-informatique': 'cat_tech', 'tech': 'cat_tech',
@@ -35,10 +34,7 @@ const SLUG_TO_DB_CATEGORY: Record<string, string> = {
   'cat_loisir': 'cat_loisir', 'cat_autres': 'cat_autres', 'cat_agri': 'cat_agri',
 }
 
-// ─── MAPPING slug sous-catégorie → UUID direct en DB ─────────────────────────
-// ✅ BYPASS : Plus besoin de requête DB pour résoudre les sous-catégories
 const SUBCAT_SLUG_TO_UUID: Record<string, string> = {
-  // High-Tech (cat_tech)
   'objets-connectes': 'c252dd5b-5c15-4569-b05a-d4611d46332b',
   'telephones-accessoires': '72a255f1-eb6c-4b45-860a-2d2c0fce414c',
   'smartphones': '72a255f1-eb6c-4b45-860a-2d2c0fce414c',
@@ -76,7 +72,8 @@ const LABELS: Record<string, string> = {
   "tv-son": "TV & Home Cinéma", "photo-video": "Photo & Vidéo",
   "consoles-jeux": "Consoles & Jeux Vidéo", "objets-connectes": "Objets Connectés",
   "composants": "Composants (RAM, SSD, Cartes Mères)", "imprimantes": "Imprimantes & Scanners",
-  "cameras": "Cameras", "vente-appartement": "Location Appartements",
+  "cameras": "Cameras", "telephones-accessoires": "Téléphones & Accessoires",
+  "vente-appartement": "Location Appartements",
   "vente-maison-villa": "Vente Maisons & Villas", "location-meublee": "Location Meublée",
   "location-vide": "Location Vide", "colocation": "Colocation", "terrains": "Terrains avec ACD",
   "bureaux-boutiques": "Bureaux & Commerces", "vetements": "Vêtements & Chaussures",
@@ -248,11 +245,15 @@ function SearchContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
 
+  // ✅ Lecture des params URL
   const categorySlug = searchParams.get("category") ?? searchParams.get("cat")
-  const subcategorySlug = searchParams.get("subcategory") ?? searchParams.get("sub") ?? searchParams.get("subcat")
+  const subcategorySlug = searchParams.get("sub") ?? searchParams.get("subcategory") ?? searchParams.get("subcat")
   const q = searchParams.get("q") ?? ""
   const sort = searchParams.get("sort") ?? "recent"
+
+  // ✅ Résolution immédiate et stable des IDs
   const dbCategoryId = resolveDbCategoryId(categorySlug)
+  const subCatUuid = subcategorySlug ? (SUBCAT_SLUG_TO_UUID[subcategorySlug] ?? null) : null
 
   const isAdultCategory = ADULT_CATEGORIES.some((a) => a === categorySlug || a === dbCategoryId)
   const [ageCleared, setAgeCleared] = useState<boolean>(!isAdultCategory || isAgeVerified())
@@ -282,34 +283,45 @@ function SearchContent() {
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   ), [])
 
-  const fetchKey = `${dbCategoryId}|${subcategorySlug}|${q}|${sort}|${priceMin}|${priceMax}|${selectedEtat}`
-
-  const fetchAds = useCallback(async () => {
-    if (!ageCleared) return
+  // ✅ CORRECTION PRINCIPALE : fetchAds reçoit tous les paramètres directement
+  // Élimine le problème de stale closure — plus de dépendance à fetchKey
+  const fetchAds = useMemo(() => async (params: {
+    dbCategoryId: string | null
+    subCatUuid: string | null
+    q: string
+    sort: string
+    priceMin: string
+    priceMax: string
+    selectedEtat: string
+  }) => {
     setLoading(true)
     setError(null)
 
-    try {
-      // ✅ BYPASS TOTAL : résolution UUID directe sans requête DB
-      const subCatUuid = subcategorySlug ? (SUBCAT_SLUG_TO_UUID[subcategorySlug] ?? null) : null
+    console.log('[fetchAds] Paramètres reçus:', params)
 
+    try {
       let query = supabase
         .from("ads")
         .select(`id, title, price, category_id, sub_category_id, etat, marque, city, quartier, images, boost_level, views, status, created_at`, { count: "exact" })
         .in("status", ["active", "approved"])
 
-      if (subCatUuid) {
-        query = query.eq("sub_category_id", subCatUuid).eq("category_id", dbCategoryId!)
-      } else if (dbCategoryId) {
-        query = query.eq("category_id", dbCategoryId)
+      // ✅ Filtre strict : les deux conditions sont obligatoires ensemble
+      if (params.subCatUuid && params.dbCategoryId) {
+        console.log('[fetchAds] Filtre sous-catégorie:', params.subCatUuid, '+ catégorie:', params.dbCategoryId)
+        query = query
+          .eq("sub_category_id", params.subCatUuid)
+          .eq("category_id", params.dbCategoryId)
+      } else if (params.dbCategoryId) {
+        console.log('[fetchAds] Filtre catégorie seule:', params.dbCategoryId)
+        query = query.eq("category_id", params.dbCategoryId)
       }
 
-      if (q.trim()) query = query.or(`title.ilike.%${q.trim()}%,description.ilike.%${q.trim()}%`)
-      if (priceMin) query = query.gte("price", parseInt(priceMin))
-      if (priceMax) query = query.lte("price", parseInt(priceMax))
-      if (selectedEtat) query = query.eq("etat", selectedEtat)
+      if (params.q.trim()) query = query.or(`title.ilike.%${params.q.trim()}%,description.ilike.%${params.q.trim()}%`)
+      if (params.priceMin) query = query.gte("price", parseInt(params.priceMin))
+      if (params.priceMax) query = query.lte("price", parseInt(params.priceMax))
+      if (params.selectedEtat) query = query.eq("etat", params.selectedEtat)
 
-      switch (sort) {
+      switch (params.sort) {
         case "price_asc": query = query.order("price", { ascending: true }); break
         case "price_desc": query = query.order("price", { ascending: false }); break
         case "popular": query = query.order("views", { ascending: false }); break
@@ -317,6 +329,9 @@ function SearchContent() {
       }
 
       const { data, error: sbError, count } = await query.limit(48)
+
+      console.log('[fetchAds] Résultat:', { count, ids: (data as Ad[])?.map(a => ({ id: a.id, title: a.title, sub_category_id: a.sub_category_id })) })
+
       if (sbError) throw sbError
       setAds((data as Ad[]) ?? [])
       setTotal(count ?? 0)
@@ -325,9 +340,19 @@ function SearchContent() {
     } finally {
       setLoading(false)
     }
-  }, [fetchKey, ageCleared])
+  }, [supabase])
 
-  useEffect(() => { fetchAds() }, [fetchAds])
+  // ✅ useEffect déclenche fetchAds avec les valeurs ACTUELLES à chaque changement
+  useEffect(() => {
+    if (!ageCleared) return
+    fetchAds({ dbCategoryId, subCatUuid, q, sort, priceMin, priceMax, selectedEtat })
+  }, [ageCleared, dbCategoryId, subCatUuid, q, sort, priceMin, priceMax, selectedEtat, fetchAds])
+
+  const handleApplyFilters = () => {
+    if (!ageCleared) return
+    fetchAds({ dbCategoryId, subCatUuid, q, sort, priceMin, priceMax, selectedEtat })
+    setShowFilters(false)
+  }
 
   const pageLabel = subcategorySlug ? getLabel(subcategorySlug) : categorySlug ? getLabel(categorySlug) : q ? `Résultats pour "${q}"` : "Toutes les annonces"
   const pageEmoji = subcategorySlug ? getCatEmoji(subcategorySlug) : getCatEmoji(categorySlug)
@@ -418,7 +443,7 @@ function SearchContent() {
                 </div>
                 <div className="flex gap-2 ml-auto">
                   {hasActiveFilters && <button onClick={() => { setPriceMin(""); setPriceMax(""); setSelectedEtat("") }} className="px-4 py-2 text-xs font-semibold text-gray-500 hover:text-gray-700 transition-colors">Réinitialiser</button>}
-                  <button onClick={() => { fetchAds(); setShowFilters(false) }} className="px-5 py-2 bg-orange-500 hover:bg-orange-600 text-white text-xs font-bold rounded-xl transition-colors">Appliquer</button>
+                  <button onClick={handleApplyFilters} className="px-5 py-2 bg-orange-500 hover:bg-orange-600 text-white text-xs font-bold rounded-xl transition-colors">Appliquer</button>
                 </div>
               </div>
             </div>
