@@ -40,6 +40,7 @@ const SLUG_TO_DB_CATEGORY: Record<string, string> = {
 const SUBCAT_SLUG_TO_UUID: Record<string, string> = {
   // High-Tech (cat_tech)
   'objets-connectes': 'c252dd5b-5c15-4569-b05a-d4611d46332b',
+  'telephones-accessoires': '72a255f1-eb6c-4b45-860a-2d2c0fce414c',
   'smartphones': '72a255f1-eb6c-4b45-860a-2d2c0fce414c',
   'tablettes': '72a255f1-eb6c-4b45-860a-2d2c0fce414c',
   'ordinateurs': '0f43b598-2074-402a-b668-1b0075d1f402',
