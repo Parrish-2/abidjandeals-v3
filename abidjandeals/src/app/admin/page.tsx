@@ -1,5 +1,11 @@
-import { redirect } from 'next/navigation'
+'use client'
+import { useRouter } from 'next/navigation'
+import { useEffect } from 'react'
 
 export default function AdminPage() {
-  redirect('/admin/moderation')
+  const router = useRouter()
+  useEffect(() => {
+    router.replace('/admin/moderation')
+  }, [router])
+  return null
 }
