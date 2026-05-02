@@ -29,7 +29,6 @@ const QUARTIERS: Record<string, string[]> = {
 type ExtraField = { name: string; label: string; type?: string; options?: string[]; placeholder?: string }
 type CatConfig = { etats: string[]; extraFields: ExtraField[] }
 
-// ── CATEGORY_FIELDS — clés alignées sur les IDs réels de data.ts ─────────────
 const CATEGORY_FIELDS: Record<string, CatConfig> = {
   cat_tech: {
     etats: ['Neuf', 'Reconditionné', 'Très bon état', 'Bon état', 'À réparer'],
@@ -129,6 +128,7 @@ const CATEGORY_FIELDS: Record<string, CatConfig> = {
     ],
   },
 }
+
 const DEFAULT_CONFIG: CatConfig = {
   etats: ['Neuf', 'Très bon état', 'Bon état', 'État correct'],
   extraFields: [{ name: 'marque', label: 'Marque (optionnel)', placeholder: "Marque de l'article" }],
@@ -292,7 +292,6 @@ export default function PublierPage() {
     }, 25000)
 
     try {
-      // Auth check: priorité au store (instantané), fallback getSession avec timeout 5s
       let userId = storeUser?.id ?? null
       if (!userId) {
         const sessionPromise = supabase.auth.getSession()
@@ -351,7 +350,7 @@ export default function PublierPage() {
         }
       }
 
-      // Résoudre sub_category_id depuis le nom de sous-catégorie
+      // ✅ Résoudre sub_category_id depuis le nom de sous-catégorie
       let subCategoryUuid: string | null = null
       if (form.subcategory && form.category) {
         const { data: subCat } = await supabase
@@ -379,9 +378,11 @@ export default function PublierPage() {
         whatsapp: form.whatsapp || form.tel,
         images: uploadedImages,
         video_url: videoUrl || null,
-        status: 'pending',
+        // ✅ CORRECTION : status active pour que l'annonce soit visible immédiatement
+        status: 'active',
         views: 0,
       })
+
       const insertTimeout = new Promise<{ error: { message: string } }>((resolve) =>
         setTimeout(() => resolve({ error: { message: 'Délai dépassé pour la publication' } }), 15000)
       )
@@ -424,7 +425,8 @@ export default function PublierPage() {
           <CheckCircle size={48} className="text-green-500" />
         </div>
         <h1 className="text-2xl font-extrabold text-gray-900">Annonce publiée ! 🎉</h1>
-        <p className="text-gray-500">En cours de validation par notre équipe (24h max).</p>
+        {/* ✅ CORRECTION : message mis à jour */}
+        <p className="text-gray-500">Votre annonce est maintenant en ligne et visible par tous !</p>
         <p className="text-xs text-gray-400">Redirection vers votre tableau de bord...</p>
       </div>
       <Footer />
@@ -691,7 +693,7 @@ export default function PublierPage() {
                   className="w-full py-4 bg-orange-500 hover:bg-orange-600 active:scale-[0.98] text-white font-bold rounded-2xl transition-all flex items-center justify-center gap-2 disabled:opacity-60 shadow-lg shadow-orange-200 text-base">
                   {loading ? <><Loader2 size={18} className="animate-spin" /> Publication...</> : '🚀 Publier mon annonce'}
                 </button>
-                <p className="text-center text-xs text-gray-400">Gratuit · Validation sous 24h</p>
+                <p className="text-center text-xs text-gray-400">Gratuit · Visible immédiatement</p>
               </div>
             </div>
           </div>
