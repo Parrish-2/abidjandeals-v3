@@ -239,49 +239,18 @@ function SearchContent() {
   const sort = searchParams.get("sort") ?? "recent"
 
   const dbCategoryId = resolveDbCategoryId(categorySlug)
-  const subCategoryId = useRef<string | null>(null)
 
-  // ✅ FIX 1 : subResolved bloque fetchAds tant que la résolution async n'est pas terminée
-  const [subCategoryIdResolved, setSubCategoryIdResolved] = useState<string | null>(null)
-  const [subResolved, setSubResolved] = useState<boolean>(!subcategorySlug)
+  // ─── FIX DÉFINITIF ────────────────────────────────────────────────────────
+  // Filtrage direct par ads.subcategory = slug (pas de résolution UUID).
+  // publier.tsx stocke désormais le slug dans ads.subcategory.
+  // Suppression du useEffect de résolution async → zéro race condition.
+  // Compatible avec toutes les annonces futures automatiquement.
+  // ─────────────────────────────────────────────────────────────────────────
 
   const supabase = useMemo(() => createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   ), [])
-
-  // ✅ FIX 2 : setSubResolved(false) au début, setSubResolved(true) dans finally
-  useEffect(() => {
-    if (!subcategorySlug || !dbCategoryId) {
-      setSubCategoryIdResolved(null)
-      setSubResolved(true) // pas de sous-catégorie → résolution immédiate
-      return
-    }
-
-    setSubResolved(false) // reset : résolution en cours
-
-    const resolveSubcategory = async () => {
-      try {
-        const { data, error } = await supabase
-          .from('categories')
-          .select('id')
-          .eq('slug', subcategorySlug)
-          .eq('parent_id', dbCategoryId)
-          .maybeSingle()
-
-        if (error) throw error
-        setSubCategoryIdResolved(data?.id ?? null)
-        console.log('[resolveSubcategory] Resolved slug:', subcategorySlug, '→ ID:', data?.id)
-      } catch (err) {
-        console.error('[resolveSubcategory] Error:', err)
-        setSubCategoryIdResolved(null)
-      } finally {
-        setSubResolved(true) // résolution terminée (succès ou échec)
-      }
-    }
-
-    resolveSubcategory()
-  }, [subcategorySlug, dbCategoryId, supabase])
 
   const isAdultCategory = ADULT_CATEGORIES.some((a) => a === categorySlug || a === dbCategoryId)
   const [ageCleared, setAgeCleared] = useState<boolean>(!isAdultCategory || isAgeVerified())
@@ -308,8 +277,7 @@ function SearchContent() {
 
   const fetchAds = useMemo(() => async (params: {
     dbCategoryId: string | null
-    subCategoryId: string | null
-    subcategorySlug: string | null // ✅ FIX 3 : ajouté pour bloquer si slug non résolu
+    subcategorySlug: string | null
     q: string
     sort: string
     priceMin: string
@@ -319,31 +287,20 @@ function SearchContent() {
     setLoading(true)
     setError(null)
 
-    console.log('[fetchAds] Paramètres reçus:', params)
-
     try {
       let query = supabase
         .from("ads")
         .select(`id, title, price, category_id, sub_category_id, etat, marque, city, quartier, images, boost_level, views, status, created_at`, { count: "exact" })
         .in("status", ["active", "approved"])
 
-      if (params.subCategoryId && params.dbCategoryId) {
-        // Sous-catégorie résolue → double filtre catégorie + sous-catégorie
-        console.log('[fetchAds] Filtre: catégorie=', params.dbCategoryId, '+ sous-catégorie=', params.subCategoryId)
+      if (params.dbCategoryId && params.subcategorySlug) {
+        // Catégorie + sous-catégorie : filtre direct par slug sur ads.subcategory
         query = query
           .eq("category_id", params.dbCategoryId)
-          .eq("sub_category_id", params.subCategoryId)
-      } else if (params.dbCategoryId && !params.subcategorySlug) {
-        // Catégorie seule, sans sous-catégorie demandée
-        console.log('[fetchAds] Filtre: catégorie seule=', params.dbCategoryId)
+          .eq("subcategory", params.subcategorySlug)
+      } else if (params.dbCategoryId) {
+        // Catégorie seule
         query = query.eq("category_id", params.dbCategoryId)
-      } else if (params.subcategorySlug && !params.subCategoryId) {
-        // ✅ FIX CLEF : sous-catégorie demandée mais UUID non trouvé → 0 résultats proprement
-        console.log('[fetchAds] Sous-catégorie slug non résolue → 0 résultats')
-        setAds([])
-        setTotal(0)
-        setLoading(false)
-        return
       }
 
       if (params.q.trim()) query = query.or(`title.ilike.%${params.q.trim()}%,description.ilike.%${params.q.trim()}%`)
@@ -360,7 +317,7 @@ function SearchContent() {
 
       const { data, error: sbError, count } = await query.limit(48)
 
-      console.log('[fetchAds] Résultat:', { count, data: (data as Ad[])?.map(a => ({ id: a.id, title: a.title, category_id: a.category_id, sub_category_id: a.sub_category_id })) })
+      console.log('[fetchAds] count:', count)
 
       if (sbError) throw sbError
       setAds((data as Ad[]) ?? [])
@@ -372,26 +329,14 @@ function SearchContent() {
     }
   }, [supabase])
 
-  // ✅ FIX 4 : fetchAds bloqué tant que subResolved = false
   useEffect(() => {
     if (!ageCleared) return
-    if (!subResolved) return // ← BLOQUE la requête pendant la résolution async
-    fetchAds({
-      dbCategoryId,
-      subCategoryId: subCategoryIdResolved,
-      subcategorySlug,
-      q, sort, priceMin, priceMax, selectedEtat
-    })
-  }, [ageCleared, subResolved, dbCategoryId, subCategoryIdResolved, subcategorySlug, q, sort, priceMin, priceMax, selectedEtat, fetchAds])
+    fetchAds({ dbCategoryId, subcategorySlug, q, sort, priceMin, priceMax, selectedEtat })
+  }, [ageCleared, dbCategoryId, subcategorySlug, q, sort, priceMin, priceMax, selectedEtat, fetchAds])
 
   const handleApplyFilters = () => {
     if (!ageCleared) return
-    fetchAds({
-      dbCategoryId,
-      subCategoryId: subCategoryIdResolved,
-      subcategorySlug,
-      q, sort, priceMin, priceMax, selectedEtat
-    })
+    fetchAds({ dbCategoryId, subcategorySlug, q, sort, priceMin, priceMax, selectedEtat })
     setShowFilters(false)
   }
 
