@@ -108,3 +108,15 @@ export const CATEGORIES = [
     subcats: ['lingerie-sous-vetements', 'maillots-de-bain', 'cosmetiques-bien-etre', 'accessoires-mode'],
   },
 ]
+
+export const CITIES = [
+  '🌍 Toute la CI',
+  '🏙️ Abidjan',
+  '🌇 Bouaké',
+  '🏛️ Yamoussoukro',
+  '⚓ San-Pédro',
+  '🌳 Daloa',
+  '🌴 Korhogo',
+  '⛰️ Man',
+  '🌊 Gagnoa',
+]
