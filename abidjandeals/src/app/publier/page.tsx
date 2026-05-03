@@ -1,7 +1,7 @@
 'use client'
 import { Footer } from '@/components/Footer'
 import { Navbar } from '@/components/Navbar'
-import { CATEGORIES, CITIES, type SubCatDef } from '@/lib/data'
+import { CATEGORIES, CITIES } from '@/lib/data'
 import { supabase } from '@/lib/supabase'
 import { useStore } from '@/lib/store'
 import { CheckCircle, ChevronRight, Loader2, MapPin, Phone, Save, Upload, Video, X } from 'lucide-react'
