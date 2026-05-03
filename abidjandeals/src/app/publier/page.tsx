@@ -2,8 +2,8 @@
 import { Footer } from '@/components/Footer'
 import { Navbar } from '@/components/Navbar'
 import { CATEGORIES, CITIES } from '@/lib/data'
-import { supabase } from '@/lib/supabase'
 import { useStore } from '@/lib/store'
+import { supabase } from '@/lib/supabase'
 import { CheckCircle, ChevronRight, Loader2, MapPin, Phone, Save, Upload, Video, X } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useCallback, useEffect, useRef, useState } from 'react'
@@ -471,7 +471,7 @@ export default function PublierPage() {
                   <select name="subcategory" value={form.subcategory} onChange={handleChange}
                     className="mt-3 w-full border border-gray-100 bg-gray-50 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-orange-400 focus:bg-white transition">
                     <option value="">Sous-catégorie (optionnel)</option>
-                    {selectedCat.subcats.map(s => <option key={s.slug} value={s.slug}>{s.name}</option>)}
+                    {selectedCat.subcats.map(s => <option key={s} value={s}>{s}</option>)}
                   </select>
                 )}
               </div>
