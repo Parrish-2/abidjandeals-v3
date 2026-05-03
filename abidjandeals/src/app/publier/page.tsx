@@ -4,76 +4,42 @@ import { Navbar } from '@/components/Navbar'
 import { CATEGORIES, CITIES } from '@/lib/data'
 import { useStore } from '@/lib/store'
 import { supabase } from '@/lib/supabase'
+import imageCompression from 'browser-image-compression'
 import { CheckCircle, ChevronRight, Loader2, Lock, MapPin, Phone, Save, Shield, Upload, Video, X } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import toast, { Toaster } from 'react-hot-toast'
 
-// ─────────────────────────────────────────────────────────────────────────────
-// CONFIGURATION DU VERROU — à maintenir ici uniquement
-// ─────────────────────────────────────────────────────────────────────────────
-//
-// LOGIQUE :
-//   - Si une catégorie n'est pas dans LOCK_CONFIG → accessible à tous, pas de verrou.
-//   - Si elle est dans LOCK_CONFIG avec exemptSubcats vide → toute la catégorie est verrouillée.
-//   - Si elle a des exemptSubcats → seules ces sous-catégories sont libres, le reste est verrouillé.
-//   - Un utilisateur 'confirmed' ou 'certified' passe toujours, quelle que soit la config.
-//
 const LOCK_CONFIG: Record<string, { exemptSubcats: string[] }> = {
   cat_tech: {
     exemptSubcats: [
-      'Jeux Vidéo',             // risque faible, valeur modérée
-      'Objets Connectés',       // montres connectées, trackers
-      'Pièces & Périphériques', // câbles, claviers, souris
+      'Jeux Vidéo',
+      'Objets Connectés',
+      'Pièces & Périphériques',
     ],
-    // Verrouillés : Téléphones & Accessoires, Ordinateurs & Tablettes,
-    //               TV & Audio, Photo & Vidéo, Cameras
   },
-  cat_auto: {
-    exemptSubcats: [],
-    // Tout verrouillé : les subcats actuelles ne contiennent que des véhicules.
-    // Si tu ajoutes 'Pièces détachées' dans data.ts plus tard, ajoute-la ici.
-  },
-  cat_immo: {
-    exemptSubcats: [],
-    // Tout verrouillé sans exception.
-  },
+  cat_auto: { exemptSubcats: [] },
+  cat_immo: { exemptSubcats: [] },
 }
 
-// Dérivé automatiquement depuis LOCK_CONFIG — ne pas modifier manuellement
 const EXCLUSIVE_CAT_IDS = Object.keys(LOCK_CONFIG)
 
-/**
- * Retourne true si l'utilisateur doit voir le verrou pour cette combinaison
- * catégorie + sous-catégorie + niveau de compte.
- *
- * @param catId      - ID de la catégorie (ex: 'cat_tech')
- * @param subcatName - Nom de la sous-catégorie sélectionnée, ou '' si aucune
- * @param level      - Niveau du compte utilisateur
- */
+// ✅ Limite vidéo 30MB
+const VIDEO_MAX_MB = 30
+const VIDEO_MAX_BYTES = VIDEO_MAX_MB * 1024 * 1024
+
 function isLocked(
   catId: string,
   subcatName: string,
   level: 'basic' | 'confirmed' | 'certified'
 ): boolean {
-  // Confirmed/certified : accès total, jamais de verrou
   if (level === 'confirmed' || level === 'certified') return false
-
-  // Catégorie non sensible : libre
   const config = LOCK_CONFIG[catId]
   if (!config) return false
-
-  // Catégorie sensible sans subcat choisie → verrou préventif dès la sélection
   if (!subcatName) return true
-
-  // Sous-catégorie dans la liste d'exemptions → libre même en BASIC
   if (config.exemptSubcats.includes(subcatName)) return false
-
-  // Tout le reste de la catégorie sensible → verrou
   return true
 }
-
-// ─────────────────────────────────────────────────────────────────────────────
 
 const QUARTIERS: Record<string, string[]> = {
   'Abidjan': [
@@ -210,75 +176,59 @@ const EMPTY_FORM: Record<string, string> = {
 type MediaFile = { file: File; url: string; type: 'image' | 'video' }
 type Location = { id: string; name: string; parent_id: string | null }
 
+// ✅ Fonction de reset complet — appelée après publication réussie et sur clearDraft
+function buildResetState() {
+  return {
+    form: { ...EMPTY_FORM },
+    media: [] as MediaFile[],
+    hasDraft: false,
+    lastSaved: null as string | null,
+    lockState: null as null,
+    compressing: false,
+  }
+}
+
 // ─── Carte de verrou ──────────────────────────────────────────────────────────
 function CategoryLockCard({
-  categoryName,
-  categoryIcon,
-  subcatName,
-  exemptSubcats,
-  onGoBack,
-  onUpgrade,
+  categoryName, categoryIcon, subcatName, exemptSubcats, onGoBack, onUpgrade,
 }: {
-  categoryName: string
-  categoryIcon: string
-  subcatName: string
-  exemptSubcats: string[]
-  onGoBack: () => void
-  onUpgrade: () => void
+  categoryName: string; categoryIcon: string; subcatName: string
+  exemptSubcats: string[]; onGoBack: () => void; onUpgrade: () => void
 }) {
   return (
     <div className="bg-white rounded-2xl border border-orange-100 shadow-sm overflow-hidden">
-      {/* Bandeau */}
       <div className="bg-gradient-to-r from-orange-500 to-amber-500 px-5 py-3 flex items-center gap-2">
         <Shield size={14} className="text-white/90" />
-        <span className="text-white text-xs font-bold tracking-wide uppercase">
-          Réservé aux membres certifiés
-        </span>
+        <span className="text-white text-xs font-bold tracking-wide uppercase">Réservé aux membres certifiés</span>
       </div>
-
       <div className="p-5">
-        {/* En-tête */}
         <div className="flex items-start gap-3 mb-4">
-          <div className="w-12 h-12 rounded-xl bg-orange-50 border border-orange-100 flex items-center justify-center text-xl flex-shrink-0">
-            {categoryIcon}
-          </div>
+          <div className="w-12 h-12 rounded-xl bg-orange-50 border border-orange-100 flex items-center justify-center text-xl flex-shrink-0">{categoryIcon}</div>
           <div>
             <p className="text-[10px] font-bold text-orange-500 uppercase tracking-widest mb-0.5">
               {categoryName}{subcatName ? ` › ${subcatName}` : ''}
             </p>
-            <h3 className="text-gray-900 font-extrabold text-base leading-tight">
-              Passez au statut CONFIRMÉ pour publier ici
-            </h3>
+            <h3 className="text-gray-900 font-extrabold text-base leading-tight">Passez au statut CONFIRMÉ pour publier ici</h3>
           </div>
         </div>
-
-        {/* Argumentaire */}
         <div className="bg-amber-50 border border-amber-100 rounded-xl px-4 py-3 mb-4 flex gap-2.5">
           <Lock size={13} className="text-amber-600 flex-shrink-0 mt-0.5" />
           <p className="text-amber-800 text-xs leading-relaxed">
             Pour garantir la sécurité et lutter contre le recel, les catégories{' '}
             <strong>High-Tech</strong>, <strong>Véhicules</strong> et <strong>Immobilier</strong>{' '}
-            sont réservées à nos membres certifiés. La vérification de votre CNI est rapide et sécurisée.
+            sont réservées à nos membres certifiés.
           </p>
         </div>
-
-        {/* Sous-catégories libres disponibles dans cette catégorie */}
         {exemptSubcats.length > 0 && (
           <div className="mb-4">
-            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">
-              Accessibles sans vérification dans {categoryName} :
-            </p>
+            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Accessibles sans vérification :</p>
             <div className="flex flex-wrap gap-1.5">
               {exemptSubcats.map(s => (
-                <span key={s} className="text-xs bg-green-50 text-green-700 border border-green-100 rounded-lg px-2.5 py-1 font-medium">
-                  ✓ {s}
-                </span>
+                <span key={s} className="text-xs bg-green-50 text-green-700 border border-green-100 rounded-lg px-2.5 py-1 font-medium">✓ {s}</span>
               ))}
             </div>
           </div>
         )}
-
-        {/* Bénéfices */}
         <div className="space-y-2 mb-5">
           {[
             'Badge vendeur CONFIRMÉ visible sur toutes vos annonces',
@@ -292,21 +242,12 @@ function CategoryLockCard({
             </div>
           ))}
         </div>
-
-        {/* Actions */}
-        <button
-          type="button"
-          onClick={onUpgrade}
-          className="w-full py-3 bg-orange-500 hover:bg-orange-600 active:scale-[0.98] text-white font-bold rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-orange-200 text-sm mb-2.5"
-        >
-          <Shield size={14} />
-          Devenir Confirmé — Vérifier mon CNI
+        <button type="button" onClick={onUpgrade}
+          className="w-full py-3 bg-orange-500 hover:bg-orange-600 active:scale-[0.98] text-white font-bold rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-orange-200 text-sm mb-2.5">
+          <Shield size={14} /> Devenir Confirmé — Vérifier mon CNI
         </button>
-        <button
-          type="button"
-          onClick={onGoBack}
-          className="w-full py-2 text-gray-500 hover:text-gray-700 text-xs font-medium rounded-xl border border-gray-100 hover:border-gray-200 hover:bg-gray-50 transition-all"
-        >
+        <button type="button" onClick={onGoBack}
+          className="w-full py-2 text-gray-500 hover:text-gray-700 text-xs font-medium rounded-xl border border-gray-100 hover:border-gray-200 hover:bg-gray-50 transition-all">
           ← Choisir une autre catégorie ou sous-catégorie
         </button>
       </div>
@@ -314,30 +255,21 @@ function CategoryLockCard({
   )
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// PAGE PRINCIPALE
-// ─────────────────────────────────────────────────────────────────────────────
+// ─── Page principale ──────────────────────────────────────────────────────────
 export default function PublierPage() {
   const router = useRouter()
   const { user: storeUser } = useStore()
-
-  // ── Dérivation du plan depuis Profile.level (défini dans src/lib/supabase.ts)
-  // 'basic' | 'confirmed' | 'certified' — branché directement sur le store existant
   const userLevel = storeUser?.level ?? 'basic'
 
-  // ── État du verrou ────────────────────────────────────────────────────────
-  // null = aucun verrou affiché
   const [lockState, setLockState] = useState<{
-    catId: string
-    catName: string
-    catIcon: string
-    subcatName: string       // sous-catégorie qui a déclenché le verrou ('' = catégorie entière)
-    exemptSubcats: string[]  // sous-catégories libres à afficher dans la carte
+    catId: string; catName: string; catIcon: string
+    subcatName: string; exemptSubcats: string[]
   } | null>(null)
 
   const fileInputRef = useRef<HTMLInputElement>(null)
   const videoInputRef = useRef<HTMLInputElement>(null)
   const [loading, setLoading] = useState(false)
+  const [compressing, setCompressing] = useState(false) // ✅ état compression
   const [villes, setVilles] = useState<Location[]>([])
   const [communes, setCommunes] = useState<Location[]>([])
   const [sousQuartiers, setSousQuartiers] = useState<Location[]>([])
@@ -354,11 +286,28 @@ export default function PublierPage() {
   const quartiersForCity = form.city ? (QUARTIERS[form.city] ?? []) : []
   const showLock = lockState !== null
 
+  // ✅ Reset complet — utilisé après publication ET sur clearDraft
+  function resetAll() {
+    const r = buildResetState()
+    setForm(r.form)
+    setMedia(r.media)
+    setHasDraft(r.hasDraft)
+    setLastSaved(r.lastSaved)
+    setLockState(r.lockState)
+    setCompressing(r.compressing)
+    setSelectedVilleId('')
+    setSelectedCommuneId('')
+    localStorage.removeItem(STORAGE_KEY)
+    // Réinitialise les refs fichiers pour permettre re-sélection du même fichier
+    if (fileInputRef.current) fileInputRef.current.value = ''
+    if (videoInputRef.current) videoInputRef.current.value = ''
+    // Libère les object URLs pour éviter les fuites mémoire
+    media.forEach(m => URL.revokeObjectURL(m.url))
+  }
+
   useEffect(() => {
     async function loadVilles() {
-      const { data } = await supabase
-        .from('locations').select('id, name, parent_id')
-        .is('parent_id', null).eq('is_active', true).order('name')
+      const { data } = await supabase.from('locations').select('id, name, parent_id').is('parent_id', null).eq('is_active', true).order('name')
       if (data) setVilles(data)
     }
     loadVilles()
@@ -367,9 +316,7 @@ export default function PublierPage() {
   useEffect(() => {
     if (!selectedVilleId) { setCommunes([]); setSousQuartiers([]); return }
     async function loadCommunes() {
-      const { data } = await supabase
-        .from('locations').select('id, name, parent_id')
-        .eq('parent_id', selectedVilleId).eq('is_active', true).order('name')
+      const { data } = await supabase.from('locations').select('id, name, parent_id').eq('parent_id', selectedVilleId).eq('is_active', true).order('name')
       if (data) setCommunes(data)
       setSousQuartiers([])
       setSelectedCommuneId('')
@@ -380,15 +327,12 @@ export default function PublierPage() {
   useEffect(() => {
     if (!selectedCommuneId) { setSousQuartiers([]); return }
     async function loadSousQuartiers() {
-      const { data } = await supabase
-        .from('locations').select('id, name, parent_id')
-        .eq('parent_id', selectedCommuneId).eq('is_active', true).order('name')
+      const { data } = await supabase.from('locations').select('id, name, parent_id').eq('parent_id', selectedCommuneId).eq('is_active', true).order('name')
       if (data) setSousQuartiers(data)
     }
     loadSousQuartiers()
   }, [selectedCommuneId])
 
-  // Restauration du brouillon
   useEffect(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY)
@@ -401,7 +345,6 @@ export default function PublierPage() {
     } catch { }
   }, [])
 
-  // Sauvegarde auto du brouillon (3s après la dernière frappe)
   useEffect(() => {
     const hasContent = form.title || form.description || form.price || form.category
     if (!hasContent) return
@@ -417,12 +360,7 @@ export default function PublierPage() {
   }, [form])
 
   function clearDraft() {
-    localStorage.removeItem(STORAGE_KEY)
-    setHasDraft(false)
-    setLastSaved(null)
-    setForm({ ...EMPTY_FORM })
-    setMedia([])
-    setLockState(null)
+    resetAll()
     toast.success('Brouillon effacé')
   }
 
@@ -435,91 +373,90 @@ export default function PublierPage() {
     })
   }
 
-  // ── Sélection de catégorie ────────────────────────────────────────────────
-  // Déclenche le verrou immédiatement si la catégorie est sensible et l'user est BASIC.
-  // La sous-catégorie affinera ensuite si besoin (ex: cat_tech a des subcats libres).
   function handleCategoryChange(catId: string) {
     const cat = CATEGORIES.find(c => c.id === catId)
     if (!cat) return
-
-    // Catégorie non sensible → accès direct, ferme le verrou si ouvert
     if (!EXCLUSIVE_CAT_IDS.includes(catId)) {
       setLockState(null)
       setForm(f => ({ ...f, category: catId, subcategory: '', etat: '' }))
       return
     }
-
-    // Catégorie sensible + BASIC → verrou préventif sans sous-catégorie
     if (isLocked(catId, '', userLevel)) {
-      setLockState({
-        catId,
-        catName: cat.name,
-        catIcon: cat.icon,
-        subcatName: '',
-        exemptSubcats: LOCK_CONFIG[catId]?.exemptSubcats ?? [],
-      })
-      // form.category n'est PAS mis à jour — l'utilisateur n'a pas encore accès
+      setLockState({ catId, catName: cat.name, catIcon: cat.icon, subcatName: '', exemptSubcats: LOCK_CONFIG[catId]?.exemptSubcats ?? [] })
       return
     }
-
-    // Confirmed/certified → accès direct
     setLockState(null)
     setForm(f => ({ ...f, category: catId, subcategory: '', etat: '' }))
   }
 
-  // ── Sélection de sous-catégorie ───────────────────────────────────────────
-  // Vérifie la subcat spécifique : 'Jeux Vidéo' est libre, 'Téléphones' est verrouillé.
-  // C'est ici que se joue la granularité subcat-level.
   function handleSubcatChange(e: React.ChangeEvent<HTMLSelectElement>) {
     const subcatName = e.target.value
-
-    if (!subcatName) {
-      setForm(f => ({ ...f, subcategory: '' }))
-      // Si on était sur une cat sensible sans subcat, le verrou préventif reste
-      return
-    }
-
+    if (!subcatName) { setForm(f => ({ ...f, subcategory: '' })); return }
     if (isLocked(form.category, subcatName, userLevel)) {
       const cat = CATEGORIES.find(c => c.id === form.category)
-      setLockState({
-        catId: form.category,
-        catName: cat?.name ?? '',
-        catIcon: cat?.icon ?? '',
-        subcatName,
-        exemptSubcats: LOCK_CONFIG[form.category]?.exemptSubcats ?? [],
-      })
-      // subcategory remise à vide — la sélection verrouillée n'est pas appliquée
+      setLockState({ catId: form.category, catName: cat?.name ?? '', catIcon: cat?.icon ?? '', subcatName, exemptSubcats: LOCK_CONFIG[form.category]?.exemptSubcats ?? [] })
       setForm(f => ({ ...f, subcategory: '' }))
       return
     }
-
-    // Subcat libre → ferme le verrou, applique la sélection, active le formulaire
     setLockState(null)
     setForm(f => ({ ...f, subcategory: subcatName }))
   }
 
-  // Retour depuis le verrou → remet à zéro catégorie + subcat pour choix propre
   function handleLockGoBack() {
     setLockState(null)
     setForm(f => ({ ...f, category: '', subcategory: '', etat: '' }))
   }
 
-  // Redirection vers la page KYC / sélection des plans
-  // Adapte l'URL selon ta structure de routes (/kyc, /plans, /vendeur...)
-  function handleUpgrade() {
-    router.push('/vendeur')
-  }
+  function handleUpgrade() { router.push('/vendeur') }
 
-  function addMedia(files: FileList | null, type: 'image' | 'video') {
+  // ✅ FIX BUG 2 : Compression images + limite vidéo 30MB
+  async function addMedia(files: FileList | null, type: 'image' | 'video') {
     if (!files) return
-    const limit = type === 'video' ? 1 : 5 - media.filter(m => m.type === 'image').length
-    const newItems: MediaFile[] = Array.from(files).slice(0, limit).map(file => ({
-      file, url: URL.createObjectURL(file), type,
-    }))
-    setMedia(prev => [...prev, ...newItems].slice(0, 6))
+
+    if (type === 'video') {
+      const file = files[0]
+      if (!file) return
+      if (file.size > VIDEO_MAX_BYTES) {
+        toast.error(`Vidéo trop lourde — max ${VIDEO_MAX_MB}MB (environ 30 secondes)`, { duration: 4000 })
+        return
+      }
+      setMedia(prev => [...prev, { file, url: URL.createObjectURL(file), type: 'video' as const }].slice(0, 6))
+      return
+    }
+
+    // ✅ Compression automatique des images
+    const limit = 5 - media.filter(m => m.type === 'image').length
+    const selectedFiles = Array.from(files).slice(0, limit)
+    if (!selectedFiles.length) return
+
+    setCompressing(true)
+    toast.loading(`Optimisation de ${selectedFiles.length} photo(s)...`, { id: 'compress' })
+
+    const compressed: MediaFile[] = []
+    for (const file of selectedFiles) {
+      try {
+        const compressedFile = await imageCompression(file, {
+          maxSizeMB: 0.5,
+          maxWidthOrHeight: 1200,
+          useWebWorker: true,
+        })
+        compressed.push({ file: compressedFile, url: URL.createObjectURL(compressedFile), type: 'image' })
+      } catch {
+        compressed.push({ file, url: URL.createObjectURL(file), type: 'image' })
+      }
+    }
+
+    setCompressing(false)
+    toast.success(`${compressed.length} photo(s) optimisée(s) ✓`, { id: 'compress', duration: 2000 })
+    setMedia(prev => [...prev, ...compressed].slice(0, 6))
   }
 
-  function removeMedia(i: number) { setMedia(prev => prev.filter((_, idx) => idx !== i)) }
+  function removeMedia(i: number) {
+    setMedia(prev => {
+      URL.revokeObjectURL(prev[i].url) // libère mémoire
+      return prev.filter((_, idx) => idx !== i)
+    })
+  }
 
   const onDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault()
@@ -535,20 +472,11 @@ export default function PublierPage() {
     if (!form.category) { toast.error('Choisissez une catégorie'); return }
     if (!form.city) { toast.error('Choisissez une ville'); return }
 
-    // ── Protection serveur ────────────────────────────────────────────────────
-    // Le verrou visuel est de l'UX. Cette vérification re-interroge Supabase
-    // directement avant l'insert pour qu'aucune manipulation client ne passe.
     if (EXCLUSIVE_CAT_IDS.includes(form.category)) {
       const exempts = LOCK_CONFIG[form.category]?.exemptSubcats ?? []
       const subcatIsExempt = form.subcategory !== '' && exempts.includes(form.subcategory)
-
       if (!subcatIsExempt) {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('level')
-          .eq('id', storeUser?.id ?? '')
-          .single()
-
+        const { data: profile } = await supabase.from('profiles').select('level').eq('id', storeUser?.id ?? '').single()
         if (!profile || (profile.level !== 'confirmed' && profile.level !== 'certified')) {
           toast.error('Cette catégorie est réservée aux membres CONFIRMÉ')
           return
@@ -558,10 +486,11 @@ export default function PublierPage() {
 
     setLoading(true)
 
+    // ✅ FIX BUG 2 : Timeout global 60s
     const globalTimeout = setTimeout(() => {
       setLoading(false)
       toast.error('Délai dépassé. Vérifiez votre connexion et réessayez.')
-    }, 25000)
+    }, 60000)
 
     try {
       let userId = storeUser?.id ?? null
@@ -591,9 +520,14 @@ export default function PublierPage() {
             const ext = m.file.name.split('.').pop()
             const bucket = m.type === 'image' ? 'ad-photos' : 'ad-videos'
             const path = `${userId}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
+
+            // ✅ FIX BUG 2 : Timeout dynamique selon taille (min 30s)
+            const timeoutMs = Math.max(30000, m.file.size / 500)
+
             const uploadPromise = supabase.storage.from(bucket).upload(path, m.file, { cacheControl: '3600', upsert: false })
-            const timeoutPromise = new Promise<never>((_, reject) => setTimeout(() => reject(new Error('timeout')), 15000))
+            const timeoutPromise = new Promise<never>((_, reject) => setTimeout(() => reject(new Error('timeout')), timeoutMs))
             const result = await Promise.race([uploadPromise, timeoutPromise]) as any
+
             if (result.error) { uploadFailed = true }
             else {
               const { data } = supabase.storage.from(bucket).getPublicUrl(path)
@@ -611,9 +545,7 @@ export default function PublierPage() {
 
       let subCategoryUuid: string | null = null
       if (form.subcategory && form.category) {
-        const { data: subCat } = await supabase
-          .from('sub_categories').select('id')
-          .eq('category_id', form.category).ilike('name', form.subcategory).maybeSingle()
+        const { data: subCat } = await supabase.from('sub_categories').select('id').eq('category_id', form.category).ilike('name', form.subcategory).maybeSingle()
         subCategoryUuid = subCat?.id ?? null
       }
 
@@ -636,8 +568,10 @@ export default function PublierPage() {
         status: 'active',
         views: 0,
       })
+
+      // ✅ FIX BUG 2 : Timeout insert 30s
       const insertTimeout = new Promise<{ error: { message: string } }>((resolve) =>
-        setTimeout(() => resolve({ error: { message: 'Délai dépassé' } }), 15000)
+        setTimeout(() => resolve({ error: { message: 'Délai dépassé' } }), 30000)
       )
       const { error } = await Promise.race([insertPromise, insertTimeout])
 
@@ -649,23 +583,17 @@ export default function PublierPage() {
       }
 
       clearTimeout(globalTimeout)
-      localStorage.removeItem(STORAGE_KEY)
-      setHasDraft(false)
-      setLastSaved(null)
-      setForm({ ...EMPTY_FORM })
-      setMedia([])
-      setLockState(null)
+
+      // ✅ RESET COMPLET après publication réussie
+      resetAll()
       setSuccess(true)
-      setTimeout(() => router.push('/dashboard'), 2500)
+      setTimeout(() => router.push('/dashboard'), 3000)
+
     } catch (err) {
       console.error('Erreur soumission:', err)
       toast.error('Une erreur est survenue. Réessayez.')
       clearTimeout(globalTimeout)
-      localStorage.removeItem(STORAGE_KEY)
-      setHasDraft(false)
-      setLastSaved(null)
-      setForm({ ...EMPTY_FORM })
-      setMedia([])
+      resetAll()
     } finally {
       setLoading(false)
     }
@@ -680,7 +608,19 @@ export default function PublierPage() {
         </div>
         <h1 className="text-2xl font-extrabold text-gray-900">Annonce publiée ! 🎉</h1>
         <p className="text-gray-500">Votre annonce est maintenant en ligne et visible par tous !</p>
-        <p className="text-xs text-gray-400">Redirection vers votre tableau de bord...</p>
+        <div className="flex gap-3">
+          <button
+            onClick={() => { setSuccess(false) }}
+            className="px-5 py-2.5 bg-white border border-gray-200 text-gray-700 text-sm font-semibold rounded-xl hover:bg-gray-50 transition">
+            + Publier une autre annonce
+          </button>
+          <button
+            onClick={() => router.push('/dashboard')}
+            className="px-5 py-2.5 bg-orange-500 text-white text-sm font-bold rounded-xl hover:bg-orange-600 transition">
+            Voir mes annonces
+          </button>
+        </div>
+        <p className="text-xs text-gray-400">Redirection automatique dans 3 secondes...</p>
       </div>
       <Footer />
     </div>
@@ -688,18 +628,17 @@ export default function PublierPage() {
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
-      <Toaster position="top-center" />
+      {/* ✅ FIX BUG 1 : Toasts limités à 3 secondes */}
+      <Toaster position="top-center" toastOptions={{ duration: 3000 }} />
       <Navbar />
       <main className="flex-1 w-full max-w-6xl mx-auto px-4 py-8 pb-28 lg:pb-8">
 
-        {/* En-tête */}
         <div className="flex items-start justify-between mb-8">
           <div>
             <h1 className="text-3xl font-extrabold text-gray-900">Publier une annonce</h1>
             <p className="text-gray-400 mt-1">Le formulaire s'adapte automatiquement à votre article</p>
           </div>
           <div className="flex items-center gap-3">
-            {/* Badge plan utilisateur */}
             {userLevel === 'basic' && (
               <span className="text-[10px] font-bold bg-gray-100 text-gray-500 rounded-full px-2.5 py-1 flex items-center gap-1">
                 <Lock size={9} /> Plan BASIC
@@ -740,88 +679,50 @@ export default function PublierPage() {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="lg:col-span-2 space-y-5">
 
-              {/* ── Étape 1 — Catégorie ──────────────────────────────────── */}
+              {/* Étape 1 — Catégorie */}
               <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
                 <div className="flex items-center gap-2 mb-4">
                   <div className="w-7 h-7 rounded-full bg-orange-500 text-white text-xs font-bold flex items-center justify-center">1</div>
                   <h2 className="font-bold text-gray-800">Choisissez une catégorie</h2>
                 </div>
-
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                   {CATEGORIES.map(cat => {
                     const isSensitive = EXCLUSIVE_CAT_IDS.includes(cat.id)
                     const allLocked = isSensitive && (LOCK_CONFIG[cat.id]?.exemptSubcats.length === 0)
                     const partiallyFree = isSensitive && ((LOCK_CONFIG[cat.id]?.exemptSubcats.length ?? 0) > 0)
                     const isSelected = form.category === cat.id && !showLock
-
                     return (
-                      <button
-                        key={cat.id}
-                        type="button"
-                        onClick={() => handleCategoryChange(cat.id)}
-                        className={`
-                          flex items-center gap-2 px-3 py-2.5 rounded-xl border text-xs font-medium transition-all
-                          ${isSelected
-                            ? 'border-orange-500 bg-orange-50 text-orange-600 shadow-sm'
-                            : isSensitive && userLevel === 'basic'
-                              ? 'border-gray-100 text-gray-400 hover:border-amber-200 hover:bg-amber-50/40'
-                              : 'border-gray-100 text-gray-600 hover:border-orange-200 hover:bg-orange-50/50'
-                          }
-                        `}
-                      >
+                      <button key={cat.id} type="button" onClick={() => handleCategoryChange(cat.id)}
+                        className={`flex items-center gap-2 px-3 py-2.5 rounded-xl border text-xs font-medium transition-all ${isSelected ? 'border-orange-500 bg-orange-50 text-orange-600 shadow-sm' : isSensitive && userLevel === 'basic' ? 'border-gray-100 text-gray-400 hover:border-amber-200 hover:bg-amber-50/40' : 'border-gray-100 text-gray-600 hover:border-orange-200 hover:bg-orange-50/50'}`}>
                         <span className="text-base">{cat.icon}</span>
                         <span className="truncate">{cat.name}</span>
-                        {/* Icône verrou total */}
-                        {userLevel === 'basic' && allLocked && (
-                          <Lock size={9} className="ml-auto flex-shrink-0 text-amber-500" />
-                        )}
-                        {/* Badge "PARTIEL" pour cat_tech qui a des subcats libres */}
-                        {userLevel === 'basic' && partiallyFree && (
-                          <span className="ml-auto text-[8px] bg-amber-100 text-amber-600 rounded px-1 font-bold flex-shrink-0">
-                            PARTIEL
-                          </span>
-                        )}
+                        {userLevel === 'basic' && allLocked && <Lock size={9} className="ml-auto flex-shrink-0 text-amber-500" />}
+                        {userLevel === 'basic' && partiallyFree && <span className="ml-auto text-[8px] bg-amber-100 text-amber-600 rounded px-1 font-bold flex-shrink-0">PARTIEL</span>}
                       </button>
                     )
                   })}
                 </div>
-
-                {/* Select sous-catégorie — visible seulement si cat sélectionnée et pas de verrou */}
                 {selectedCat && !showLock && (
-                  <select
-                    name="subcategory"
-                    value={form.subcategory}
-                    onChange={handleSubcatChange}
-                    className="mt-3 w-full border border-gray-100 bg-gray-50 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-orange-400 focus:bg-white transition"
-                  >
+                  <select name="subcategory" value={form.subcategory} onChange={handleSubcatChange}
+                    className="mt-3 w-full border border-gray-100 bg-gray-50 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-orange-400 focus:bg-white transition">
                     <option value="">Sous-catégorie (optionnel)</option>
                     {selectedCat.subcats.map(s => {
                       const subcatLocked = isLocked(form.category, s, userLevel)
-                      return (
-                        <option key={s} value={s}>
-                          {subcatLocked ? `🔒 ${s}` : s}
-                        </option>
-                      )
+                      return <option key={s} value={s}>{subcatLocked ? `🔒 ${s}` : s}</option>
                     })}
                   </select>
                 )}
-
-                {/* Carte de verrou — remplace le select quand verrou actif */}
                 {showLock && lockState && (
                   <div className="mt-4">
                     <CategoryLockCard
-                      categoryName={lockState.catName}
-                      categoryIcon={lockState.catIcon}
-                      subcatName={lockState.subcatName}
-                      exemptSubcats={lockState.exemptSubcats}
-                      onGoBack={handleLockGoBack}
-                      onUpgrade={handleUpgrade}
+                      categoryName={lockState.catName} categoryIcon={lockState.catIcon}
+                      subcatName={lockState.subcatName} exemptSubcats={lockState.exemptSubcats}
+                      onGoBack={handleLockGoBack} onUpgrade={handleUpgrade}
                     />
                   </div>
                 )}
               </div>
 
-              {/* ── Étapes 2–5 masquées pendant le verrou ─────────────────── */}
               {!showLock && (
                 <>
                   {/* Étape 2 — Photos & Vidéo */}
@@ -832,22 +733,31 @@ export default function PublierPage() {
                       <span className="ml-auto text-xs text-gray-400">{media.length}/6</span>
                     </div>
                     <div className="p-5">
+                      {/* ✅ Zone drop avec état compression */}
                       <div onDrop={onDrop} onDragOver={e => e.preventDefault()}
-                        className="border-2 border-dashed border-gray-200 rounded-2xl p-6 text-center hover:border-orange-400 transition-colors cursor-pointer mb-4 group"
-                        onClick={() => fileInputRef.current?.click()}>
-                        <Upload size={28} className="mx-auto text-gray-300 group-hover:text-orange-400 transition mb-2" />
-                        <p className="font-semibold text-gray-600 text-sm">Glissez vos photos ou cliquez</p>
-                        <p className="text-xs text-gray-400 mt-1">JPG, PNG, WEBP · Max 5 photos + 1 vidéo</p>
-                        <input ref={fileInputRef} type="file" accept="image/*" multiple className="hidden"
-                          onChange={e => addMedia(e.target.files, 'image')} />
+                        className={`border-2 border-dashed rounded-2xl p-6 text-center transition-colors cursor-pointer mb-4 group ${compressing ? 'border-orange-300 bg-orange-50/50 cursor-wait' : 'border-gray-200 hover:border-orange-400'}`}
+                        onClick={() => !compressing && fileInputRef.current?.click()}>
+                        {compressing ? (
+                          <>
+                            <Loader2 size={28} className="mx-auto text-orange-400 animate-spin mb-2" />
+                            <p className="font-semibold text-orange-500 text-sm">Optimisation en cours...</p>
+                            <p className="text-xs text-gray-400 mt-1">Vos photos sont compressées pour un upload rapide</p>
+                          </>
+                        ) : (
+                          <>
+                            <Upload size={28} className="mx-auto text-gray-300 group-hover:text-orange-400 transition mb-2" />
+                            <p className="font-semibold text-gray-600 text-sm">Glissez vos photos ou cliquez</p>
+                            <p className="text-xs text-gray-400 mt-1">JPG, PNG, WEBP · Max 5 photos · Optimisées automatiquement ✓</p>
+                          </>
+                        )}
+                        <input ref={fileInputRef} type="file" accept="image/*" multiple className="hidden" onChange={e => addMedia(e.target.files, 'image')} />
                       </div>
+
                       {media.length > 0 && (
                         <div className="grid grid-cols-4 gap-2 mb-3">
                           {media.map((m, i) => (
                             <div key={i} className={`relative rounded-xl overflow-hidden border-2 aspect-square ${i === 0 ? 'border-orange-400' : 'border-gray-100'}`}>
-                              {m.type === 'image'
-                                ? <img src={m.url} alt="" className="w-full h-full object-cover" />
-                                : <video src={m.url} className="w-full h-full object-cover" muted />}
+                              {m.type === 'image' ? <img src={m.url} alt="" className="w-full h-full object-cover" /> : <video src={m.url} className="w-full h-full object-cover" muted />}
                               {i === 0 && <span className="absolute bottom-0 left-0 right-0 bg-orange-500 text-white text-[9px] font-bold text-center py-0.5">PRINCIPALE</span>}
                               {m.type === 'video' && <span className="absolute top-1 left-1 bg-black/60 text-white text-[9px] px-1 rounded">📹</span>}
                               <button type="button" onClick={() => removeMedia(i)}
@@ -858,37 +768,33 @@ export default function PublierPage() {
                           ))}
                         </div>
                       )}
+
+                      {/* ✅ Bouton vidéo avec info limite */}
                       {!media.find(m => m.type === 'video') && (
-                        <button type="button" onClick={() => videoInputRef.current?.click()}
-                          className="flex items-center gap-2 text-sm text-gray-500 hover:text-orange-500 border border-dashed border-gray-200 hover:border-orange-300 rounded-xl px-4 py-2.5 w-full justify-center transition">
-                          <Video size={15} /> Ajouter une vidéo (booste les contacts ×3)
-                        </button>
+                        <div>
+                          <button type="button" onClick={() => videoInputRef.current?.click()}
+                            className="flex items-center gap-2 text-sm text-gray-500 hover:text-orange-500 border border-dashed border-gray-200 hover:border-orange-300 rounded-xl px-4 py-2.5 w-full justify-center transition">
+                            <Video size={15} /> Ajouter une vidéo (booste les contacts ×3)
+                          </button>
+                          <p className="text-[11px] text-gray-400 text-center mt-1.5">Max {VIDEO_MAX_MB}MB · environ 30 secondes</p>
+                        </div>
                       )}
-                      <input ref={videoInputRef} type="file" accept="video/*" className="hidden"
-                        onChange={e => addMedia(e.target.files, 'video')} />
+                      <input ref={videoInputRef} type="file" accept="video/*" className="hidden" onChange={e => addMedia(e.target.files, 'video')} />
                     </div>
                   </div>
 
-                  {/* Étape 3 — Détails dynamiques */}
+                  {/* Étape 3 — Détails */}
                   <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
                     <div className="flex items-center gap-2 mb-4">
                       <div className="w-7 h-7 rounded-full bg-orange-500 text-white text-xs font-bold flex items-center justify-center">3</div>
-                      <h2 className="font-bold text-gray-800">
-                        {form.category ? `Détails — ${selectedCat?.name}` : "Détails de l'annonce"}
-                      </h2>
+                      <h2 className="font-bold text-gray-800">{form.category ? `Détails — ${selectedCat?.name}` : "Détails de l'annonce"}</h2>
                     </div>
                     <div className="space-y-3">
                       <input name="title" value={form.title} onChange={handleChange} required
                         placeholder={selectedCat ? `Titre — ex: ${selectedCat.name} à vendre...` : "Titre de l'annonce *"}
                         className="w-full border border-gray-100 bg-gray-50 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-orange-400 focus:bg-white transition font-medium" />
                       <textarea name="description" value={form.description} onChange={handleChange} rows={4}
-                        placeholder={
-                          form.category === 'cat_auto' ? "Décrivez la voiture : options, historique d'entretien, raison de vente..." :
-                            form.category === 'cat_immo' ? 'Décrivez le bien : équipements, voisinage, accès, charges...' :
-                              form.category === 'cat_tech' ? "Décrivez l'état, les accessoires inclus, raison de vente..." :
-                                form.category === 'cat_serv' ? 'Décrivez votre service, vos compétences, vos références...' :
-                                  'Décrivez votre article en détail...'
-                        }
+                        placeholder={form.category === 'cat_auto' ? "Décrivez la voiture : options, historique d'entretien, raison de vente..." : form.category === 'cat_immo' ? 'Décrivez le bien : équipements, voisinage, accès, charges...' : form.category === 'cat_tech' ? "Décrivez l'état, les accessoires inclus, raison de vente..." : form.category === 'cat_serv' ? 'Décrivez votre service, vos compétences, vos références...' : 'Décrivez votre article en détail...'}
                         className="w-full border border-gray-100 bg-gray-50 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-orange-400 focus:bg-white transition resize-none" />
                       <div className="grid grid-cols-2 gap-3">
                         <div className="relative">
@@ -946,14 +852,12 @@ export default function PublierPage() {
                           <option value="Autre">Autre quartier</option>
                         </select>
                       ) : (
-                        <input name="quartier" value={form.quartier} onChange={handleChange}
-                          placeholder="Quartier (optionnel)"
+                        <input name="quartier" value={form.quartier} onChange={handleChange} placeholder="Quartier (optionnel)"
                           className="border border-gray-100 bg-gray-50 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-orange-400 focus:bg-white transition" />
                       )}
                     </div>
                     {form.quartier === 'Autre' && (
-                      <input onChange={e => setForm(f => ({ ...f, quartier: e.target.value }))}
-                        placeholder="Précisez votre quartier"
+                      <input onChange={e => setForm(f => ({ ...f, quartier: e.target.value }))} placeholder="Précisez votre quartier"
                         className="mt-3 w-full border border-gray-100 bg-gray-50 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-orange-400 focus:bg-white transition" />
                     )}
                   </div>
@@ -966,11 +870,9 @@ export default function PublierPage() {
                       <h2 className="font-bold text-gray-800">Contact</h2>
                     </div>
                     <div className="space-y-3">
-                      <input name="tel" value={form.tel} onChange={handleChange} required
-                        placeholder="Téléphone * (+225 07 12 34 56 78)"
+                      <input name="tel" value={form.tel} onChange={handleChange} required placeholder="Téléphone * (+225 07 12 34 56 78)"
                         className="w-full border border-gray-100 bg-gray-50 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-orange-400 focus:bg-white transition" />
-                      <input name="whatsapp" value={form.whatsapp || ''} onChange={handleChange}
-                        placeholder="WhatsApp si différent du téléphone"
+                      <input name="whatsapp" value={form.whatsapp || ''} onChange={handleChange} placeholder="WhatsApp si différent du téléphone"
                         className="w-full border border-gray-100 bg-gray-50 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-orange-400 focus:bg-white transition" />
                     </div>
                   </div>
@@ -978,7 +880,7 @@ export default function PublierPage() {
               )}
             </div>
 
-            {/* ── Colonne droite sticky ──────────────────────────────────── */}
+            {/* Colonne droite sticky */}
             <div className="hidden lg:block">
               <div className="sticky top-4 space-y-4">
                 {showLock ? (
@@ -987,9 +889,7 @@ export default function PublierPage() {
                       <Lock size={18} className="text-amber-600" />
                     </div>
                     <p className="text-sm font-bold text-gray-900 mb-1">Accès restreint</p>
-                    <p className="text-xs text-gray-500 mb-4 leading-relaxed">
-                      Cette catégorie est réservée aux membres CONFIRMÉ avec vérification CNI.
-                    </p>
+                    <p className="text-xs text-gray-500 mb-4 leading-relaxed">Cette catégorie est réservée aux membres CONFIRMÉ avec vérification CNI.</p>
                     <button type="button" onClick={handleUpgrade}
                       className="w-full py-2.5 bg-orange-500 hover:bg-orange-600 text-white text-xs font-bold rounded-xl transition flex items-center justify-center gap-1.5">
                       <Shield size={12} /> Devenir Confirmé
@@ -1040,9 +940,11 @@ export default function PublierPage() {
                       <p className="text-xs text-blue-600">Sauvegarde automatique activée</p>
                     </div>
 
-                    <button type="submit" disabled={loading}
+                    <button type="submit" disabled={loading || compressing}
                       className="w-full py-4 bg-orange-500 hover:bg-orange-600 active:scale-[0.98] text-white font-bold rounded-2xl transition-all flex items-center justify-center gap-2 disabled:opacity-60 shadow-lg shadow-orange-200 text-base">
-                      {loading ? <><Loader2 size={18} className="animate-spin" /> Publication...</> : '🚀 Publier mon annonce'}
+                      {loading ? <><Loader2 size={18} className="animate-spin" /> Publication...</>
+                        : compressing ? <><Loader2 size={18} className="animate-spin" /> Optimisation...</>
+                          : '🚀 Publier mon annonce'}
                     </button>
                     <p className="text-center text-xs text-gray-400">Gratuit · Visible immédiatement</p>
                   </>
@@ -1052,7 +954,7 @@ export default function PublierPage() {
           </div>
         </form>
 
-        {/* ── Barre mobile flottante ─────────────────────────────────────── */}
+        {/* Barre mobile flottante */}
         <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-100 shadow-2xl px-4 py-3">
           <div className="flex items-center gap-3 max-w-lg mx-auto">
             {showLock ? (
@@ -1077,14 +979,12 @@ export default function PublierPage() {
                   <p className="font-extrabold text-orange-500 text-base leading-tight">
                     {form.price ? `${parseInt(form.price).toLocaleString('fr')} FCFA` : 'Prix non défini'}
                   </p>
-                  <p className="text-xs text-gray-400 truncate">
-                    {form.city || '—'}{form.quartier ? `, ${form.quartier}` : ''}
-                  </p>
+                  <p className="text-xs text-gray-400 truncate">{form.city || '—'}{form.quartier ? `, ${form.quartier}` : ''}</p>
                 </div>
-                <button type="submit" form="publier-form" disabled={loading}
+                <button type="submit" form="publier-form" disabled={loading || compressing}
                   className="flex-shrink-0 px-5 py-3 bg-orange-500 hover:bg-orange-600 text-white font-bold rounded-xl transition flex items-center gap-2 disabled:opacity-60 shadow-lg shadow-orange-200">
-                  {loading ? <Loader2 size={16} className="animate-spin" /> : <span>🚀</span>}
-                  <span>Publier</span>
+                  {loading || compressing ? <Loader2 size={16} className="animate-spin" /> : <span>🚀</span>}
+                  <span>{compressing ? 'Optimisation...' : 'Publier'}</span>
                 </button>
               </>
             )}
