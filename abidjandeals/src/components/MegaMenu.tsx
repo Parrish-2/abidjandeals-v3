@@ -51,25 +51,25 @@ const CAT_VISUAL: Record<string, {
     gradient: 'linear-gradient(135deg,#6366f1,#8b5cf6)',
     imageUrl: 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=400&q=80&auto=format&fit=crop',
     descKey: 'cat.hightech_desc',
-    subBadges: { 'telephones-accessoires': 'TOP', 'tv-son': 'NEW' },
+    subBadges: { 'Téléphones & Accessoires': 'TOP', 'TV & Home Cinéma': 'NEW' },
   },
   cat_auto: {
     gradient: 'linear-gradient(135deg,#ef4444,#f97316)',
     imageUrl: 'https://images.unsplash.com/photo-1494976388531-d1058494cdd8?w=400&q=80&auto=format&fit=crop',
     descKey: 'cat.auto_desc',
-    subBadges: { 'motos-scooters': 'PROMO' },
+    subBadges: { 'Motos & Scooters': 'PROMO' },
   },
   cat_immo: {
     gradient: 'linear-gradient(135deg,#10b981,#059669)',
     imageUrl: 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=400&q=80&auto=format&fit=crop',
     descKey: 'cat.realestate_desc',
-    subBadges: { 'vente-maison-villa': 'TOP' },
+    subBadges: { 'Vente Maisons & Villas': 'TOP' },
   },
   cat_serv: {
     gradient: 'linear-gradient(135deg,#8b5cf6,#6366f1)',
     imageUrl: 'https://images.unsplash.com/photo-1521791136064-7986c2920216?w=400&q=80&auto=format&fit=crop',
     descKey: 'cat.services_desc',
-    subBadges: { 'freelance-it': 'TOP', 'cours-formation': 'NEW' },
+    subBadges: { 'Freelance IT & Design': 'TOP', 'Cours & Formations': 'NEW' },
   },
   cat_maison: {
     gradient: 'linear-gradient(135deg,#06b6d4,#0284c7)',
@@ -80,7 +80,7 @@ const CAT_VISUAL: Record<string, {
     gradient: 'linear-gradient(135deg,#f97316,#ef4444)',
     imageUrl: 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=400&q=80&auto=format&fit=crop',
     descKey: 'cat.mode_desc',
-    subBadges: { 'vetements': 'NEW' },
+    subBadges: { 'Vêtements & Chaussures': 'NEW' },
   },
   cat_beaute: {
     gradient: 'linear-gradient(135deg,#ec4899,#db2777)',
@@ -91,7 +91,7 @@ const CAT_VISUAL: Record<string, {
     gradient: 'linear-gradient(135deg,#f43f5e,#e11d48)',
     imageUrl: 'https://images.unsplash.com/photo-1578632292335-df3abbb0d586?w=400&q=80&auto=format&fit=crop',
     descKey: 'cat.lingerie_desc',
-    subBadges: { 'lingerie-sous-vetements': 'NEW' },
+    subBadges: { 'Lingerie & Sous-vêtements': 'NEW' },
   },
   cat_bebe: {
     gradient: 'linear-gradient(135deg,#f59e0b,#f97316)',
@@ -102,13 +102,13 @@ const CAT_VISUAL: Record<string, {
     gradient: 'linear-gradient(135deg,#84cc16,#65a30d)',
     imageUrl: 'https://images.unsplash.com/photo-1542838132-92c53300491e?w=400&q=80&auto=format&fit=crop',
     descKey: 'cat.grocery_desc',
-    subBadges: { 'produits-locaux': 'NEW' },
+    subBadges: { 'Produits locaux CI': 'NEW' },
   },
   cat_sport: {
     gradient: 'linear-gradient(135deg,#14b8a6,#0d9488)',
     imageUrl: 'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=400&q=80&auto=format&fit=crop',
     descKey: 'cat.sport_desc',
-    subBadges: { 'equipements-sport': 'TOP' },
+    subBadges: { 'Équipements de Sport': 'TOP' },
   },
 }
 
@@ -126,8 +126,6 @@ function toSubCat(
   slug: string,
   badges: Record<string, 'TOP' | 'NEW' | 'PROMO' | 'URGENT'> = {}
 ): SubCat {
-  // slug = valeur exacte stockée en DB dans ads.subcategory
-  // Le label affiché est résolu par getLabel(slug, locale) via SUB_LABELS
   return { id: slug, nameKey: slug, badge: badges[slug] }
 }
 
@@ -179,72 +177,73 @@ const CAT_LABELS: Record<string, { en: string; fr: string }> = {
   'cat.sport_desc': { en: 'Equipment, fitness & leisure', fr: 'Équipements, fitness & loisirs' },
 }
 
-// SUB_LABELS : clé = slug DB exact (= valeur dans data.ts et ads.subcategory)
+// SUB_LABELS : clé = sub.name (champ affiché dans data.ts), valeur = traductions EN/FR
+// ⚠️ Les clés DOIVENT correspondre exactement aux champs { name } définis dans data.ts
 const SUB_LABELS: Record<string, { en: string; fr: string }> = {
   // ── High-Tech ──────────────────────────────────────────────────────────────
-  'telephones-accessoires': { en: 'Phones & Accessories', fr: 'Téléphones & Accessoires' },
-  'ordinateurs': { en: 'Computers & Laptops', fr: 'Ordinateurs & Laptops' },
-  'tablettes': { en: 'Tablets', fr: 'Tablettes' },
-  'tv-son': { en: 'TV & Home Cinema', fr: 'TV & Home Cinéma' },
-  'photo-video': { en: 'Photo & Video', fr: 'Photo & Vidéo' },
-  'consoles-jeux': { en: 'Consoles & Video Games', fr: 'Consoles & Jeux Vidéo' },
-  'objets-connectes': { en: 'Connected Devices', fr: 'Objets Connectés' },
-  'cameras': { en: 'Cameras', fr: 'Cameras' },
-  'composants': { en: 'Parts & Peripherals', fr: 'Pièces & Périphériques' },
+  'Téléphones & Accessoires':   { en: 'Phones & Accessories',      fr: 'Téléphones & Accessoires' },
+  'Ordinateurs & Laptops':      { en: 'Computers & Laptops',       fr: 'Ordinateurs & Laptops' },
+  'Tablettes':                  { en: 'Tablets',                   fr: 'Tablettes' },
+  'TV & Home Cinéma':           { en: 'TV & Home Cinema',          fr: 'TV & Home Cinéma' },
+  'Photo & Vidéo':              { en: 'Photo & Video',             fr: 'Photo & Vidéo' },
+  'Consoles & Jeux Vidéo':      { en: 'Consoles & Video Games',    fr: 'Consoles & Jeux Vidéo' },
+  'Objets Connectés':           { en: 'Connected Devices',         fr: 'Objets Connectés' },
+  'Cameras':                    { en: 'Cameras',                   fr: 'Cameras' },
+  'Pièces & Périphériques':     { en: 'Parts & Peripherals',       fr: 'Pièces & Périphériques' },
   // ── Automobile ────────────────────────────────────────────────────────────
-  'voitures-d-occasion': { en: 'Used Cars', fr: "Voitures d'occasion" },
-  'voitures-neuves': { en: 'New Cars', fr: 'Voitures Neuves' },
-  'motos-scooters': { en: 'Motorbikes & Scooters', fr: 'Motos & Scooters' },
-  'pieces-pneus': { en: 'Parts & Tyres', fr: 'Pièces détachées & Pneus' },
-  'location-auto': { en: 'Car Rental', fr: 'Location Auto' },
-  'camions-utilitaires': { en: 'Trucks & Vans', fr: 'Camions & Utilitaires' },
-  'groupes-electrogenes': { en: 'Generators', fr: 'Groupes Électrogènes' },
-  'materiel-agricole': { en: 'Agricultural Equipment', fr: 'Matériel Agricole' },
-  'outillage-industriel': { en: 'Industrial Tools', fr: 'Outillage Industriel' },
-  'engins-chantier': { en: 'Construction Equipment', fr: 'Engins de Chantier' },
+  "Voitures d'occasion":        { en: 'Used Cars',                 fr: "Voitures d'occasion" },
+  'Voitures Neuves':            { en: 'New Cars',                  fr: 'Voitures Neuves' },
+  'Motos & Scooters':           { en: 'Motorbikes & Scooters',     fr: 'Motos & Scooters' },
+  'Pièces détachées & Pneus':   { en: 'Parts & Tyres',             fr: 'Pièces détachées & Pneus' },
+  'Location Auto':              { en: 'Car Rental',                fr: 'Location Auto' },
+  'Camions & Utilitaires':      { en: 'Trucks & Vans',             fr: 'Camions & Utilitaires' },
+  'Groupes Électrogènes':       { en: 'Generators',                fr: 'Groupes Électrogènes' },
+  'Matériel Agricole':          { en: 'Agricultural Equipment',    fr: 'Matériel Agricole' },
+  'Outillage Industriel':       { en: 'Industrial Tools',          fr: 'Outillage Industriel' },
+  'Engins de Chantier':         { en: 'Construction Equipment',    fr: 'Engins de Chantier' },
   // ── Immobilier ────────────────────────────────────────────────────────────
-  'vente-appartement': { en: 'Apartment Sales', fr: 'Vente Appartements' },
-  'vente-maison-villa': { en: 'House & Villa Sales', fr: 'Vente Maisons & Villas' },
-  'location-meublee': { en: 'Furnished Rental', fr: 'Location Meublée' },
-  'location-vide': { en: 'Unfurnished Rental', fr: 'Location Vide' },
-  'colocation': { en: 'Flatsharing', fr: 'Colocation' },
-  'terrains': { en: 'Land with Title Deed', fr: 'Terrains avec ACD' },
-  'bureaux-boutiques': { en: 'Offices & Retail', fr: 'Bureaux & Commerces' },
+  'Vente Appartements':         { en: 'Apartment Sales',           fr: 'Vente Appartements' },
+  'Vente Maisons & Villas':     { en: 'House & Villa Sales',       fr: 'Vente Maisons & Villas' },
+  'Location Meublée':           { en: 'Furnished Rental',          fr: 'Location Meublée' },
+  'Location Vide':              { en: 'Unfurnished Rental',        fr: 'Location Vide' },
+  'Colocation':                 { en: 'Flatsharing',               fr: 'Colocation' },
+  'Terrains avec ACD':          { en: 'Land with Title Deed',      fr: 'Terrains avec ACD' },
+  'Bureaux & Commerces':        { en: 'Offices & Retail',          fr: 'Bureaux & Commerces' },
   // ── Services ──────────────────────────────────────────────────────────────
-  'freelance-it': { en: 'Freelance IT & Design', fr: 'Freelance IT & Design' },
-  'batiment': { en: 'Construction & Trades', fr: 'BTP & Artisanat' },
-  'cours-formation': { en: 'Courses & Training', fr: 'Cours & Formations' },
-  'offres-emploi': { en: 'Job Offers', fr: "Offres d'Emploi" },
-  'transport': { en: 'Transport & Delivery', fr: 'Transport & Livraison' },
-  'menage': { en: 'Cleaning Services', fr: 'Ménage & Nettoyage' },
-  'securite': { en: 'Security & Guarding', fr: 'Sécurité & Gardiennage' },
-  'evenementiel': { en: 'Events & Entertainment', fr: 'Événementiel' },
+  'Freelance IT & Design':      { en: 'Freelance IT & Design',     fr: 'Freelance IT & Design' },
+  'BTP & Artisanat':            { en: 'Construction & Trades',     fr: 'BTP & Artisanat' },
+  'Cours & Formations':         { en: 'Courses & Training',        fr: 'Cours & Formations' },
+  "Offres d'Emploi":            { en: 'Job Offers',                fr: "Offres d'Emploi" },
+  'Transport & Livraison':      { en: 'Transport & Delivery',      fr: 'Transport & Livraison' },
+  'Ménage & Nettoyage':         { en: 'Cleaning Services',         fr: 'Ménage & Nettoyage' },
+  'Sécurité & Gardiennage':     { en: 'Security & Guarding',       fr: 'Sécurité & Gardiennage' },
+  'Événementiel':               { en: 'Events & Entertainment',    fr: 'Événementiel' },
   // ── Maison ────────────────────────────────────────────────────────────────
-  'meubles': { en: 'Furniture', fr: 'Meubles' },
-  'electromenager': { en: 'Appliances', fr: 'Électroménager' },
-  'decoration': { en: 'Decoration', fr: 'Décoration' },
-  'jardin-bricolage': { en: 'Garden & DIY', fr: 'Jardin & Bricolage' },
+  'Meubles':                    { en: 'Furniture',                 fr: 'Meubles' },
+  'Électroménager':             { en: 'Appliances',                fr: 'Électroménager' },
+  'Décoration':                 { en: 'Decoration',                fr: 'Décoration' },
+  'Jardin & Bricolage':         { en: 'Garden & DIY',              fr: 'Jardin & Bricolage' },
   // ── Mode ──────────────────────────────────────────────────────────────────
-  'vetements': { en: 'Clothing & Shoes', fr: 'Vêtements & Chaussures' },
-  'chaussures': { en: 'Shoes', fr: 'Chaussures' },
-  'sacs-accessoires': { en: 'Bags & Accessories', fr: 'Sacs & Accessoires' },
-  'montres': { en: 'Watches & Jewellery', fr: 'Montres & Bijoux' },
-  'cosmetiques': { en: 'Cosmetics & Perfumes', fr: 'Cosmétiques & Parfums' },
+  'Vêtements & Chaussures':     { en: 'Clothing & Shoes',          fr: 'Vêtements & Chaussures' },
+  'Chaussures':                 { en: 'Shoes',                     fr: 'Chaussures' },
+  'Sacs & Accessoires':         { en: 'Bags & Accessories',        fr: 'Sacs & Accessoires' },
+  'Montres & Bijoux':           { en: 'Watches & Jewellery',       fr: 'Montres & Bijoux' },
+  'Cosmétiques & Parfums':      { en: 'Cosmetics & Perfumes',      fr: 'Cosmétiques & Parfums' },
   // ── Sport & Loisirs ───────────────────────────────────────────────────────
-  'equipements-sport': { en: 'Sports Equipment', fr: 'Équipements de Sport' },
-  'instruments-musique': { en: 'Musical Instruments', fr: 'Instruments de Musique' },
-  'jouets': { en: 'Toys & Games', fr: 'Jouets & Jeux' },
-  'voyages': { en: 'Travel & Tourism', fr: 'Voyages & Tourisme' },
-  'velos': { en: 'Bikes & Scooters', fr: 'Vélos & Trottinettes' },
+  'Équipements de Sport':       { en: 'Sports Equipment',          fr: 'Équipements de Sport' },
+  'Instruments de Musique':     { en: 'Musical Instruments',       fr: 'Instruments de Musique' },
+  'Jouets & Jeux':              { en: 'Toys & Games',              fr: 'Jouets & Jeux' },
+  'Voyages & Tourisme':         { en: 'Travel & Tourism',          fr: 'Voyages & Tourisme' },
+  'Vélos & Trottinettes':       { en: 'Bikes & Scooters',          fr: 'Vélos & Trottinettes' },
   // ── Autres ────────────────────────────────────────────────────────────────
-  'animaux': { en: 'Pets & Accessories', fr: 'Animaux & Accessoires' },
-  'collection': { en: 'Collectibles', fr: 'Objets de Collection' },
-  'inclassables': { en: 'Miscellaneous', fr: 'Inclassables' },
+  'Animaux & Accessoires':      { en: 'Pets & Accessories',        fr: 'Animaux & Accessoires' },
+  'Objets de Collection':       { en: 'Collectibles',              fr: 'Objets de Collection' },
+  'Inclassables':               { en: 'Miscellaneous',             fr: 'Inclassables' },
   // ── Adulte ────────────────────────────────────────────────────────────────
-  'lingerie-sous-vetements': { en: 'Lingerie & Underwear', fr: 'Lingerie & Sous-vêtements' },
-  'maillots-de-bain': { en: 'Swimwear', fr: 'Maillots de Bain' },
-  'cosmetiques-bien-etre': { en: 'Cosmetics & Wellness', fr: 'Cosmétiques & Bien-être' },
-  'accessoires-mode': { en: 'Fashion Accessories', fr: 'Accessoires Mode' },
+  'Lingerie & Sous-vêtements':  { en: 'Lingerie & Underwear',      fr: 'Lingerie & Sous-vêtements' },
+  'Maillots de Bain':           { en: 'Swimwear',                  fr: 'Maillots de Bain' },
+  'Cosmétiques & Bien-être':    { en: 'Cosmetics & Wellness',      fr: 'Cosmétiques & Bien-être' },
+  'Accessoires Mode':           { en: 'Fashion Accessories',       fr: 'Accessoires Mode' },
 }
 
 function getLabel(key: string, locale: string): string {
