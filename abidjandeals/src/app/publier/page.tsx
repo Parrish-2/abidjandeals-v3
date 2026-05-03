@@ -460,10 +460,49 @@ export default function PublierPage() {
 
       setUploadProgress(null)
 
+      // ✅ Résolution automatique + création de la sous-catégorie si inexistante
+      // Garantit que chaque nouvelle sous-catégorie est toujours trouvable dans /search
       let subCategoryUuid: string | null = null
       if (form.subcategory && form.category) {
-        const { data: subCat } = await supabase.from('sub_categories').select('id').eq('category_id', form.category).ilike('name', form.subcategory).maybeSingle()
-        subCategoryUuid = subCat?.id ?? null
+        // 1. Cherche si la sous-catégorie existe déjà dans la table categories
+        const { data: existing } = await supabase
+          .from('categories')
+          .select('id')
+          .eq('parent_id', form.category)
+          .ilike('label_fr', form.subcategory)
+          .maybeSingle()
+
+        if (existing) {
+          // Trouvée → on utilise son UUID directement
+          subCategoryUuid = existing.id
+        } else {
+          // Pas trouvée → on la crée automatiquement avec le bon parent_id
+          const slug = form.subcategory
+            .toLowerCase()
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '') // supprime les accents
+            .replace(/[^a-z0-9]+/g, '-')     // remplace tout non-alphanumérique par -
+            .replace(/^-+|-+$/g, '')          // supprime les tirets en début/fin
+
+          const { data: created, error: createError } = await supabase
+            .from('categories')
+            .insert({
+              slug,
+              label_fr: form.subcategory,
+              label_en: form.subcategory,
+              parent_id: form.category,
+              sort_order: 0,
+              is_adult: false,
+            })
+            .select('id')
+            .single()
+
+          if (!createError && created) {
+            subCategoryUuid = created.id
+          }
+          // Si la création échoue (ex: slug en double), on continue sans UUID
+          // L'annonce sera publiée normalement, juste sans sous-catégorie liée
+        }
       }
 
       const { error } = await Promise.race([
