@@ -1,4 +1,7 @@
-﻿const SUBCAT_LABELS: Record<string, string> = {
+﻿type ExtraField = { name: string; label: string; type?: string; options?: string[]; placeholder?: string }
+type CatConfig = { etats: string[]; extraFields: ExtraField[] }
+
+const SUBCAT_LABELS: Record<string, string> = {
   'telephones-accessoires': 'Téléphones & Accessoires',
   'ordinateurs': 'Ordinateurs',
   'tablettes': 'Tablettes',
@@ -744,6 +747,7 @@ export default function PublierPage() {
     </div>
   )
 }
+
 
 
 
