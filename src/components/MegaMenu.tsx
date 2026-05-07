@@ -123,13 +123,17 @@ function slugify(str: string): string {
 }
 
 function toSubCat(
-  sub: { name: string; slug: string },
+  sub: string | { name: string; slug?: string },
   badges: Record<string, 'TOP' | 'NEW' | 'PROMO' | 'URGENT'> = {}
 ): SubCat {
   // ✅ FIX CRITIQUE : on utilise sub.slug (slug DB exact) au lieu de slugify(sub.name)
   // slugify("Voitures d'occasion") → "voitures-d-occasion" (FAUX)
   // sub.slug                       → "voitures-d-occasion" (VRAI, calé sur la DB)
-  return { id: sub.slug, nameKey: sub.name, badge: badges[sub.name] }
+  const name = typeof sub === 'string' ? sub : sub.name
+  const id = typeof sub === 'string'
+    ? slugify(sub)
+    : (sub.slug ?? slugify(sub.name))
+  return { id, nameKey: name, badge: badges[name] }
 }
 
 export const MEGA_CATS: MegaCat[] = CATEGORIES.map(cat => {
@@ -148,7 +152,7 @@ export const MEGA_CATS: MegaCat[] = CATEGORIES.map(cat => {
     imageUrl: visual.imageUrl,
     descKey: visual.descKey,
     isAdult: (cat as any).isAdult,
-    subs: cat.subcats.map(s => toSubCat(s, visual.subBadges)),
+    subs: (cat.subcats as Array<string | { name: string; slug?: string }>).map(s => toSubCat(s, visual.subBadges)),
   }
 })
 
