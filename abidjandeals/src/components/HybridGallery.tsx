@@ -17,7 +17,8 @@ export function HybridGallery({ images, videoUrl, alt = 'Photo' }: HybridGallery
     const [selectedIndex, setSelectedIndex] = useState(0)
     const [isExpanded, setIsExpanded] = useState(false)
     const [isMuted, setIsMuted] = useState(true)
-    const videoRef = useRef<HTMLVideoElement>(null)
+    const pipVideoRef = useRef<HTMLVideoElement>(null)   // vidéo miniature PiP
+    const expandedVideoRef = useRef<HTMLVideoElement>(null) // vidéo agrandie
     const containerRef = useRef<HTMLDivElement>(null)
 
     // Position draggable de la vidéo PiP
@@ -32,12 +33,28 @@ export function HybridGallery({ images, videoUrl, alt = 'Photo' }: HybridGallery
         return () => { emblaApi.off('select', onSelect) }
     }, [emblaApi])
 
-    // Sync muted state avec la vidéo
+    // Sync muted state avec la vidéo agrandie
     useEffect(() => {
-        if (videoRef.current) {
-            videoRef.current.muted = isMuted
+        if (expandedVideoRef.current) {
+            expandedVideoRef.current.muted = isMuted
         }
     }, [isMuted])
+
+    // Force chargement + lecture de la vidéo PiP dès que l'URL est disponible
+    useEffect(() => {
+        const v = pipVideoRef.current
+        if (!v || !videoUrl) return
+        v.load()
+        const tryPlay = () => {
+            v.play().catch(() => {
+                const onCanPlay = () => { v.play().catch(() => { }); v.removeEventListener('canplay', onCanPlay) }
+                v.addEventListener('canplay', onCanPlay)
+            })
+        }
+        if (v.readyState >= 3) { tryPlay() }
+        else { v.addEventListener('loadeddata', tryPlay, { once: true }) }
+        return () => { v.removeEventListener('loadeddata', tryPlay) }
+    }, [videoUrl])
 
     const scrollTo = useCallback((index: number) => {
         emblaApi?.scrollTo(index)
@@ -53,10 +70,13 @@ export function HybridGallery({ images, videoUrl, alt = 'Photo' }: HybridGallery
         if (!isExpanded) {
             setIsExpanded(true)
             setIsMuted(false)
-            if (videoRef.current) {
-                videoRef.current.muted = false
-                videoRef.current.play()
-            }
+            // La vidéo agrandie s'auto-joue via autoPlay; on s'assure du son
+            setTimeout(() => {
+                if (expandedVideoRef.current) {
+                    expandedVideoRef.current.muted = false
+                    expandedVideoRef.current.play().catch(() => { })
+                }
+            }, 50)
         }
     }
 
@@ -64,8 +84,9 @@ export function HybridGallery({ images, videoUrl, alt = 'Photo' }: HybridGallery
         e.stopPropagation()
         setIsExpanded(false)
         setIsMuted(true)
-        if (videoRef.current) {
-            videoRef.current.muted = true
+        if (expandedVideoRef.current) {
+            expandedVideoRef.current.pause()
+            expandedVideoRef.current.muted = true
         }
     }
 
@@ -127,12 +148,13 @@ export function HybridGallery({ images, videoUrl, alt = 'Photo' }: HybridGallery
                         onClick={handleVideoClick}
                     >
                         <video
-                            ref={videoRef}
+                            ref={pipVideoRef}
                             src={videoUrl}
                             autoPlay
                             loop
                             muted
                             playsInline
+                            preload="auto"
                             className="w-full h-full object-cover"
                         />
                         {/* Overlay hint */}
@@ -159,11 +181,12 @@ export function HybridGallery({ images, videoUrl, alt = 'Photo' }: HybridGallery
                         className="absolute inset-0 z-30 bg-black"
                     >
                         <video
-                            ref={videoRef}
+                            ref={expandedVideoRef}
                             src={videoUrl}
                             autoPlay
                             loop
                             playsInline
+                            preload="auto"
                             className="w-full h-full object-contain"
                         />
 

@@ -11,6 +11,8 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 
+import { CATEGORIES as CAT_DATA } from '@/lib/data';
+
 const ADULT_CATEGORIES = ['lingerie', 'cat_lingerie']
 const STORAGE_KEY = 'abidjandeals_age_verified'
 
@@ -34,7 +36,26 @@ const SLUG_TO_DB_CATEGORY: Record<string, string> = {
   'cat_loisir': 'cat_loisir', 'cat_autres': 'cat_autres', 'cat_agri': 'cat_agri',
 }
 
-const SUBCAT_SLUG_TO_DB_NAME: Record<string, string> = {}
+// Build slug → label mapping from CATEGORIES (data.ts)
+// e.g. slugify('Téléphones & Accessoires') → 'telephones-accessoires' → 'Téléphones & Accessoires'
+function _slugify(str: string): string {
+  return str
+    .toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '')
+}
+
+const SUBCAT_SLUG_TO_NAME: Record<string, string> = (() => {
+  const map: Record<string, string> = {}
+  for (const cat of CAT_DATA) {
+    for (const sub of cat.subcats) {
+      const name = typeof sub === 'string' ? sub : (sub as { name: string }).name
+      if (name) map[_slugify(name)] = name
+    }
+  }
+  return map
+})()
 
 function resolveDbCategoryId(slug: string | null): string | null {
   if (!slug) return null
@@ -100,7 +121,7 @@ function getCatEmoji(cat: string | null): string {
 
 interface Ad {
   id: string; title: string; price: number; category_id: string;
-  sub_category_id?: string; etat: string; marque: string; city: string;
+  subcategory?: string; etat: string; marque: string; city: string;
   quartier: string; images: string[]; boost_level: 'STANDARD' | 'PREMIUM' | 'URGENT' | null;
   views: number; status: string; created_at: string;
 }
@@ -240,12 +261,9 @@ function SearchContent() {
 
   const dbCategoryId = resolveDbCategoryId(categorySlug)
 
-  // ─── FIX DÉFINITIF ────────────────────────────────────────────────────────
-  // Filtrage direct par ads.subcategory = slug (pas de résolution UUID).
-  // publier.tsx stocke désormais le slug dans ads.subcategory.
-  // Suppression du useEffect de résolution async → zéro race condition.
-  // Compatible avec toutes les annonces futures automatiquement.
-  // ─────────────────────────────────────────────────────────────────────────
+  // Résolution synchrone : slug URL → label texte stocké dans la colonne 'subcategory'
+  // Exemple : 'telephones-accessoires' → 'Téléphones & Accessoires'
+  const subcatLabel = subcategorySlug ? (SUBCAT_SLUG_TO_NAME[subcategorySlug] ?? null) : null
 
   const supabase = useMemo(() => createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -277,7 +295,7 @@ function SearchContent() {
 
   const fetchAds = useMemo(() => async (params: {
     dbCategoryId: string | null
-    subcategorySlug: string | null
+    subcatLabel: string | null
     q: string
     sort: string
     priceMin: string
@@ -290,14 +308,14 @@ function SearchContent() {
     try {
       let query = supabase
         .from("ads")
-        .select(`id, title, price, category_id, sub_category_id, etat, marque, city, quartier, images, boost_level, views, status, created_at`, { count: "exact" })
+        .select(`id, title, price, category_id, subcategory, etat, marque, city, quartier, images, boost_level, views, status, created_at`, { count: "exact" })
         .in("status", ["active", "approved"])
 
-      if (params.dbCategoryId && params.subcategorySlug) {
-        // Catégorie + sous-catégorie : filtre direct par slug sur ads.subcategory
+      if (params.subcatLabel && params.dbCategoryId) {
+        // Filtre catégorie + sous-catégorie (colonne texte "subcategory")
         query = query
           .eq("category_id", params.dbCategoryId)
-          .eq("subcategory", params.subcategorySlug)
+          .eq("subcategory", params.subcatLabel)
       } else if (params.dbCategoryId) {
         // Catégorie seule
         query = query.eq("category_id", params.dbCategoryId)
@@ -317,8 +335,6 @@ function SearchContent() {
 
       const { data, error: sbError, count } = await query.limit(48)
 
-      console.log('[fetchAds] count:', count)
-
       if (sbError) throw sbError
       setAds((data as Ad[]) ?? [])
       setTotal(count ?? 0)
@@ -331,16 +347,24 @@ function SearchContent() {
 
   useEffect(() => {
     if (!ageCleared) return
-    fetchAds({ dbCategoryId, subcategorySlug, q, sort, priceMin, priceMax, selectedEtat })
-  }, [ageCleared, dbCategoryId, subcategorySlug, q, sort, priceMin, priceMax, selectedEtat, fetchAds])
+    fetchAds({
+      dbCategoryId,
+      subcatLabel,
+      q, sort, priceMin, priceMax, selectedEtat
+    })
+  }, [ageCleared, dbCategoryId, subcatLabel, q, sort, priceMin, priceMax, selectedEtat, fetchAds])
 
   const handleApplyFilters = () => {
     if (!ageCleared) return
-    fetchAds({ dbCategoryId, subcategorySlug, q, sort, priceMin, priceMax, selectedEtat })
+    fetchAds({
+      dbCategoryId,
+      subcatLabel,
+      q, sort, priceMin, priceMax, selectedEtat
+    })
     setShowFilters(false)
   }
 
-  const pageLabel = subcategorySlug ? getLabel(subcategorySlug) : categorySlug ? getLabel(categorySlug) : q ? `Résultats pour "${q}"` : "Toutes les annonces"
+  const pageLabel = subcatLabel ?? (subcategorySlug ? getLabel(subcategorySlug) : null) ?? (categorySlug ? getLabel(categorySlug) : null) ?? (q ? `Résultats pour "${q}"` : "Toutes les annonces")
   const pageEmoji = subcategorySlug ? getCatEmoji(subcategorySlug) : getCatEmoji(categorySlug)
 
   const sortOptions = [
