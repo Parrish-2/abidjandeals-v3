@@ -50,7 +50,9 @@
   'animaux': 'Animaux',
   'collection': 'Collection',
   'inclassables': 'Inclassables',
-}const CATEGORY_FIELDS: Record<string, CatConfig> = {
+}
+
+const CATEGORY_FIELDS: Record<string, CatConfig> = {
   cat_tech: {
     etats: ['Neuf', 'ReconditionnÃ©', 'TrÃ¨s bon Ã©tat', 'Bon Ã©tat', 'Ã€ rÃ©parer'],
     extraFields: [
@@ -742,5 +744,6 @@ export default function PublierPage() {
     </div>
   )
 }
+
 
 
