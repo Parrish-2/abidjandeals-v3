@@ -152,7 +152,7 @@ export const MEGA_CATS: MegaCat[] = CATEGORIES.map(cat => {
     imageUrl: visual.imageUrl,
     descKey: visual.descKey,
     isAdult: (cat as any).isAdult,
-    subs: cat.subcats.map(s => toSubCat(s, visual.subBadges)),
+    subs: (cat.subcats as Array<string | { name: string; slug?: string }>).map(s => toSubCat(s, visual.subBadges)),
   }
 })
 
