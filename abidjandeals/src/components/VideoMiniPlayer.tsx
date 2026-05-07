@@ -40,6 +40,33 @@ export default function VideoMiniPlayer({
     return () => clearTimeout(t)
   }, [])
 
+  // ── Lancement explicite de la lecture ────────────────────────────────────────
+  // Le autoPlay seul ne suffit pas si le navigateur n'a pas encore chargé la vidéo.
+  // On force load() + play() dès que le composant monte ou que l'URL change.
+  useEffect(() => {
+    const v = videoRef.current
+    if (!v || !videoUrl) return
+    v.load()
+    const tryPlay = () => {
+      v.play().catch(() => {
+        // Autoplay bloqué (ex. politique navigateur) → on attend un événement
+        const onCanPlay = () => {
+          v.play().catch(() => { })
+          v.removeEventListener('canplay', onCanPlay)
+        }
+        v.addEventListener('canplay', onCanPlay)
+      })
+    }
+    if (v.readyState >= 3) {
+      tryPlay()
+    } else {
+      v.addEventListener('loadeddata', tryPlay, { once: true })
+    }
+    return () => {
+      v.removeEventListener('loadeddata', tryPlay)
+    }
+  }, [videoUrl])
+
   // ── Helpers ─────────────────────────────────────────────────────────────────
 
   const getClientPos = (e: MouseEvent | TouchEvent) => {
@@ -216,8 +243,14 @@ export default function VideoMiniPlayer({
               ref={videoRef}
               src={videoUrl}
               autoPlay loop playsInline
+              preload="auto"
               muted={muted}
               className="w-full aspect-video object-cover block"
+              onLoadedData={e => {
+                const v = e.currentTarget
+                v.muted = muted
+                v.play().catch(() => { })
+              }}
             />
           </div>
         </div>
@@ -330,6 +363,7 @@ export default function VideoMiniPlayer({
               ref={videoRef}
               src={videoUrl}
               autoPlay loop muted playsInline
+              preload="auto"
               style={{ width: '100%', aspectRatio: '16/9', objectFit: 'cover', display: 'block', pointerEvents: 'none' }}
             />
           </div>
