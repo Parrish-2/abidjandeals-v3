@@ -1,4 +1,57 @@
-﻿'use client'
+﻿const SUBCAT_LABELS: Record<string, string> = {
+  'telephones-accessoires': 'Telephones et Accessoires',
+  'ordinateurs': 'Ordinateurs',
+  'tablettes': 'Tablettes',
+  'tv-son': 'TV et Son',
+  'photo-video': 'Photo et Video',
+  'consoles-jeux': 'Consoles et Jeux',
+  'objets-connectes': 'Objets Connectes',
+  'cameras': 'Cameras',
+  'composants': 'Composants',
+  'voitures-d-occasion': 'Voitures occasion',
+  'voitures-neuves': 'Voitures Neuves',
+  'motos-scooters': 'Motos et Scooters',
+  'pieces-pneus': 'Pieces et Pneus',
+  'location-auto': 'Location Auto',
+  'camions-utilitaires': 'Camions et Utilitaires',
+  'groupes-electrogenes': 'Groupes Electrogenes',
+  'materiel-agricole': 'Materiel Agricole',
+  'outillage-industriel': 'Outillage Industriel',
+  'engins-chantier': 'Engins de Chantier',
+  'vente-appartement': 'Vente Appartement',
+  'vente-maison-villa': 'Vente Maison et Villa',
+  'location-meublee': 'Location Meublee',
+  'location-vide': 'Location Vide',
+  'colocation': 'Colocation',
+  'terrains': 'Terrains',
+  'bureaux-boutiques': 'Bureaux et Boutiques',
+  'freelance-it': 'Freelance et IT',
+  'batiment': 'Batiment',
+  'cours-formation': 'Cours et Formation',
+  'offres-emploi': 'Offres emploi',
+  'transport': 'Transport',
+  'menage': 'Menage',
+  'securite': 'Securite',
+  'evenementiel': 'Evenementiel',
+  'meubles': 'Meubles',
+  'electromenager': 'Electromenager',
+  'decoration': 'Decoration',
+  'jardin-bricolage': 'Jardin et Bricolage',
+  'vetements': 'Vetements',
+  'chaussures': 'Chaussures',
+  'sacs-accessoires': 'Sacs et Accessoires',
+  'montres': 'Montres',
+  'cosmetiques': 'Cosmetiques',
+  'equipements-sport': 'Equipements Sport',
+  'instruments-musique': 'Instruments de Musique',
+  'jouets': 'Jouets',
+  'voyages': 'Voyages',
+  'velos': 'Velos',
+  'animaux': 'Animaux',
+  'collection': 'Collection',
+  'inclassables': 'Inclassables',
+}
+'use client'
 import { Footer } from '@/components/Footer'
 import { Navbar } from '@/components/Navbar'
 import { CATEGORIES, CITIES } from '@/lib/data'
@@ -30,7 +83,59 @@ type ExtraField = { name: string; label: string; type?: string; options?: string
 type CatConfig = { etats: string[]; extraFields: ExtraField[] }
 
 // â”€â”€ CATEGORY_FIELDS â€” clÃ©s alignÃ©es sur les IDs rÃ©els de data.ts â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-const CATEGORY_FIELDS: Record<string, CatConfig> = {
+const SUBCAT_LABELS: Record<string, string> = {
+  'telephones-accessoires': 'Téléphones & Accessoires',
+  'ordinateurs': 'Ordinateurs',
+  'tablettes': 'Tablettes',
+  'tv-son': 'TV & Son',
+  'photo-video': 'Photo & Vidéo',
+  'consoles-jeux': 'Consoles & Jeux',
+  'objets-connectes': 'Objets Connectés',
+  'cameras': 'Caméras',
+  'composants': 'Composants',
+  'voitures-d-occasion': "Voitures d'occasion",
+  'voitures-neuves': 'Voitures Neuves',
+  'motos-scooters': 'Motos & Scooters',
+  'pieces-pneus': 'Pièces & Pneus',
+  'location-auto': 'Location Auto',
+  'camions-utilitaires': 'Camions & Utilitaires',
+  'groupes-electrogenes': 'Groupes Électrogènes',
+  'materiel-agricole': 'Matériel Agricole',
+  'outillage-industriel': 'Outillage Industriel',
+  'engins-chantier': 'Engins de Chantier',
+  'vente-appartement': 'Vente Appartement',
+  'vente-maison-villa': 'Vente Maison & Villa',
+  'location-meublee': 'Location Meublée',
+  'location-vide': 'Location Vide',
+  'colocation': 'Colocation',
+  'terrains': 'Terrains',
+  'bureaux-boutiques': 'Bureaux & Boutiques',
+  'freelance-it': 'Freelance & IT',
+  'batiment': 'Bâtiment',
+  'cours-formation': 'Cours & Formation',
+  'offres-emploi': "Offres d'emploi",
+  'transport': 'Transport',
+  'menage': 'Ménage',
+  'securite': 'Sécurité',
+  'evenementiel': 'Événementiel',
+  'meubles': 'Meubles',
+  'electromenager': 'Électroménager',
+  'decoration': 'Décoration',
+  'jardin-bricolage': 'Jardin & Bricolage',
+  'vetements': 'Vêtements',
+  'chaussures': 'Chaussures',
+  'sacs-accessoires': 'Sacs & Accessoires',
+  'montres': 'Montres',
+  'cosmetiques': 'Cosmétiques',
+  'equipements-sport': 'Équipements Sport',
+  'instruments-musique': 'Instruments de Musique',
+  'jouets': 'Jouets',
+  'voyages': 'Voyages',
+  'velos': 'Vélos',
+  'animaux': 'Animaux',
+  'collection': 'Collection',
+  'inclassables': 'Inclassables',
+}const CATEGORY_FIELDS: Record<string, CatConfig> = {
   cat_tech: {
     etats: ['Neuf', 'ReconditionnÃ©', 'TrÃ¨s bon Ã©tat', 'Bon Ã©tat', 'Ã€ rÃ©parer'],
     extraFields: [
@@ -39,10 +144,19 @@ const CATEGORY_FIELDS: Record<string, CatConfig> = {
       { name: 'stockage', label: 'Stockage', type: 'select', options: ['32 Go', '64 Go', '128 Go', '256 Go', '512 Go', '1 To', '2 To'] },
       { name: 'ram', label: 'RAM', type: 'select', options: ['2 Go', '4 Go', '6 Go', '8 Go', '12 Go', '16 Go', '32 Go'] },
       { name: 'couleur', label: 'Couleur', placeholder: 'Noir, Blanc, Or...' },
+const CATEGORY_FIELDS: Record<string, CatConfig> = {
+    cat_tech: {
+      etats: ['Neuf', 'ReconditionnÃ©', 'TrÃ¨s bon Ã©tat', 'Bon Ã©tat', 'Ã€ rÃ©parer'],
+      extraFields: [
+        { name: 'marque', label: 'Marque *', placeholder: 'Apple, Samsung, HP...' },
+        { name: 'modele', label: 'ModÃ¨le', placeholder: 'iPhone 15, Galaxy S24...' },
+        { name: 'stockage', label: 'Stockage', type: 'select', options: ['32 Go', '64 Go', '128 Go', '256 Go', '512 Go', '1 To', '2 To'] },
+      { name: 'ram', label: 'RAM', type: 'select', options: ['2 Go', '4 Go', '6 Go', '8 Go', '12 Go', '16 Go', '32 Go'] },
+{ name: 'couleur', label: 'Couleur', placeholder: 'Noir, Blanc, Or...' },
     ],
   },
-  cat_auto: {
-    etats: ['Neuf', 'TrÃ¨s bon Ã©tat', 'Bon Ã©tat', 'Ã‰tat correct', 'Pour piÃ¨ces'],
+cat_auto: {
+  etats: ['Neuf', 'TrÃ¨s bon Ã©tat', 'Bon Ã©tat', 'Ã‰tat correct', 'Pour piÃ¨ces'],
     extraFields: [
       { name: 'marque', label: 'Marque *', placeholder: 'Toyota, Kia, Renault...' },
       { name: 'modele', label: 'ModÃ¨le', placeholder: 'Prado, Forte, Duster...' },
@@ -52,8 +166,8 @@ const CATEGORY_FIELDS: Record<string, CatConfig> = {
       { name: 'boite', label: 'BoÃ®te de vitesse', type: 'select', options: ['Automatique', 'Manuelle'] },
     ],
   },
-  cat_immo: {
-    etats: ['Neuf', 'Bon Ã©tat', 'Ã€ rÃ©nover'],
+cat_immo: {
+  etats: ['Neuf', 'Bon Ã©tat', 'Ã€ rÃ©nover'],
     extraFields: [
       { name: 'type_bien', label: 'Type de bien', type: 'select', options: ['Appartement', 'Maison', 'Villa', 'Terrain', 'Bureau', 'EntrepÃ´t', 'Chambre'] },
       { name: 'surface', label: 'Surface (mÂ²)', type: 'number', placeholder: '120' },
@@ -61,68 +175,68 @@ const CATEGORY_FIELDS: Record<string, CatConfig> = {
       { name: 'meuble', label: 'MeublÃ© ?', type: 'select', options: ['Oui', 'Non', 'Partiellement'] },
     ],
   },
-  cat_location: {
-    etats: ['Disponible', 'Sous rÃ©serve'],
+cat_location: {
+  etats: ['Disponible', 'Sous rÃ©serve'],
     extraFields: [
       { name: 'capacite', label: 'CapacitÃ© / Places', placeholder: '30 personnes, 300 invitÃ©s...' },
       { name: 'duree_min', label: 'DurÃ©e minimale', placeholder: '1 jour, 1 semaine...' },
       { name: 'caution', label: 'Caution (FCFA)', type: 'number', placeholder: '50000' },
     ],
   },
-  cat_serv: {
-    etats: ['Disponible', 'Sur rendez-vous'],
+cat_serv: {
+  etats: ['Disponible', 'Sur rendez-vous'],
     extraFields: [
       { name: 'experience', label: 'ExpÃ©rience', type: 'select', options: ["Moins d'1 an", '1-3 ans', '3-5 ans', '5-10 ans', 'Plus de 10 ans'] },
       { name: 'deplacement', label: 'DÃ©placement', type: 'select', options: ['Ã€ domicile', 'En boutique', 'Les deux'] },
       { name: 'delai', label: "DÃ©lai d'intervention", placeholder: '24h, 1 semaine...' },
     ],
   },
-  cat_maison: {
-    etats: ['Neuf', 'TrÃ¨s bon Ã©tat', 'Bon Ã©tat', 'En panne'],
+cat_maison: {
+  etats: ['Neuf', 'TrÃ¨s bon Ã©tat', 'Bon Ã©tat', 'En panne'],
     extraFields: [
       { name: 'marque', label: 'Marque', placeholder: 'LG, Samsung, Ikea...' },
       { name: 'modele', label: 'ModÃ¨le / RÃ©fÃ©rence', placeholder: 'RÃ©fÃ©rence du produit' },
       { name: 'couleur', label: 'Couleur', placeholder: 'Blanc, Noir, Bois...' },
     ],
   },
-  cat_mode: {
-    etats: ['Neuf avec Ã©tiquette', 'Neuf sans Ã©tiquette', 'TrÃ¨s bon Ã©tat', 'Bon Ã©tat'],
+cat_mode: {
+  etats: ['Neuf avec Ã©tiquette', 'Neuf sans Ã©tiquette', 'TrÃ¨s bon Ã©tat', 'Bon Ã©tat'],
     extraFields: [
       { name: 'taille', label: 'Taille', type: 'select', options: ['XS', 'S', 'M', 'L', 'XL', 'XXL', '36', '38', '40', '42', '44', '46', 'Autre'] },
       { name: 'couleur', label: 'Couleur', placeholder: 'Noir, Rouge, Blanc...' },
       { name: 'marque', label: 'Marque', placeholder: 'Zara, H&M, Nike...' },
     ],
   },
-  cat_beaute: {
-    etats: ['Neuf', 'Ouvert', 'EntamÃ©'],
+cat_beaute: {
+  etats: ['Neuf', 'Ouvert', 'EntamÃ©'],
     extraFields: [
       { name: 'marque', label: 'Marque', placeholder: 'MAC, LorÃ©al, Nivea...' },
       { name: 'date_expiration', label: "Date d'expiration", placeholder: 'MM/AAAA' },
     ],
   },
-  cat_adulte: {
-    etats: ['Neuf', 'Ouvert', 'TrÃ¨s bon Ã©tat'],
+cat_adulte: {
+  etats: ['Neuf', 'Ouvert', 'TrÃ¨s bon Ã©tat'],
     extraFields: [
       { name: 'marque', label: 'Marque (optionnel)', placeholder: 'Marque du produit' },
     ],
   },
-  cat_bebe: {
-    etats: ['Neuf', 'TrÃ¨s bon Ã©tat', 'Bon Ã©tat'],
+cat_bebe: {
+  etats: ['Neuf', 'TrÃ¨s bon Ã©tat', 'Bon Ã©tat'],
     extraFields: [
       { name: 'marque', label: 'Marque', placeholder: 'Chicco, Graco...' },
       { name: 'age_cible', label: 'Ã‚ge cible', type: 'select', options: ['0-3 mois', '3-6 mois', '6-12 mois', '1-2 ans', '2-3 ans', '3-5 ans', '5+ ans'] },
     ],
   },
-  cat_epicerie: {
-    etats: ['Disponible', 'Stock limitÃ©'],
+cat_epicerie: {
+  etats: ['Disponible', 'Stock limitÃ©'],
     extraFields: [
       { name: 'poids', label: 'Poids / QuantitÃ©', placeholder: '1kg, 500g, 1L...' },
       { name: 'origine', label: 'Origine', placeholder: "CÃ´te d'Ivoire, ImportÃ©..." },
       { name: 'date_expiration', label: "Date d'expiration", placeholder: 'MM/AAAA' },
     ],
   },
-  cat_sport: {
-    etats: ['Neuf', 'TrÃ¨s bon Ã©tat', 'Bon Ã©tat'],
+cat_sport: {
+  etats: ['Neuf', 'TrÃ¨s bon Ã©tat', 'Bon Ã©tat'],
     extraFields: [
       { name: 'marque', label: 'Marque', placeholder: 'Nike, Adidas, Decathlon...' },
       { name: 'taille', label: 'Taille / Pointure', placeholder: '42, L, XL...' },
@@ -713,4 +827,5 @@ export default function PublierPage() {
     </div>
   )
 }
+
 
