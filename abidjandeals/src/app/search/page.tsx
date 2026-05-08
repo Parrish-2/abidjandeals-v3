@@ -315,7 +315,7 @@ function SearchContent() {
         // Filtre catÃ©gorie + sous-catÃ©gorie (colonne texte "subcategory")
         query = query
           .eq("category_id", params.dbCategoryId)
-          .ilike("subcategory", params.subcatLabel)
+          .ilike("subcategory", `%${params.subcatLabel}%`)
       } else if (params.dbCategoryId) {
         // CatÃ©gorie seule
         query = query.eq("category_id", params.dbCategoryId)
@@ -522,6 +522,7 @@ function PageSkeleton() {
 export default function SearchPage() {
   return <Suspense fallback={<PageSkeleton />}><SearchContent /></Suspense>
 }
+
 
 
 
