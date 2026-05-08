@@ -311,15 +311,15 @@ function SearchContent() {
         .select(`id, title, price, category_id, subcategory, etat, marque, city, quartier, images, boost_level, views, status, created_at`, { count: "exact" })
         .in("status", ["active", "approved"])
 
-      if (params.subcatLabel && params.dbCategoryId) {
-        // Filtre catÃ©gorie + sous-catÃ©gorie (colonne texte "subcategory")
-        query = query
-          .eq("category_id", params.dbCategoryId)
-          .ilike("subcategory", `%${params.subcatLabel}%`)
-      } else if (params.dbCategoryId) {
-        // CatÃ©gorie seule
+      if (params.dbCategoryId) {
         query = query.eq("category_id", params.dbCategoryId)
       }
+
+
+
+
+
+
 
       if (params.q.trim()) query = query.or(`title.ilike.%${params.q.trim()}%,description.ilike.%${params.q.trim()}%`)
       if (params.priceMin) query = query.gte("price", parseInt(params.priceMin))
