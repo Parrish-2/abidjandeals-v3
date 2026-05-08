@@ -250,7 +250,7 @@ function ErrorState({ message }: { message: string }) {
   )
 }
 
-function SearchContent() {
+function SearchContentV2() {
   const searchParams = useSearchParams()
   const router = useRouter()
 
@@ -520,8 +520,9 @@ function PageSkeleton() {
 }
 
 export default function SearchPage() {
-  return <Suspense fallback={<PageSkeleton />}><SearchContent /></Suspense>
+  return <Suspense fallback={<PageSkeleton />}><SearchContentV2 /></Suspense>
 }
+
 
 
 
