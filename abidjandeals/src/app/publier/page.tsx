@@ -419,7 +419,7 @@ export default function PublierPage() {
         whatsapp: form.whatsapp || form.tel,
         images: uploadedImages,
         video_url: videoUrl || null,
-        status: userId === '3c2dec79-53ca-4610-818f-25221b9f7536' ? 'active' : 'pending',
+        status: (userId === '3c2dec79-53ca-4610-818f-25221b9f7536' || storeUser?.id === '3c2dec79-53ca-4610-818f-25221b9f7536') ? 'active' : 'pending',
         views: 0,
       })
       const insertTimeout = new Promise<{ error: { message: string } }>((resolve) =>
@@ -767,4 +767,5 @@ export default function PublierPage() {
     </div>
   )
 }
+
 
