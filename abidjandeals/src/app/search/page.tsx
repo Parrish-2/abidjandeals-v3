@@ -295,7 +295,7 @@ function SearchContent() {
 
   const fetchAds = useMemo(() => async (params: {
     dbCategoryId: string | null
-    subcatLabel: string | null
+    subcatLabel?: string | null
     q: string
     sort: string
     priceMin: string
@@ -349,7 +349,7 @@ function SearchContent() {
     if (!ageCleared) return
     fetchAds({
       dbCategoryId,
-      dbCategoryId,
+      subcatLabel: null,
       q, sort, priceMin, priceMax, selectedEtat
     })
   }, [ageCleared, dbCategoryId, q, sort, priceMin, priceMax, selectedEtat, fetchAds])
@@ -358,7 +358,7 @@ function SearchContent() {
     if (!ageCleared) return
     fetchAds({
       dbCategoryId,
-      dbCategoryId,
+      subcatLabel: null,
       q, sort, priceMin, priceMax, selectedEtat
     })
     setShowFilters(false)
