@@ -263,7 +263,7 @@ function SearchContent() {
 
   // RÃ©solution synchrone : slug URL â†’ label texte stockÃ© dans la colonne 'subcategory'
   // Exemple : 'telephones-accessoires' â†’ 'TÃ©lÃ©phones & Accessoires'
-  const subcatLabel = subcategorySlug ?? null
+  const subcatLabel = null
 
   const supabase = useMemo(() => createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
