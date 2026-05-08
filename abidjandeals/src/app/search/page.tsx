@@ -336,7 +336,7 @@ function SearchContent() {
       const { data, error: sbError, count } = await query.limit(48)
 
       if (sbError) throw sbError
-      setAds((data as Ad[]) ?? [])
+      console.log("SEARCH RESULT", data, sbError, count, params);       setAds((data as Ad[]) ?? [])
       setTotal(count ?? 0)
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Erreur inconnue.")
