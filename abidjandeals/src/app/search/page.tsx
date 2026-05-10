@@ -352,7 +352,7 @@ function SearchContentV2() {
     if (!ageCleared) return
     fetchAds({
       dbCategoryId,
-      subcatLabel,,
+      subcatLabel,
       q, sort, priceMin, priceMax, selectedEtat
     })
   }, [ageCleared, dbCategoryId, q, sort, priceMin, priceMax, selectedEtat, fetchAds])
@@ -361,7 +361,7 @@ function SearchContentV2() {
     if (!ageCleared) return
     fetchAds({
       dbCategoryId,
-      subcatLabel,,
+      subcatLabel,
       q, sort, priceMin, priceMax, selectedEtat
     })
     setShowFilters(false)
@@ -525,6 +525,7 @@ function PageSkeleton() {
 export default function SearchPage() {
   return <Suspense fallback={<PageSkeleton />}><SearchContentV2 /></Suspense>
 }
+
 
 
 
