@@ -348,7 +348,7 @@ function SearchContentV2() {
   useEffect(() => {
     if (!ageCleared) return
     fetchAds({
-      dbCategoryId,
+      subcatLabel,
       subcatLabel: null,
       q, sort, priceMin, priceMax, selectedEtat
     })
@@ -357,7 +357,7 @@ function SearchContentV2() {
   const handleApplyFilters = () => {
     if (!ageCleared) return
     fetchAds({
-      dbCategoryId,
+      subcatLabel,
       subcatLabel: null,
       q, sort, priceMin, priceMax, selectedEtat
     })
