@@ -344,19 +344,19 @@ function SearchContentV2() {
       setLoading(false)
     }
   }, [supabase])
-
   useEffect(() => {
+    if (!ageCleared) return
+    fetchAds({
       dbCategoryId,
       subcatLabel,
       q, sort, priceMin, priceMax, selectedEtat
     })
   }, [ageCleared, dbCategoryId, subcatLabel, q, sort, priceMin, priceMax, selectedEtat, fetchAds])
-    })
-  }, [ageCleared, dbCategoryId, q, sort, priceMin, priceMax, selectedEtat, fetchAds])
-
   const handleApplyFilters = () => {
     if (!ageCleared) return
     fetchAds({
+      dbCategoryId,
+      subcatLabel,
       subcatLabel,
       subcatLabel: null,
       q, sort, priceMin, priceMax, selectedEtat
