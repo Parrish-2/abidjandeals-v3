@@ -357,10 +357,10 @@ function SearchContentV2() {
     fetchAds({
       dbCategoryId,
       subcatLabel,
-      subcatLabel,
-      subcatLabel: null,
       q, sort, priceMin, priceMax, selectedEtat
     })
+    setShowFilters(false)
+  }
     setShowFilters(false)
   }
 
