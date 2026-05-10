@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { AgeGate } from '@/components/AgeGate';
 import { formatFCFA } from '@/lib/format';
@@ -10,6 +10,8 @@ import {
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
+
+import { CATEGORIES as CAT_DATA } from '@/lib/data';
 
 const ADULT_CATEGORIES = ['lingerie', 'cat_lingerie']
 const STORAGE_KEY = 'abidjandeals_age_verified'
@@ -34,7 +36,26 @@ const SLUG_TO_DB_CATEGORY: Record<string, string> = {
   'cat_loisir': 'cat_loisir', 'cat_autres': 'cat_autres', 'cat_agri': 'cat_agri',
 }
 
-const SUBCAT_SLUG_TO_DB_NAME: Record<string, string> = {}
+// Build slug â†’ label mapping from CATEGORIES (data.ts)
+// e.g. slugify('TÃ©lÃ©phones & Accessoires') â†’ 'telephones-accessoires' â†’ 'TÃ©lÃ©phones & Accessoires'
+function _slugify(str: string): string {
+  return str
+    .toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '')
+}
+
+const SUBCAT_SLUG_TO_NAME: Record<string, string> = (() => {
+  const map: Record<string, string> = {}
+  for (const cat of CAT_DATA) {
+    for (const sub of cat.subcats) {
+      const name = typeof sub === 'string' ? sub : (sub as { name: string }).name
+      if (name) map[_slugify(name)] = name
+    }
+  }
+  return map
+})()
 
 function resolveDbCategoryId(slug: string | null): string | null {
   if (!slug) return null
@@ -43,48 +64,48 @@ function resolveDbCategoryId(slug: string | null): string | null {
 
 const LABELS: Record<string, string> = {
   "auto": "Automobile & Industrie", "hightech": "High-Tech & Informatique",
-  "hightech-informatique": "High-Tech & Informatique", "vehicules-equipements": "Véhicules & Équipements",
-  "location": "Location & Mobilité", "immobilier": "Immobilier", "mode": "Mode & Beauté",
-  "maison": "Maison & Décoration", "services": "Services & Emploi", "sport": "Sport & Loisirs",
+  "hightech-informatique": "High-Tech & Informatique", "vehicules-equipements": "VÃ©hicules & Ã‰quipements",
+  "location": "Location & MobilitÃ©", "immobilier": "Immobilier", "mode": "Mode & BeautÃ©",
+  "maison": "Maison & DÃ©coration", "services": "Services & Emploi", "sport": "Sport & Loisirs",
   "sport-loisirs": "Sport & Loisirs", "autres": "Autres & Divers", "lingerie": "Lingerie & Adulte",
   "cat_lingerie": "Lingerie & Adulte", "cat_auto": "Automobile & Industrie",
-  "cat_tech": "High-Tech & Informatique", "cat_immo": "Immobilier", "cat_mode": "Mode & Beauté",
-  "cat_maison": "Maison & Décoration", "cat_serv": "Services & Emploi", "cat_loisir": "Sport & Loisirs",
+  "cat_tech": "High-Tech & Informatique", "cat_immo": "Immobilier", "cat_mode": "Mode & BeautÃ©",
+  "cat_maison": "Maison & DÃ©coration", "cat_serv": "Services & Emploi", "cat_loisir": "Sport & Loisirs",
   "cat_autres": "Autres & Divers", "voitures-occasion": "Voitures d'occasion",
   "voitures-neuves": "Voitures Neuves", "motos-scooters": "Motos & Scooters",
-  "pieces-pneus": "Pièces détachées & Pneus", "location-auto": "Location Auto",
-  "camions-utilitaires": "Camions & Utilitaires", "groupes-electrogenes": "Groupes Électrogènes",
-  "materiel-agricole": "Matériel Agricole", "outillage-industriel": "Outillage Industriel",
-  "engins-chantier": "Équipements de Chantier", "smartphones": "Smartphones",
-  "tablettes": "Téléphones & Tablettes", "ordinateurs": "Ordinateurs & Laptops",
-  "tv-son": "TV & Home Cinéma", "photo-video": "Photo & Vidéo",
-  "consoles-jeux": "Consoles & Jeux Vidéo", "objets-connectes": "Objets Connectés",
-  "composants": "Composants (RAM, SSD, Cartes Mères)", "imprimantes": "Imprimantes & Scanners",
-  "cameras": "Cameras", "telephones-accessoires": "Téléphones & Accessoires",
+  "pieces-pneus": "PiÃ¨ces dÃ©tachÃ©es & Pneus", "location-auto": "Location Auto",
+  "camions-utilitaires": "Camions & Utilitaires", "groupes-electrogenes": "Groupes Ã‰lectrogÃ¨nes",
+  "materiel-agricole": "MatÃ©riel Agricole", "outillage-industriel": "Outillage Industriel",
+  "engins-chantier": "Ã‰quipements de Chantier", "smartphones": "Smartphones",
+  "tablettes": "TÃ©lÃ©phones & Tablettes", "ordinateurs": "Ordinateurs & Laptops",
+  "tv-son": "TV & Home CinÃ©ma", "photo-video": "Photo & VidÃ©o",
+  "consoles-jeux": "Consoles & Jeux VidÃ©o", "objets-connectes": "Objets ConnectÃ©s",
+  "composants": "Composants (RAM, SSD, Cartes MÃ¨res)", "imprimantes": "Imprimantes & Scanners",
+  "cameras": "Cameras", "telephones-accessoires": "TÃ©lÃ©phones & Accessoires",
   "vente-appartement": "Location Appartements",
-  "vente-maison-villa": "Vente Maisons & Villas", "location-meublee": "Location Meublée",
+  "vente-maison-villa": "Vente Maisons & Villas", "location-meublee": "Location MeublÃ©e",
   "location-vide": "Location Vide", "colocation": "Colocation", "terrains": "Terrains avec ACD",
-  "bureaux-boutiques": "Bureaux & Commerces", "vetements": "Vêtements & Chaussures",
+  "bureaux-boutiques": "Bureaux & Commerces", "vetements": "VÃªtements & Chaussures",
   "chaussures": "Chaussures", "sacs-accessoires": "Sacs & Accessoires", "montres": "Montres & Bijoux",
-  "cosmetiques": "Cosmétiques & Parfums", "meubles": "Meubles", "decoration": "Décoration",
+  "cosmetiques": "CosmÃ©tiques & Parfums", "meubles": "Meubles", "decoration": "DÃ©coration",
   "jardin-bricolage": "Jardin & Bricolage", "offres-emploi": "Offres d'Emploi",
   "freelance-it": "Freelance IT & Design", "batiment": "BTP & Artisanat",
   "cours-formation": "Cours & Formations", "transport": "Transport & Livraison",
-  "menage": "Ménage & Nettoyage", "securite": "Sécurité & Gardiennage",
-  "evenementiel": "Événementiel", "equipements-sport": "Équipements de Sport",
+  "menage": "MÃ©nage & Nettoyage", "securite": "SÃ©curitÃ© & Gardiennage",
+  "evenementiel": "Ã‰vÃ©nementiel", "equipements-sport": "Ã‰quipements de Sport",
   "instruments-musique": "Instruments de Musique", "jouets": "Jouets & Jeux",
-  "voyages": "Voyages & Tourisme", "velos": "Vélos & Trottinettes",
+  "voyages": "Voyages & Tourisme", "velos": "VÃ©los & Trottinettes",
   "animaux": "Animaux & Accessoires", "collection": "Objets de Collection", "inclassables": "Inclassables",
 }
 
 const CAT_EMOJI: Record<string, string> = {
-  "vehicules-equipements": "🚗", "cat_auto": "🚗", "auto": "🚗",
-  "immobilier": "🏠", "cat_immo": "🏠", "hightech-informatique": "📱",
-  "cat_tech": "📱", "hightech": "📱", "mode": "👗", "cat_mode": "👗",
-  "maison": "🛋️", "cat_maison": "🛋️", "services": "🛠️", "cat_serv": "🛠️",
-  "sport-loisirs": "⚽", "cat_loisir": "⚽", "sport": "⚽",
-  "autres": "📦", "cat_autres": "📦", "cat_agri": "🌾", "agri": "🌾",
-  "agriculture": "🌾", "lingerie": "🌸", "cat_lingerie": "🌸",
+  "vehicules-equipements": "ðŸš—", "cat_auto": "ðŸš—", "auto": "ðŸš—",
+  "immobilier": "ðŸ ", "cat_immo": "ðŸ ", "hightech-informatique": "ðŸ“±",
+  "cat_tech": "ðŸ“±", "hightech": "ðŸ“±", "mode": "ðŸ‘—", "cat_mode": "ðŸ‘—",
+  "maison": "ðŸ›‹ï¸", "cat_maison": "ðŸ›‹ï¸", "services": "ðŸ› ï¸", "cat_serv": "ðŸ› ï¸",
+  "sport-loisirs": "âš½", "cat_loisir": "âš½", "sport": "âš½",
+  "autres": "ðŸ“¦", "cat_autres": "ðŸ“¦", "cat_agri": "ðŸŒ¾", "agri": "ðŸŒ¾",
+  "agriculture": "ðŸŒ¾", "lingerie": "ðŸŒ¸", "cat_lingerie": "ðŸŒ¸",
 }
 
 function getLabel(slug: string | null): string {
@@ -94,13 +115,13 @@ function getLabel(slug: string | null): string {
 }
 
 function getCatEmoji(cat: string | null): string {
-  if (!cat) return "🏷️"
-  return CAT_EMOJI[cat] ?? CAT_EMOJI[resolveDbCategoryId(cat) ?? ''] ?? "📦"
+  if (!cat) return "ðŸ·ï¸"
+  return CAT_EMOJI[cat] ?? CAT_EMOJI[resolveDbCategoryId(cat) ?? ''] ?? "ðŸ“¦"
 }
 
 interface Ad {
   id: string; title: string; price: number; category_id: string;
-  sub_category_id?: string; etat: string; marque: string; city: string;
+  subcategory?: string; etat: string; marque: string; city: string;
   quartier: string; images: string[]; boost_level: 'STANDARD' | 'PREMIUM' | 'URGENT' | null;
   views: number; status: string; created_at: string;
 }
@@ -129,7 +150,7 @@ function AdCard({ ad, view = "grid" }: { ad: Ad; view?: "grid" | "list" }) {
   const timeAgo = (() => {
     const diff = Date.now() - new Date(ad.created_at).getTime()
     const h = Math.floor(diff / 3600000)
-    if (h < 1) return "À l'instant"
+    if (h < 1) return "Ã€ l'instant"
     if (h < 24) return `Il y a ${h}h`
     const d = Math.floor(h / 24)
     if (d < 7) return `Il y a ${d}j`
@@ -167,7 +188,7 @@ function AdCard({ ad, view = "grid" }: { ad: Ad; view?: "grid" | "list" }) {
         {isBoosted && (
           <div className="absolute top-0 left-0 right-0 z-10 flex items-center gap-1.5 bg-gradient-to-r from-amber-400 to-orange-400 px-3 py-1">
             <Zap size={10} className="text-white fill-white" />
-            <span className="text-white text-[10px] font-bold uppercase tracking-wider">Annonce boostée</span>
+            <span className="text-white text-[10px] font-bold uppercase tracking-wider">Annonce boostÃ©e</span>
           </div>
         )}
         <div className={`relative overflow-hidden bg-gray-50 ${isBoosted ? "pt-6" : ""}`} style={{ height: 188 }}>
@@ -194,7 +215,7 @@ function AdCard({ ad, view = "grid" }: { ad: Ad; view?: "grid" | "list" }) {
 }
 
 function EmptyState({ query, label }: { query: string; label: string }) {
-  const suggestions = ["Voitures d'occasion", "iPhone 14", "Appartement Cocody", "MacBook Pro", "Groupe électrogène"]
+  const suggestions = ["Voitures d'occasion", "iPhone 14", "Appartement Cocody", "MacBook Pro", "Groupe Ã©lectrogÃ¨ne"]
   return (
     <div className="col-span-full">
       <div className="flex flex-col items-center justify-center py-20 text-center max-w-md mx-auto">
@@ -202,10 +223,10 @@ function EmptyState({ query, label }: { query: string; label: string }) {
           <Search size={48} className="text-orange-300" strokeWidth={1.5} />
         </div>
         <h2 className="text-xl font-bold text-gray-800 mb-2">
-          {query ? `Aucun résultat pour "${query}"` : `Aucune annonce dans ${label}`}
+          {query ? `Aucun rÃ©sultat pour "${query}"` : `Aucune annonce dans ${label}`}
         </h2>
         <p className="text-gray-400 text-sm leading-relaxed mb-8">
-          {query ? "Essayez d'autres mots-clés ou explorez les catégories." : "Soyez le premier à publier dans cette catégorie !"}
+          {query ? "Essayez d'autres mots-clÃ©s ou explorez les catÃ©gories." : "Soyez le premier Ã  publier dans cette catÃ©gorie !"}
         </p>
         <div className="flex flex-wrap gap-2 justify-center mb-6">
           {suggestions.map((s) => <Link key={s} href={`/search?q=${encodeURIComponent(s)}`} className="px-3 py-1.5 bg-white border border-gray-200 text-gray-600 text-xs font-medium rounded-full hover:border-orange-300 transition-colors">{s}</Link>)}
@@ -222,14 +243,14 @@ function EmptyState({ query, label }: { query: string; label: string }) {
 function ErrorState({ message }: { message: string }) {
   return (
     <div className="col-span-full flex flex-col items-center justify-center py-20 text-center">
-      <div className="w-20 h-20 bg-red-50 rounded-3xl flex items-center justify-center mb-4"><span className="text-4xl">⚠️</span></div>
+      <div className="w-20 h-20 bg-red-50 rounded-3xl flex items-center justify-center mb-4"><span className="text-4xl">âš ï¸</span></div>
       <h2 className="text-lg font-bold text-red-500 mb-1">Erreur de chargement</h2>
       <p className="text-gray-400 text-sm max-w-xs">{message}</p>
     </div>
   )
 }
 
-function SearchContent() {
+function SearchContentV2() {
   const searchParams = useSearchParams()
   const router = useRouter()
 
@@ -239,49 +260,15 @@ function SearchContent() {
   const sort = searchParams.get("sort") ?? "recent"
 
   const dbCategoryId = resolveDbCategoryId(categorySlug)
-  const subCategoryId = useRef<string | null>(null)
 
-  // ✅ FIX 1 : subResolved bloque fetchAds tant que la résolution async n'est pas terminée
-  const [subCategoryIdResolved, setSubCategoryIdResolved] = useState<string | null>(null)
-  const [subResolved, setSubResolved] = useState<boolean>(!subcategorySlug)
+  // RÃ©solution synchrone : slug URL â†’ label texte stockÃ© dans la colonne 'subcategory'
+  // Exemple : 'telephones-accessoires' â†’ 'TÃ©lÃ©phones & Accessoires'
+  const subcatLabel = null
 
   const supabase = useMemo(() => createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   ), [])
-
-  // ✅ FIX 2 : setSubResolved(false) au début, setSubResolved(true) dans finally
-  useEffect(() => {
-    if (!subcategorySlug || !dbCategoryId) {
-      setSubCategoryIdResolved(null)
-      setSubResolved(true) // pas de sous-catégorie → résolution immédiate
-      return
-    }
-
-    setSubResolved(false) // reset : résolution en cours
-
-    const resolveSubcategory = async () => {
-      try {
-        const { data, error } = await supabase
-          .from('categories')
-          .select('id')
-          .eq('slug', subcategorySlug)
-          .eq('parent_id', dbCategoryId)
-          .maybeSingle()
-
-        if (error) throw error
-        setSubCategoryIdResolved(data?.id ?? null)
-        console.log('[resolveSubcategory] Resolved slug:', subcategorySlug, '→ ID:', data?.id)
-      } catch (err) {
-        console.error('[resolveSubcategory] Error:', err)
-        setSubCategoryIdResolved(null)
-      } finally {
-        setSubResolved(true) // résolution terminée (succès ou échec)
-      }
-    }
-
-    resolveSubcategory()
-  }, [subcategorySlug, dbCategoryId, supabase])
 
   const isAdultCategory = ADULT_CATEGORIES.some((a) => a === categorySlug || a === dbCategoryId)
   const [ageCleared, setAgeCleared] = useState<boolean>(!isAdultCategory || isAgeVerified())
@@ -308,8 +295,7 @@ function SearchContent() {
 
   const fetchAds = useMemo(() => async (params: {
     dbCategoryId: string | null
-    subCategoryId: string | null
-    subcategorySlug: string | null // ✅ FIX 3 : ajouté pour bloquer si slug non résolu
+    subcatLabel?: string | null
     q: string
     sort: string
     priceMin: string
@@ -319,32 +305,21 @@ function SearchContent() {
     setLoading(true)
     setError(null)
 
-    console.log('[fetchAds] Paramètres reçus:', params)
-
     try {
       let query = supabase
         .from("ads")
-        .select(`id, title, price, category_id, sub_category_id, etat, marque, city, quartier, images, boost_level, views, status, created_at`, { count: "exact" })
+        .select(`id, title, price, category_id, subcategory, etat, marque, city, quartier, images, boost_level, views, status, created_at`, { count: "exact" })
         .in("status", ["active", "approved"])
 
-      if (params.subCategoryId && params.dbCategoryId) {
-        // Sous-catégorie résolue → double filtre catégorie + sous-catégorie
-        console.log('[fetchAds] Filtre: catégorie=', params.dbCategoryId, '+ sous-catégorie=', params.subCategoryId)
-        query = query
-          .eq("category_id", params.dbCategoryId)
-          .eq("sub_category_id", params.subCategoryId)
-      } else if (params.dbCategoryId && !params.subcategorySlug) {
-        // Catégorie seule, sans sous-catégorie demandée
-        console.log('[fetchAds] Filtre: catégorie seule=', params.dbCategoryId)
+      if (params.dbCategoryId) {
         query = query.eq("category_id", params.dbCategoryId)
-      } else if (params.subcategorySlug && !params.subCategoryId) {
-        // ✅ FIX CLEF : sous-catégorie demandée mais UUID non trouvé → 0 résultats proprement
-        console.log('[fetchAds] Sous-catégorie slug non résolue → 0 résultats')
-        setAds([])
-        setTotal(0)
-        setLoading(false)
-        return
       }
+
+
+
+
+
+
 
       if (params.q.trim()) query = query.or(`title.ilike.%${params.q.trim()}%,description.ilike.%${params.q.trim()}%`)
       if (params.priceMin) query = query.gte("price", parseInt(params.priceMin))
@@ -360,10 +335,8 @@ function SearchContent() {
 
       const { data, error: sbError, count } = await query.limit(48)
 
-      console.log('[fetchAds] Résultat:', { count, data: (data as Ad[])?.map(a => ({ id: a.id, title: a.title, category_id: a.category_id, sub_category_id: a.sub_category_id })) })
-
       if (sbError) throw sbError
-      setAds((data as Ad[]) ?? [])
+      console.log("SEARCH RESULT", data, sbError, count, params);       setAds((data as Ad[]) ?? [])
       setTotal(count ?? 0)
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Erreur inconnue.")
@@ -372,39 +345,35 @@ function SearchContent() {
     }
   }, [supabase])
 
-  // ✅ FIX 4 : fetchAds bloqué tant que subResolved = false
   useEffect(() => {
     if (!ageCleared) return
-    if (!subResolved) return // ← BLOQUE la requête pendant la résolution async
     fetchAds({
       dbCategoryId,
-      subCategoryId: subCategoryIdResolved,
-      subcategorySlug,
+      subcatLabel: null,
       q, sort, priceMin, priceMax, selectedEtat
     })
-  }, [ageCleared, subResolved, dbCategoryId, subCategoryIdResolved, subcategorySlug, q, sort, priceMin, priceMax, selectedEtat, fetchAds])
+  }, [ageCleared, dbCategoryId, q, sort, priceMin, priceMax, selectedEtat, fetchAds])
 
   const handleApplyFilters = () => {
     if (!ageCleared) return
     fetchAds({
       dbCategoryId,
-      subCategoryId: subCategoryIdResolved,
-      subcategorySlug,
+      subcatLabel: null,
       q, sort, priceMin, priceMax, selectedEtat
     })
     setShowFilters(false)
   }
 
-  const pageLabel = subcategorySlug ? getLabel(subcategorySlug) : categorySlug ? getLabel(categorySlug) : q ? `Résultats pour "${q}"` : "Toutes les annonces"
+  const pageLabel = subcatLabel ?? (subcategorySlug ? getLabel(subcategorySlug) : null) ?? (categorySlug ? getLabel(categorySlug) : null) ?? (q ? `RÃ©sultats pour "${q}"` : "Toutes les annonces")
   const pageEmoji = subcategorySlug ? getCatEmoji(subcategorySlug) : getCatEmoji(categorySlug)
 
   const sortOptions = [
-    { value: "recent", label: "Plus récents", icon: Clock },
+    { value: "recent", label: "Plus rÃ©cents", icon: Clock },
     { value: "price_asc", label: "Prix croissant", icon: Tag },
-    { value: "price_desc", label: "Prix décroissant", icon: Tag },
+    { value: "price_desc", label: "Prix dÃ©croissant", icon: Tag },
     { value: "popular", label: "Populaires", icon: TrendingUp },
   ]
-  const etats = ["Neuf", "Comme neuf", "Bon état", "État correct", "Disponible"]
+  const etats = ["Neuf", "Comme neuf", "Bon Ã©tat", "Ã‰tat correct", "Disponible"]
   const hasActiveFilters = priceMin || priceMax || selectedEtat
 
   return (
@@ -425,7 +394,7 @@ function SearchContent() {
                 <div className="w-10 h-10 rounded-xl bg-orange-500/20 border border-orange-500/30 flex items-center justify-center text-xl">{pageEmoji}</div>
                 <h1 className="text-2xl md:text-3xl font-extrabold text-white tracking-tight">
                   {pageLabel}
-                  {isAdultCategory && ageCleared && <span className="ml-2 align-middle text-[11px] font-bold bg-pink-600 text-white px-2 py-0.5 rounded-full">🔞 18+</span>}
+                  {isAdultCategory && ageCleared && <span className="ml-2 align-middle text-[11px] font-bold bg-pink-600 text-white px-2 py-0.5 rounded-full">ðŸ”ž 18+</span>}
                 </h1>
               </div>
               {!loading && !error && ageCleared && (
@@ -472,18 +441,18 @@ function SearchContent() {
                   <label className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5 block">Prix (FCFA)</label>
                   <div className="flex items-center gap-2">
                     <input type="number" placeholder="Min" value={priceMin} onChange={(e) => setPriceMin(e.target.value)} className="w-28 px-3 py-2 text-sm border border-gray-200 rounded-xl outline-none focus:border-orange-400 focus:ring-1 focus:ring-orange-100" />
-                    <span className="text-gray-400 text-sm">—</span>
+                    <span className="text-gray-400 text-sm">â€”</span>
                     <input type="number" placeholder="Max" value={priceMax} onChange={(e) => setPriceMax(e.target.value)} className="w-28 px-3 py-2 text-sm border border-gray-200 rounded-xl outline-none focus:border-orange-400 focus:ring-1 focus:ring-orange-100" />
                   </div>
                 </div>
                 <div>
-                  <label className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5 block">État</label>
+                  <label className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5 block">Ã‰tat</label>
                   <div className="flex flex-wrap gap-1.5">
                     {etats.map((e) => <button key={e} onClick={() => setSelectedEtat(selectedEtat === e ? "" : e)} className={`px-3 py-1.5 text-xs font-medium rounded-xl border transition-all ${selectedEtat === e ? 'bg-orange-100 border-orange-400 text-orange-600' : 'bg-white border-gray-200 text-gray-600 hover:border-gray-300'}`}>{e}</button>)}
                   </div>
                 </div>
                 <div className="flex gap-2 ml-auto">
-                  {hasActiveFilters && <button onClick={() => { setPriceMin(""); setPriceMax(""); setSelectedEtat("") }} className="px-4 py-2 text-xs font-semibold text-gray-500 hover:text-gray-700 bg-white border border-gray-200 rounded-xl transition-colors">Réinitialiser</button>}
+                  {hasActiveFilters && <button onClick={() => { setPriceMin(""); setPriceMax(""); setSelectedEtat("") }} className="px-4 py-2 text-xs font-semibold text-gray-500 hover:text-gray-700 bg-white border border-gray-200 rounded-xl transition-colors">RÃ©initialiser</button>}
                   <button onClick={handleApplyFilters} className="px-5 py-2 bg-orange-500 hover:bg-orange-600 text-white text-xs font-bold rounded-xl transition-colors">Appliquer</button>
                 </div>
               </div>
@@ -495,13 +464,13 @@ function SearchContent() {
       <div className="max-w-7xl mx-auto px-4 py-6 md:px-8">
         {!loading && !error && ads.length > 0 && ageCleared && (
           <div className="flex items-center justify-between mb-5">
-            <p className="text-sm text-gray-500"><span className="font-semibold text-gray-800">{ads.length}</span> annonce{ads.length > 1 ? "s" : ""} affichée{ads.length > 1 ? "s" : ""}{total > ads.length ? ` sur ${total.toLocaleString("fr-CI")}` : ""}</p>
+            <p className="text-sm text-gray-500"><span className="font-semibold text-gray-800">{ads.length}</span> annonce{ads.length > 1 ? "s" : ""} affichÃ©e{ads.length > 1 ? "s" : ""}{total > ads.length ? ` sur ${total.toLocaleString("fr-CI")}` : ""}</p>
             {(categorySlug || subcategorySlug || q) && <Link href="/search" className="text-xs text-gray-400 hover:text-orange-500 transition-colors flex items-center gap-1"><X size={11} /> Effacer les filtres</Link>}
           </div>
         )}
 
         {!ageCleared ? (
-          <div className="flex flex-col items-center justify-center py-32 text-center"><span className="text-6xl mb-4">🔞</span><p className="text-gray-400 text-sm">Vérification de l'âge en cours...</p></div>
+          <div className="flex flex-col items-center justify-center py-32 text-center"><span className="text-6xl mb-4">ðŸ”ž</span><p className="text-gray-400 text-sm">VÃ©rification de l'Ã¢ge en cours...</p></div>
         ) : loading ? (
           <div className={view === "grid" ? "grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4" : "flex flex-col gap-3"}>
             {Array.from({ length: 10 }).map((_, i) => view === "grid" ? <AdCardSkeleton key={i} /> : <div key={i} className="h-28 bg-white rounded-2xl border border-gray-100 animate-pulse" />)}
@@ -551,5 +520,12 @@ function PageSkeleton() {
 }
 
 export default function SearchPage() {
-  return <Suspense fallback={<PageSkeleton />}><SearchContent /></Suspense>
+  return <Suspense fallback={<PageSkeleton />}><SearchContentV2 /></Suspense>
 }
+
+
+
+
+
+
+
