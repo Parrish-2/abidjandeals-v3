@@ -310,12 +310,12 @@ function SearchContentV2() {
         .from("ads")
         .select(`id, title, price, category_id, subcategory, etat, marque, city, quartier, images, boost_level, views, status, created_at`, { count: "exact" })
         .in("status", ["active", "approved"])
-
       if (params.dbCategoryId) {
         query = query.eq("category_id", params.dbCategoryId)
+        if (params.subcatLabel) {
+          query = query.eq("subcategory", params.subcatLabel)
+        }
       }
-
-
 
 
 
