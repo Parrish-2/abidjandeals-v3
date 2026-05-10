@@ -379,7 +379,7 @@ export default function PublierPage() {
               upsert: false,
             })
             const timeoutPromise = new Promise<never>((_, reject) =>
-              setTimeout(() => reject(new Error('timeout')), 15000)
+              setTimeout(() => reject(new Error('timeout')), 60000)
             )
             const result = await Promise.race([uploadPromise, timeoutPromise]) as any
 
@@ -767,5 +767,6 @@ export default function PublierPage() {
     </div>
   )
 }
+
 
 
