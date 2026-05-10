@@ -11,136 +11,82 @@ import toast, { Toaster } from 'react-hot-toast'
 
 const QUARTIERS: Record<string, string[]> = {
   'Abidjan': [
-    'Abobo', 'Adjam├®', 'Att├®coub├®', 'Cocody', 'Koumassi', 'Marcory',
-    'Plateau', 'Port-Bou├½t', 'Treichville', 'Yopougon', 'Bingerville',
-    'Riviera', 'Angr├®', 'Deux-Plateaux', 'Bassam', 'Songon',
+    'Abobo', 'AdjamÃ©', 'AttÃ©coubÃ©', 'Cocody', 'Koumassi', 'Marcory',
+    'Plateau', 'Port-BouÃ«t', 'Treichville', 'Yopougon', 'Bingerville',
+    'Riviera', 'AngrÃ©', 'Deux-Plateaux', 'Bassam', 'Songon',
     'Zone 4', 'Zone industrielle', 'Vridi', 'Williamsville',
-    'Carrefour Bandji', "N'dotr├®", "M'Pouto", 'Anoumabo',
+    'Carrefour Bandji', "N'dotrÃ©", "M'Pouto", 'Anoumabo',
   ],
-  'Bouak├®': ['Centre', 'Air France', 'Belleville', 'Commerce', 'Koko', "N'Gattakro", 'Sokoura'],
-  'Yamoussoukro': ['Habitat', 'Centre', 'Dioulakro', "N'Zuessy", 'Morof├®'],
-  'San-P├®dro': ['Centre', 'Bardot', 'Cit├®', 'Zone industrielle'],
-  'Korhogo': ['Centre', 'Commerce', 'R├®sidentiel'],
+  'BouakÃ©': ['Centre', 'Air France', 'Belleville', 'Commerce', 'Koko', "N'Gattakro", 'Sokoura'],
+  'Yamoussoukro': ['Habitat', 'Centre', 'Dioulakro', "N'Zuessy", 'MorofÃ©'],
+  'San-PÃ©dro': ['Centre', 'Bardot', 'CitÃ©', 'Zone industrielle'],
+  'Korhogo': ['Centre', 'Commerce', 'RÃ©sidentiel'],
   'Daloa': ['Centre', 'Lobia', 'Tazibouo'],
   'Man': ['Centre', 'Libreville', 'Domoraud'],
-  'Gagnoa': ['Centre', 'Dioulabougou', 'R├®sidentiel'],
-}
-
-const SUBCAT_LABELS: Record<string, string> = {
-  'telephones-accessoires': 'Telephones et Accessoires',
-  'ordinateurs': 'Ordinateurs',
-  'tablettes': 'Tablettes',
-  'tv-son': 'TV et Son',
-  'photo-video': 'Photo et Video',
-  'consoles-jeux': 'Consoles et Jeux',
-  'objets-connectes': 'Objets Connectes',
-  'cameras': 'Cameras',
-  'composants': 'Composants',
-  'voitures-d-occasion': 'Voitures occasion',
-  'voitures-neuves': 'Voitures Neuves',
-  'motos-scooters': 'Motos et Scooters',
-  'pieces-pneus': 'Pieces et Pneus',
-  'location-auto': 'Location Auto',
-  'camions-utilitaires': 'Camions et Utilitaires',
-  'groupes-electrogenes': 'Groupes Electrogenes',
-  'materiel-agricole': 'Materiel Agricole',
-  'outillage-industriel': 'Outillage Industriel',
-  'engins-chantier': 'Engins de Chantier',
-  'vente-appartement': 'Vente Appartement',
-  'vente-maison-villa': 'Vente Maison et Villa',
-  'location-meublee': 'Location Meublee',
-  'location-vide': 'Location Vide',
-  'colocation': 'Colocation',
-  'terrains': 'Terrains',
-  'bureaux-boutiques': 'Bureaux et Boutiques',
-  'freelance-it': 'Freelance et IT',
-  'batiment': 'Batiment',
-  'cours-formation': 'Cours et Formation',
-  'offres-emploi': 'Offres emploi',
-  'transport': 'Transport',
-  'menage': 'Menage',
-  'securite': 'Securite',
-  'evenementiel': 'Evenementiel',
-  'meubles': 'Meubles',
-  'electromenager': 'Electromenager',
-  'decoration': 'Decoration',
-  'jardin-bricolage': 'Jardin et Bricolage',
-  'vetements': 'Vetements',
-  'chaussures': 'Chaussures',
-  'sacs-accessoires': 'Sacs et Accessoires',
-  'montres': 'Montres',
-  'cosmetiques': 'Cosmetiques',
-  'equipements-sport': 'Equipements Sport',
-  'instruments-musique': 'Instruments de Musique',
-  'jouets': 'Jouets',
-  'voyages': 'Voyages',
-  'velos': 'Velos',
-  'animaux': 'Animaux',
-  'collection': 'Collection',
-  'inclassables': 'Inclassables',
+  'Gagnoa': ['Centre', 'Dioulabougou', 'RÃ©sidentiel'],
 }
 
 type ExtraField = { name: string; label: string; type?: string; options?: string[]; placeholder?: string }
 type CatConfig = { etats: string[]; extraFields: ExtraField[] }
 
-// ÔöÇÔöÇ CATEGORY_FIELDS ÔÇö cl├®s align├®es sur les IDs r├®els de data.ts ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
+// â”€â”€ CATEGORY_FIELDS â€” clÃ©s alignÃ©es sur les IDs rÃ©els de data.ts â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const CATEGORY_FIELDS: Record<string, CatConfig> = {
   cat_tech: {
-    etats: ['Neuf', 'Reconditionn├®', 'Tr├¿s bon ├®tat', 'Bon ├®tat', '├Ç r├®parer'],
+    etats: ['Neuf', 'ReconditionnÃ©', 'TrÃ¨s bon Ã©tat', 'Bon Ã©tat', 'Ã€ rÃ©parer'],
     extraFields: [
       { name: 'marque', label: 'Marque *', placeholder: 'Apple, Samsung, HP...' },
-      { name: 'modele', label: 'Mod├¿le', placeholder: 'iPhone 15, Galaxy S24...' },
+      { name: 'modele', label: 'ModÃ¨le', placeholder: 'iPhone 15, Galaxy S24...' },
       { name: 'stockage', label: 'Stockage', type: 'select', options: ['32 Go', '64 Go', '128 Go', '256 Go', '512 Go', '1 To', '2 To'] },
       { name: 'ram', label: 'RAM', type: 'select', options: ['2 Go', '4 Go', '6 Go', '8 Go', '12 Go', '16 Go', '32 Go'] },
       { name: 'couleur', label: 'Couleur', placeholder: 'Noir, Blanc, Or...' },
     ],
   },
   cat_auto: {
-    etats: ['Neuf', 'Tr├¿s bon ├®tat', 'Bon ├®tat', '├ëtat correct', 'Pour pi├¿ces'],
+    etats: ['Neuf', 'TrÃ¨s bon Ã©tat', 'Bon Ã©tat', 'Ã‰tat correct', 'Pour piÃ¨ces'],
     extraFields: [
       { name: 'marque', label: 'Marque *', placeholder: 'Toyota, Kia, Renault...' },
-      { name: 'modele', label: 'Mod├¿le', placeholder: 'Prado, Forte, Duster...' },
-      { name: 'annee', label: 'Ann├®e', type: 'number', placeholder: '2020' },
-      { name: 'kilometrage', label: 'Kilom├®trage (km)', type: 'number', placeholder: '45000' },
-      { name: 'carburant', label: 'Carburant', type: 'select', options: ['Essence', 'Diesel', 'Hybride', '├ëlectrique', 'GPL'] },
-      { name: 'boite', label: 'Bo├«te de vitesse', type: 'select', options: ['Automatique', 'Manuelle'] },
+      { name: 'modele', label: 'ModÃ¨le', placeholder: 'Prado, Forte, Duster...' },
+      { name: 'annee', label: 'AnnÃ©e', type: 'number', placeholder: '2020' },
+      { name: 'kilometrage', label: 'KilomÃ©trage (km)', type: 'number', placeholder: '45000' },
+      { name: 'carburant', label: 'Carburant', type: 'select', options: ['Essence', 'Diesel', 'Hybride', 'Ã‰lectrique', 'GPL'] },
+      { name: 'boite', label: 'BoÃ®te de vitesse', type: 'select', options: ['Automatique', 'Manuelle'] },
     ],
   },
   cat_immo: {
-    etats: ['Neuf', 'Bon ├®tat', '├Ç r├®nover'],
+    etats: ['Neuf', 'Bon Ã©tat', 'Ã€ rÃ©nover'],
     extraFields: [
-      { name: 'type_bien', label: 'Type de bien', type: 'select', options: ['Appartement', 'Maison', 'Villa', 'Terrain', 'Bureau', 'Entrep├┤t', 'Chambre'] },
-      { name: 'surface', label: 'Surface (m┬▓)', type: 'number', placeholder: '120' },
-      { name: 'pieces', label: 'Nombre de pi├¿ces', type: 'select', options: ['Studio', '2 pi├¿ces', '3 pi├¿ces', '4 pi├¿ces', '5 pi├¿ces', '6+'] },
-      { name: 'meuble', label: 'Meubl├® ?', type: 'select', options: ['Oui', 'Non', 'Partiellement'] },
+      { name: 'type_bien', label: 'Type de bien', type: 'select', options: ['Appartement', 'Maison', 'Villa', 'Terrain', 'Bureau', 'EntrepÃ´t', 'Chambre'] },
+      { name: 'surface', label: 'Surface (mÂ²)', type: 'number', placeholder: '120' },
+      { name: 'pieces', label: 'Nombre de piÃ¨ces', type: 'select', options: ['Studio', '2 piÃ¨ces', '3 piÃ¨ces', '4 piÃ¨ces', '5 piÃ¨ces', '6+'] },
+      { name: 'meuble', label: 'MeublÃ© ?', type: 'select', options: ['Oui', 'Non', 'Partiellement'] },
     ],
   },
   cat_location: {
-    etats: ['Disponible', 'Sous r├®serve'],
+    etats: ['Disponible', 'Sous rÃ©serve'],
     extraFields: [
-      { name: 'capacite', label: 'Capacit├® / Places', placeholder: '30 personnes, 300 invit├®s...' },
-      { name: 'duree_min', label: 'Dur├®e minimale', placeholder: '1 jour, 1 semaine...' },
+      { name: 'capacite', label: 'CapacitÃ© / Places', placeholder: '30 personnes, 300 invitÃ©s...' },
+      { name: 'duree_min', label: 'DurÃ©e minimale', placeholder: '1 jour, 1 semaine...' },
       { name: 'caution', label: 'Caution (FCFA)', type: 'number', placeholder: '50000' },
     ],
   },
   cat_serv: {
     etats: ['Disponible', 'Sur rendez-vous'],
     extraFields: [
-      { name: 'experience', label: 'Exp├®rience', type: 'select', options: ["Moins d'1 an", '1-3 ans', '3-5 ans', '5-10 ans', 'Plus de 10 ans'] },
-      { name: 'deplacement', label: 'D├®placement', type: 'select', options: ['├Ç domicile', 'En boutique', 'Les deux'] },
-      { name: 'delai', label: "D├®lai d'intervention", placeholder: '24h, 1 semaine...' },
+      { name: 'experience', label: 'ExpÃ©rience', type: 'select', options: ["Moins d'1 an", '1-3 ans', '3-5 ans', '5-10 ans', 'Plus de 10 ans'] },
+      { name: 'deplacement', label: 'DÃ©placement', type: 'select', options: ['Ã€ domicile', 'En boutique', 'Les deux'] },
+      { name: 'delai', label: "DÃ©lai d'intervention", placeholder: '24h, 1 semaine...' },
     ],
   },
   cat_maison: {
-    etats: ['Neuf', 'Tr├¿s bon ├®tat', 'Bon ├®tat', 'En panne'],
+    etats: ['Neuf', 'TrÃ¨s bon Ã©tat', 'Bon Ã©tat', 'En panne'],
     extraFields: [
       { name: 'marque', label: 'Marque', placeholder: 'LG, Samsung, Ikea...' },
-      { name: 'modele', label: 'Mod├¿le / R├®f├®rence', placeholder: 'R├®f├®rence du produit' },
+      { name: 'modele', label: 'ModÃ¨le / RÃ©fÃ©rence', placeholder: 'RÃ©fÃ©rence du produit' },
       { name: 'couleur', label: 'Couleur', placeholder: 'Blanc, Noir, Bois...' },
     ],
   },
   cat_mode: {
-    etats: ['Neuf avec ├®tiquette', 'Neuf sans ├®tiquette', 'Tr├¿s bon ├®tat', 'Bon ├®tat'],
+    etats: ['Neuf avec Ã©tiquette', 'Neuf sans Ã©tiquette', 'TrÃ¨s bon Ã©tat', 'Bon Ã©tat'],
     extraFields: [
       { name: 'taille', label: 'Taille', type: 'select', options: ['XS', 'S', 'M', 'L', 'XL', 'XXL', '36', '38', '40', '42', '44', '46', 'Autre'] },
       { name: 'couleur', label: 'Couleur', placeholder: 'Noir, Rouge, Blanc...' },
@@ -148,35 +94,35 @@ const CATEGORY_FIELDS: Record<string, CatConfig> = {
     ],
   },
   cat_beaute: {
-    etats: ['Neuf', 'Ouvert', 'Entam├®'],
+    etats: ['Neuf', 'Ouvert', 'EntamÃ©'],
     extraFields: [
-      { name: 'marque', label: 'Marque', placeholder: 'MAC, Lor├®al, Nivea...' },
+      { name: 'marque', label: 'Marque', placeholder: 'MAC, LorÃ©al, Nivea...' },
       { name: 'date_expiration', label: "Date d'expiration", placeholder: 'MM/AAAA' },
     ],
   },
   cat_adulte: {
-    etats: ['Neuf', 'Ouvert', 'Tr├¿s bon ├®tat'],
+    etats: ['Neuf', 'Ouvert', 'TrÃ¨s bon Ã©tat'],
     extraFields: [
       { name: 'marque', label: 'Marque (optionnel)', placeholder: 'Marque du produit' },
     ],
   },
   cat_bebe: {
-    etats: ['Neuf', 'Tr├¿s bon ├®tat', 'Bon ├®tat'],
+    etats: ['Neuf', 'TrÃ¨s bon Ã©tat', 'Bon Ã©tat'],
     extraFields: [
       { name: 'marque', label: 'Marque', placeholder: 'Chicco, Graco...' },
-      { name: 'age_cible', label: '├ége cible', type: 'select', options: ['0-3 mois', '3-6 mois', '6-12 mois', '1-2 ans', '2-3 ans', '3-5 ans', '5+ ans'] },
+      { name: 'age_cible', label: 'Ã‚ge cible', type: 'select', options: ['0-3 mois', '3-6 mois', '6-12 mois', '1-2 ans', '2-3 ans', '3-5 ans', '5+ ans'] },
     ],
   },
   cat_epicerie: {
-    etats: ['Disponible', 'Stock limit├®'],
+    etats: ['Disponible', 'Stock limitÃ©'],
     extraFields: [
-      { name: 'poids', label: 'Poids / Quantit├®', placeholder: '1kg, 500g, 1L...' },
-      { name: 'origine', label: 'Origine', placeholder: "C├┤te d'Ivoire, Import├®..." },
+      { name: 'poids', label: 'Poids / QuantitÃ©', placeholder: '1kg, 500g, 1L...' },
+      { name: 'origine', label: 'Origine', placeholder: "CÃ´te d'Ivoire, ImportÃ©..." },
       { name: 'date_expiration', label: "Date d'expiration", placeholder: 'MM/AAAA' },
     ],
   },
   cat_sport: {
-    etats: ['Neuf', 'Tr├¿s bon ├®tat', 'Bon ├®tat'],
+    etats: ['Neuf', 'TrÃ¨s bon Ã©tat', 'Bon Ã©tat'],
     extraFields: [
       { name: 'marque', label: 'Marque', placeholder: 'Nike, Adidas, Decathlon...' },
       { name: 'taille', label: 'Taille / Pointure', placeholder: '42, L, XL...' },
@@ -184,7 +130,7 @@ const CATEGORY_FIELDS: Record<string, CatConfig> = {
   },
 }
 const DEFAULT_CONFIG: CatConfig = {
-  etats: ['Neuf', 'Tr├¿s bon ├®tat', 'Bon ├®tat', '├ëtat correct'],
+  etats: ['Neuf', 'TrÃ¨s bon Ã©tat', 'Bon Ã©tat', 'Ã‰tat correct'],
   extraFields: [{ name: 'marque', label: 'Marque (optionnel)', placeholder: "Marque de l'article" }],
 }
 
@@ -298,7 +244,7 @@ export default function PublierPage() {
     setLastSaved(null)
     setForm({ title: '', description: '', price: '', category: '', subcategory: '', etat: '', city: '', quartier: '', tel: '', whatsapp: '' })
     setMedia([])
-    toast.success('Brouillon effac├®')
+    toast.success('Brouillon effacÃ©')
   }
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) {
@@ -314,13 +260,30 @@ export default function PublierPage() {
     setForm(f => ({ ...f, category: catId, subcategory: '', etat: '' }))
   }
 
-  function addMedia(files: FileList | null, type: 'image' | 'video') {
+  →async function addMedia(files: FileList | null, type: 'image' | 'video') {
     if (!files) return
     const limit = type === 'video' ? 1 : 5 - media.filter(m => m.type === 'image').length
-    const newItems: MediaFile[] = Array.from(files).slice(0, limit).map(file => ({
-      file, url: URL.createObjectURL(file), type,
-    }))
-    setMedia(prev => [...prev, ...newItems].slice(0, 6))
+    const fileArray = Array.from(files).slice(0, limit)
+    if (type === 'image') {
+      const compressed = await Promise.all(fileArray.map(async (file) => {
+        try {
+          const compressedFile = await imageCompression(file, {
+            maxSizeMB: 0.5,
+            maxWidthOrHeight: 1200,
+            useWebWorker: true,
+          })
+          return { file: compressedFile, url: URL.createObjectURL(compressedFile), type: 'image' as const }
+        } catch {
+          return { file, url: URL.createObjectURL(file), type: 'image' as const }
+        }
+      }))
+      setMedia(prev => [...prev, ...compressed].slice(0, 6))
+    } else {
+      const newItems: MediaFile[] = fileArray.map(file => ({
+        file, url: URL.createObjectURL(file), type,
+      }))
+      setMedia(prev => [...prev, ...newItems].slice(0, 6))
+    }
   }
 
   function removeMedia(i: number) { setMedia(prev => prev.filter((_, idx) => idx !== i)) }
@@ -336,13 +299,13 @@ export default function PublierPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (!form.category) { toast.error('Choisissez une cat├®gorie'); return }
+    if (!form.category) { toast.error('Choisissez une catÃ©gorie'); return }
     if (!form.city) { toast.error('Choisissez une ville'); return }
     setLoading(true)
 
     const globalTimeout = setTimeout(() => {
       setLoading(false)
-      toast.error('D├®lai d├®pass├®. V├®rifiez votre connexion et r├®essayez.')
+      toast.error('DÃ©lai dÃ©passÃ©. VÃ©rifiez votre connexion et rÃ©essayez.')
     }, 25000)
 
     try {
@@ -365,11 +328,11 @@ export default function PublierPage() {
       let uploadFailed = false
 
       if (media.length > 0) {
-        toast.loading(`Upload des m├®dias (0/${media.length})...`, { id: 'upload' })
+        toast.loading(`Upload des mÃ©dias (0/${media.length})...`, { id: 'upload' })
         for (let i = 0; i < media.length; i++) {
           const m = media[i]
           try {
-            toast.loading(`Upload des m├®dias (${i + 1}/${media.length})...`, { id: 'upload' })
+            toast.loading(`Upload des mÃ©dias (${i + 1}/${media.length})...`, { id: 'upload' })
             const ext = m.file.name.split('.').pop()
             const bucket = m.type === 'image' ? 'ad-photos' : 'ad-videos'
             const path = `${userId}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
@@ -379,12 +342,12 @@ export default function PublierPage() {
               upsert: false,
             })
             const timeoutPromise = new Promise<never>((_, reject) =>
-              setTimeout(() => reject(new Error('timeout')), 60000)
+              setTimeout(() => reject(new Error('timeout')), 15000)
             )
             const result = await Promise.race([uploadPromise, timeoutPromise]) as any
 
             if (result.error) {
-              console.warn('Upload ├®chou├®:', result.error.message)
+              console.warn('Upload Ã©chouÃ©:', result.error.message)
               uploadFailed = true
             } else {
               const { data } = supabase.storage.from(bucket).getPublicUrl(path)
@@ -392,15 +355,15 @@ export default function PublierPage() {
               else videoUrl = data.publicUrl
             }
           } catch (err) {
-            console.warn('Upload ignor├® (timeout):', err)
+            console.warn('Upload ignorÃ© (timeout):', err)
             uploadFailed = true
           }
         }
         toast.dismiss('upload')
         if (uploadFailed && uploadedImages.length === 0) {
-          toast.error("Photos non upload├®es. L'annonce sera publi├®e sans photos.", { duration: 4000 })
+          toast.error("Photos non uploadÃ©es. L'annonce sera publiÃ©e sans photos.", { duration: 4000 })
         } else if (uploadFailed) {
-          toast.error("Certaines photos n'ont pas pu ├¬tre upload├®es.", { duration: 3000 })
+          toast.error("Certaines photos n'ont pas pu Ãªtre uploadÃ©es.", { duration: 3000 })
         }
       }
 
@@ -419,11 +382,11 @@ export default function PublierPage() {
         whatsapp: form.whatsapp || form.tel,
         images: uploadedImages,
         video_url: videoUrl || null,
-        status: (userId === '3c2dec79-53ca-4610-818f-25221b9f7536' || storeUser?.id === '3c2dec79-53ca-4610-818f-25221b9f7536') ? 'active' : 'pending',
+        status: 'pending',
         views: 0,
       })
       const insertTimeout = new Promise<{ error: { message: string } }>((resolve) =>
-        setTimeout(() => resolve({ error: { message: 'D├®lai d├®pass├® pour la publication' } }), 15000)
+        setTimeout(() => resolve({ error: { message: 'DÃ©lai dÃ©passÃ© pour la publication' } }), 15000)
       )
       const { error } = await Promise.race([insertPromise, insertTimeout])
 
@@ -443,7 +406,7 @@ export default function PublierPage() {
       setTimeout(() => router.push('/dashboard'), 2500)
     } catch (err) {
       console.error('Erreur soumission:', err)
-      toast.error('Une erreur est survenue. R├®essayez.')
+      toast.error('Une erreur est survenue. RÃ©essayez.')
       clearTimeout(globalTimeout)
       localStorage.removeItem(STORAGE_KEY)
       setHasDraft(false)
@@ -462,8 +425,8 @@ export default function PublierPage() {
         <div className="w-24 h-24 rounded-full bg-green-100 flex items-center justify-center">
           <CheckCircle size={48} className="text-green-500" />
         </div>
-        <h1 className="text-2xl font-extrabold text-gray-900">Annonce publi├®e ! ­ƒÄë</h1>
-        <p className="text-gray-500">En cours de validation par notre ├®quipe (24h max).</p>
+        <h1 className="text-2xl font-extrabold text-gray-900">Annonce publiÃ©e ! ðŸŽ‰</h1>
+        <p className="text-gray-500">En cours de validation par notre Ã©quipe (24h max).</p>
         <p className="text-xs text-gray-400">Redirection vers votre tableau de bord...</p>
       </div>
       <Footer />
@@ -478,12 +441,12 @@ export default function PublierPage() {
         <div className="flex items-start justify-between mb-8">
           <div>
             <h1 className="text-3xl font-extrabold text-gray-900">Publier une annonce</h1>
-            <p className="text-gray-400 mt-1">Le formulaire s'adapte automatiquement ├á votre article</p>
+            <p className="text-gray-400 mt-1">Le formulaire s'adapte automatiquement Ã  votre article</p>
           </div>
           <div className="flex items-center gap-3">
             {lastSaved && (
               <span className="text-xs text-gray-400 flex items-center gap-1">
-                <Save size={11} /> Sauvegard├® ├á {lastSaved}
+                <Save size={11} /> SauvegardÃ© Ã  {lastSaved}
               </span>
             )}
             {hasDraft && (
@@ -498,7 +461,7 @@ export default function PublierPage() {
         {hasDraft && (
           <div className="mb-5 bg-blue-50 border border-blue-100 rounded-xl px-4 py-3 flex items-center gap-3">
             <Save size={16} className="text-blue-500 flex-shrink-0" />
-            <p className="text-sm text-blue-700 font-medium">Brouillon r├®cup├®r├® ÔÇö vos donn├®es ont ├®t├® restaur├®es automatiquement.</p>
+            <p className="text-sm text-blue-700 font-medium">Brouillon rÃ©cupÃ©rÃ© â€” vos donnÃ©es ont Ã©tÃ© restaurÃ©es automatiquement.</p>
           </div>
         )}
 
@@ -506,11 +469,11 @@ export default function PublierPage() {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="lg:col-span-2 space-y-5">
 
-              {/* ├ëtape 1 ÔÇö Cat├®gorie */}
+              {/* Ã‰tape 1 â€” CatÃ©gorie */}
               <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
                 <div className="flex items-center gap-2 mb-4">
                   <div className="w-7 h-7 rounded-full bg-orange-500 text-white text-xs font-bold flex items-center justify-center">1</div>
-                  <h2 className="font-bold text-gray-800">Choisissez une cat├®gorie</h2>
+                  <h2 className="font-bold text-gray-800">Choisissez une catÃ©gorie</h2>
                 </div>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                   {CATEGORIES.map(cat => (
@@ -524,17 +487,17 @@ export default function PublierPage() {
                 {selectedCat && (
                   <select name="subcategory" value={form.subcategory} onChange={handleChange}
                     className="mt-3 w-full border border-gray-100 bg-gray-50 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-orange-400 focus:bg-white transition">
-                    <option value="">Sous-cat├®gorie (optionnel)</option>
-                    {selectedCat.subcats.map(s => <option key={s} value={s}>{s}</option>)}
+                    <option value="">Sous-catÃ©gorie (optionnel)</option>
+                    {selectedCat.subcats.map(s => <option key={s} value={s}>{SUBCAT_LABELS[s] ?? s.replace(/-/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase())}</option>)}
                   </select>
                 )}
               </div>
 
-              {/* ├ëtape 2 ÔÇö Photos & Vid├®o */}
+              {/* Ã‰tape 2 â€” Photos & VidÃ©o */}
               <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
                 <div className="px-5 pt-5 pb-3 border-b border-gray-50 flex items-center gap-2">
                   <div className="w-7 h-7 rounded-full bg-orange-500 text-white text-xs font-bold flex items-center justify-center">2</div>
-                  <h2 className="font-bold text-gray-800">Photos & Vid├®o</h2>
+                  <h2 className="font-bold text-gray-800">Photos & VidÃ©o</h2>
                   <span className="ml-auto text-xs text-gray-400">{media.length}/6</span>
                 </div>
                 <div className="p-5">
@@ -543,7 +506,7 @@ export default function PublierPage() {
                     onClick={() => fileInputRef.current?.click()}>
                     <Upload size={28} className="mx-auto text-gray-300 group-hover:text-orange-400 transition mb-2" />
                     <p className="font-semibold text-gray-600 text-sm">Glissez vos photos ou cliquez</p>
-                    <p className="text-xs text-gray-400 mt-1">JPG, PNG, WEBP ┬À Max 5 photos + 1 vid├®o</p>
+                    <p className="text-xs text-gray-400 mt-1">JPG, PNG, WEBP Â· Max 5 photos + 1 vidÃ©o</p>
                     <input ref={fileInputRef} type="file" accept="image/*" multiple className="hidden" onChange={e => addMedia(e.target.files, 'image')} />
                   </div>
                   {media.length > 0 && (
@@ -554,7 +517,7 @@ export default function PublierPage() {
                             ? <img src={m.url} alt="" className="w-full h-full object-cover" />
                             : <video src={m.url} className="w-full h-full object-cover" muted />}
                           {i === 0 && <span className="absolute bottom-0 left-0 right-0 bg-orange-500 text-white text-[9px] font-bold text-center py-0.5">PRINCIPALE</span>}
-                          {m.type === 'video' && <span className="absolute top-1 left-1 bg-black/60 text-white text-[9px] px-1 rounded">­ƒô╣</span>}
+                          {m.type === 'video' && <span className="absolute top-1 left-1 bg-black/60 text-white text-[9px] px-1 rounded">ðŸ“¹</span>}
                           <button type="button" onClick={() => removeMedia(i)}
                             className="absolute top-1 right-1 w-5 h-5 rounded-full bg-black/60 text-white flex items-center justify-center hover:bg-red-500 transition">
                             <X size={10} />
@@ -566,32 +529,32 @@ export default function PublierPage() {
                   {!media.find(m => m.type === 'video') && (
                     <button type="button" onClick={() => videoInputRef.current?.click()}
                       className="flex items-center gap-2 text-sm text-gray-500 hover:text-orange-500 border border-dashed border-gray-200 hover:border-orange-300 rounded-xl px-4 py-2.5 w-full justify-center transition">
-                      <Video size={15} /> Ajouter une vid├®o (booste les contacts ├ù3)
+                      <Video size={15} /> Ajouter une vidÃ©o (booste les contacts Ã—3)
                     </button>
                   )}
                   <input ref={videoInputRef} type="file" accept="video/*" className="hidden" onChange={e => addMedia(e.target.files, 'video')} />
                 </div>
               </div>
 
-              {/* ├ëtape 3 ÔÇö D├®tails dynamiques */}
+              {/* Ã‰tape 3 â€” DÃ©tails dynamiques */}
               <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
                 <div className="flex items-center gap-2 mb-4">
                   <div className="w-7 h-7 rounded-full bg-orange-500 text-white text-xs font-bold flex items-center justify-center">3</div>
                   <h2 className="font-bold text-gray-800">
-                    {form.category ? `D├®tails ÔÇö ${selectedCat?.name}` : "D├®tails de l'annonce"}
+                    {form.category ? `DÃ©tails â€” ${selectedCat?.name}` : "DÃ©tails de l'annonce"}
                   </h2>
                 </div>
                 <div className="space-y-3">
                   <input name="title" value={form.title} onChange={handleChange} required
-                    placeholder={selectedCat ? `Titre ÔÇö ex: ${selectedCat.name} ├á vendre...` : "Titre de l'annonce *"}
+                    placeholder={selectedCat ? `Titre â€” ex: ${selectedCat.name} Ã  vendre...` : "Titre de l'annonce *"}
                     className="w-full border border-gray-100 bg-gray-50 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-orange-400 focus:bg-white transition font-medium" />
                   <textarea name="description" value={form.description} onChange={handleChange} rows={4}
                     placeholder={
-                      form.category === 'cat_auto' ? "D├®crivez la voiture : options, historique d'entretien, raison de vente..." :
-                        form.category === 'cat_immo' ? 'D├®crivez le bien : ├®quipements, voisinage, acc├¿s, charges...' :
-                          form.category === 'cat_tech' ? "D├®crivez l'├®tat, les accessoires inclus, raison de vente..." :
-                            form.category === 'cat_serv' ? 'D├®crivez votre service, vos comp├®tences, vos r├®f├®rences...' :
-                              'D├®crivez votre article en d├®tail...'
+                      form.category === 'cat_auto' ? "DÃ©crivez la voiture : options, historique d'entretien, raison de vente..." :
+                        form.category === 'cat_immo' ? 'DÃ©crivez le bien : Ã©quipements, voisinage, accÃ¨s, charges...' :
+                          form.category === 'cat_tech' ? "DÃ©crivez l'Ã©tat, les accessoires inclus, raison de vente..." :
+                            form.category === 'cat_serv' ? 'DÃ©crivez votre service, vos compÃ©tences, vos rÃ©fÃ©rences...' :
+                              'DÃ©crivez votre article en dÃ©tail...'
                     }
                     className="w-full border border-gray-100 bg-gray-50 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-orange-400 focus:bg-white transition resize-none" />
                   <div className="grid grid-cols-2 gap-3">
@@ -603,7 +566,7 @@ export default function PublierPage() {
                     </div>
                     <select name="etat" value={form.etat} onChange={handleChange}
                       className="border border-gray-100 bg-gray-50 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-orange-400 focus:bg-white transition">
-                      <option value="">├ëtat</option>
+                      <option value="">Ã‰tat</option>
                       {catConfig.etats.map(e => <option key={e} value={e}>{e}</option>)}
                     </select>
                   </div>
@@ -630,7 +593,7 @@ export default function PublierPage() {
                 </div>
               </div>
 
-              {/* ├ëtape 4 ÔÇö Localisation */}
+              {/* Ã‰tape 4 â€” Localisation */}
               <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
                 <div className="flex items-center gap-2 mb-4">
                   <div className="w-7 h-7 rounded-full bg-orange-500 text-white text-xs font-bold flex items-center justify-center">4</div>
@@ -658,12 +621,12 @@ export default function PublierPage() {
                 </div>
                 {form.quartier === 'Autre' && (
                   <input onChange={e => setForm(f => ({ ...f, quartier: e.target.value }))}
-                    placeholder="Pr├®cisez votre quartier"
+                    placeholder="PrÃ©cisez votre quartier"
                     className="mt-3 w-full border border-gray-100 bg-gray-50 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-orange-400 focus:bg-white transition" />
                 )}
               </div>
 
-              {/* ├ëtape 5 ÔÇö Contact */}
+              {/* Ã‰tape 5 â€” Contact */}
               <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
                 <div className="flex items-center gap-2 mb-4">
                   <div className="w-7 h-7 rounded-full bg-orange-500 text-white text-xs font-bold flex items-center justify-center">5</div>
@@ -672,10 +635,10 @@ export default function PublierPage() {
                 </div>
                 <div className="space-y-3">
                   <input name="tel" value={form.tel} onChange={handleChange} required
-                    placeholder="T├®l├®phone * (+225 07 12 34 56 78)"
+                    placeholder="TÃ©lÃ©phone * (+225 07 12 34 56 78)"
                     className="w-full border border-gray-100 bg-gray-50 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-orange-400 focus:bg-white transition" />
                   <input name="whatsapp" value={form.whatsapp || ''} onChange={handleChange}
-                    placeholder="WhatsApp si diff├®rent du t├®l├®phone"
+                    placeholder="WhatsApp si diffÃ©rent du tÃ©lÃ©phone"
                     className="w-full border border-gray-100 bg-gray-50 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-orange-400 focus:bg-white transition" />
                 </div>
               </div>
@@ -685,15 +648,15 @@ export default function PublierPage() {
             <div className="hidden lg:block">
               <div className="sticky top-4 space-y-4">
                 <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-                  <h3 className="font-bold text-gray-800 mb-4">R├®sum├®</h3>
+                  <h3 className="font-bold text-gray-800 mb-4">RÃ©sumÃ©</h3>
                   <div className="space-y-2.5">
                     {[
-                      { label: 'Cat├®gorie', value: selectedCat ? `${selectedCat.icon} ${selectedCat.name}` : 'ÔÇö' },
+                      { label: 'CatÃ©gorie', value: selectedCat ? `${selectedCat.icon} ${selectedCat.name}` : 'â€”' },
                       { label: 'Photos', value: `${media.filter(m => m.type === 'image').length}/5` },
-                      { label: 'Vid├®o', value: media.find(m => m.type === 'video') ? 'Ô£à' : 'ÔÇö' },
-                      { label: 'Prix', value: form.price ? `${parseInt(form.price).toLocaleString('fr')} FCFA` : 'ÔÇö' },
-                      { label: 'Ville', value: form.city || 'ÔÇö' },
-                      { label: 'Quartier', value: form.quartier || 'ÔÇö' },
+                      { label: 'VidÃ©o', value: media.find(m => m.type === 'video') ? 'âœ…' : 'â€”' },
+                      { label: 'Prix', value: form.price ? `${parseInt(form.price).toLocaleString('fr')} FCFA` : 'â€”' },
+                      { label: 'Ville', value: form.city || 'â€”' },
+                      { label: 'Quartier', value: form.quartier || 'â€”' },
                     ].map(item => (
                       <div key={item.label} className="flex items-center justify-between text-sm">
                         <span className="text-gray-400">{item.label}</span>
@@ -705,32 +668,32 @@ export default function PublierPage() {
 
                 <div className="bg-orange-50 border border-orange-100 rounded-2xl p-4">
                   <p className="text-xs font-bold text-orange-600 mb-2">
-                    ­ƒÆí {form.category === 'cat_auto' ? 'Conseils vente voiture' : form.category === 'cat_immo' ? 'Conseils immobilier' : 'Conseils pour vendre vite'}
+                    ðŸ’¡ {form.category === 'cat_auto' ? 'Conseils vente voiture' : form.category === 'cat_immo' ? 'Conseils immobilier' : 'Conseils pour vendre vite'}
                   </p>
                   <ul className="text-xs text-orange-600/80 space-y-1.5">
                     {form.category === 'cat_auto' ? <>
-                      <li className="flex gap-1.5"><ChevronRight size={10} className="mt-0.5 flex-shrink-0" />Photographiez l'ext├®rieur, l'int├®rieur et le moteur</li>
-                      <li className="flex gap-1.5"><ChevronRight size={10} className="mt-0.5 flex-shrink-0" />Mentionnez si la vignette est ├á jour</li>
+                      <li className="flex gap-1.5"><ChevronRight size={10} className="mt-0.5 flex-shrink-0" />Photographiez l'extÃ©rieur, l'intÃ©rieur et le moteur</li>
+                      <li className="flex gap-1.5"><ChevronRight size={10} className="mt-0.5 flex-shrink-0" />Mentionnez si la vignette est Ã  jour</li>
                     </> : form.category === 'cat_immo' ? <>
-                      <li className="flex gap-1.5"><ChevronRight size={10} className="mt-0.5 flex-shrink-0" />Montrez toutes les pi├¿ces en photos</li>
-                      <li className="flex gap-1.5"><ChevronRight size={10} className="mt-0.5 flex-shrink-0" />Pr├®cisez l'acc├¿s eau et ├®lectricit├®</li>
+                      <li className="flex gap-1.5"><ChevronRight size={10} className="mt-0.5 flex-shrink-0" />Montrez toutes les piÃ¨ces en photos</li>
+                      <li className="flex gap-1.5"><ChevronRight size={10} className="mt-0.5 flex-shrink-0" />PrÃ©cisez l'accÃ¨s eau et Ã©lectricitÃ©</li>
                     </> : <>
-                      <li className="flex gap-1.5"><ChevronRight size={10} className="mt-0.5 flex-shrink-0" />Ajoutez au moins 3 photos de qualit├®</li>
-                      <li className="flex gap-1.5"><ChevronRight size={10} className="mt-0.5 flex-shrink-0" />Une vid├®o augmente les contacts de ├ù3</li>
+                      <li className="flex gap-1.5"><ChevronRight size={10} className="mt-0.5 flex-shrink-0" />Ajoutez au moins 3 photos de qualitÃ©</li>
+                      <li className="flex gap-1.5"><ChevronRight size={10} className="mt-0.5 flex-shrink-0" />Une vidÃ©o augmente les contacts de Ã—3</li>
                     </>}
                   </ul>
                 </div>
 
                 <div className="bg-blue-50 border border-blue-100 rounded-xl px-4 py-3 flex items-center gap-2">
                   <Save size={14} className="text-blue-500 flex-shrink-0" />
-                  <p className="text-xs text-blue-600">Sauvegarde automatique activ├®e ÔÇö vos donn├®es ne seront pas perdues</p>
+                  <p className="text-xs text-blue-600">Sauvegarde automatique activÃ©e â€” vos donnÃ©es ne seront pas perdues</p>
                 </div>
 
                 <button type="submit" disabled={loading}
                   className="w-full py-4 bg-orange-500 hover:bg-orange-600 active:scale-[0.98] text-white font-bold rounded-2xl transition-all flex items-center justify-center gap-2 disabled:opacity-60 shadow-lg shadow-orange-200 text-base">
-                  {loading ? <><Loader2 size={18} className="animate-spin" /> Publication...</> : '­ƒÜÇ Publier mon annonce'}
+                  {loading ? <><Loader2 size={18} className="animate-spin" /> Publication...</> : 'ðŸš€ Publier mon annonce'}
                 </button>
-                <p className="text-center text-xs text-gray-400">Gratuit ┬À Validation sous 24h</p>
+                <p className="text-center text-xs text-gray-400">Gratuit Â· Validation sous 24h</p>
               </div>
             </div>
           </div>
@@ -741,24 +704,24 @@ export default function PublierPage() {
           <div className="flex items-center gap-3 max-w-lg mx-auto">
             <div className="flex-1 min-w-0">
               <p className="text-xs text-gray-400 truncate">
-                {selectedCat ? `${selectedCat.icon} ${selectedCat.name}` : 'Aucune cat├®gorie s├®lectionn├®e'}
+                {selectedCat ? `${selectedCat.icon} ${selectedCat.name}` : 'Aucune catÃ©gorie sÃ©lectionnÃ©e'}
               </p>
               <p className="font-extrabold text-orange-500 text-base leading-tight">
-                {form.price ? `${parseInt(form.price).toLocaleString('fr')} FCFA` : 'Prix non d├®fini'}
+                {form.price ? `${parseInt(form.price).toLocaleString('fr')} FCFA` : 'Prix non dÃ©fini'}
               </p>
               <p className="text-xs text-gray-400 truncate">
-                {form.city || 'ÔÇö'}{form.quartier ? `, ${form.quartier}` : ''}
+                {form.city || 'â€”'}{form.quartier ? `, ${form.quartier}` : ''}
               </p>
             </div>
             <button type="submit" form="publier-form" disabled={loading}
               className="flex-shrink-0 px-5 py-3 bg-orange-500 hover:bg-orange-600 text-white font-bold rounded-xl transition flex items-center gap-2 disabled:opacity-60 shadow-lg shadow-orange-200">
-              {loading ? <Loader2 size={16} className="animate-spin" /> : <span>­ƒÜÇ</span>}
+              {loading ? <Loader2 size={16} className="animate-spin" /> : <span>ðŸš€</span>}
               <span>Publier</span>
             </button>
           </div>
           {lastSaved && (
             <p className="text-[10px] text-gray-400 text-center mt-1 flex items-center justify-center gap-1">
-              <Save size={9} /> Sauvegard├® ├á {lastSaved}
+              <Save size={9} /> SauvegardÃ© Ã  {lastSaved}
             </p>
           )}
         </div>
@@ -767,6 +730,4 @@ export default function PublierPage() {
     </div>
   )
 }
-
-
 
