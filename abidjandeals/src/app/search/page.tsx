@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { AgeGate } from '@/components/AgeGate';
 import { formatFCFA } from '@/lib/format';
@@ -336,7 +336,7 @@ function SearchContentV2() {
       const { data, error: sbError, count } = await query.limit(48)
 
       if (sbError) throw sbError
-      console.log("SEARCH RESULT", data, sbError, count, params);       setAds((data as Ad[]) ?? [])
+      console.log("SEARCH RESULT", data, sbError, count, params); setAds((data as Ad[]) ?? [])
       setTotal(count ?? 0)
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Erreur inconnue.")
