@@ -313,6 +313,9 @@ function SearchContentV2() {
 
       if (params.dbCategoryId) {
         query = query.eq("category_id", params.dbCategoryId)
+        if (params.subcatLabel) {
+          query = query.eq("subcategory", params.subcatLabel)
+        }
       }
 
 

@@ -37,7 +37,7 @@ const SLUG_TO_DB_CATEGORY: Record<string, string> = {
 }
 
 // Build slug â†’ label mapping from CATEGORIES (data.ts)
-// e.g. slugify('TÃ©lÃ©phones & Accessoires') â†’ 'telephones-accessoires' â†’ 'TÃ©lÃ©phones & Accessoires'
+// e.g. slugify('Telephones et Accessoires') â†’ 'telephones-accessoires' â†’ 'Telephones et Accessoires'
 function _slugify(str: string): string {
   return str
     .toLowerCase()
@@ -64,37 +64,37 @@ function resolveDbCategoryId(slug: string | null): string | null {
 
 const LABELS: Record<string, string> = {
   "auto": "Automobile & Industrie", "hightech": "High-Tech & Informatique",
-  "hightech-informatique": "High-Tech & Informatique", "vehicules-equipements": "VÃ©hicules & Ã‰quipements",
-  "location": "Location & MobilitÃ©", "immobilier": "Immobilier", "mode": "Mode & BeautÃ©",
-  "maison": "Maison & DÃ©coration", "services": "Services & Emploi", "sport": "Sport & Loisirs",
+  "hightech-informatique": "High-Tech & Informatique", "vehicules-equipements": "Vehicules & Ã‰quipements",
+  "location": "Location & Mobilite", "immobilier": "Immobilier", "mode": "Mode & Beaute",
+  "maison": "Maison & Decoration", "services": "Services & Emploi", "sport": "Sport & Loisirs",
   "sport-loisirs": "Sport & Loisirs", "autres": "Autres & Divers", "lingerie": "Lingerie & Adulte",
   "cat_lingerie": "Lingerie & Adulte", "cat_auto": "Automobile & Industrie",
-  "cat_tech": "High-Tech & Informatique", "cat_immo": "Immobilier", "cat_mode": "Mode & BeautÃ©",
-  "cat_maison": "Maison & DÃ©coration", "cat_serv": "Services & Emploi", "cat_loisir": "Sport & Loisirs",
+  "cat_tech": "High-Tech & Informatique", "cat_immo": "Immobilier", "cat_mode": "Mode & Beaute",
+  "cat_maison": "Maison & Decoration", "cat_serv": "Services & Emploi", "cat_loisir": "Sport & Loisirs",
   "cat_autres": "Autres & Divers", "voitures-occasion": "Voitures d'occasion",
   "voitures-neuves": "Voitures Neuves", "motos-scooters": "Motos & Scooters",
-  "pieces-pneus": "PiÃ¨ces dÃ©tachÃ©es & Pneus", "location-auto": "Location Auto",
-  "camions-utilitaires": "Camions & Utilitaires", "groupes-electrogenes": "Groupes Ã‰lectrogÃ¨nes",
-  "materiel-agricole": "MatÃ©riel Agricole", "outillage-industriel": "Outillage Industriel",
+  "pieces-pneus": "Pieces detachees & Pneus", "location-auto": "Location Auto",
+  "camions-utilitaires": "Camions & Utilitaires", "groupes-electrogenes": "Groupes Ã‰lectrogenes",
+  "materiel-agricole": "Materiel Agricole", "outillage-industriel": "Outillage Industriel",
   "engins-chantier": "Ã‰quipements de Chantier", "smartphones": "Smartphones",
-  "tablettes": "TÃ©lÃ©phones & Tablettes", "ordinateurs": "Ordinateurs & Laptops",
-  "tv-son": "TV & Home CinÃ©ma", "photo-video": "Photo & VidÃ©o",
-  "consoles-jeux": "Consoles & Jeux VidÃ©o", "objets-connectes": "Objets ConnectÃ©s",
-  "composants": "Composants (RAM, SSD, Cartes MÃ¨res)", "imprimantes": "Imprimantes & Scanners",
-  "cameras": "Cameras", "telephones-accessoires": "TÃ©lÃ©phones & Accessoires",
+  "tablettes": "Telephones & Tablettes", "ordinateurs": "Ordinateurs & Laptops",
+  "tv-son": "TV & Home Cinema", "photo-video": "Photo & Video",
+  "consoles-jeux": "Consoles & Jeux Video", "objets-connectes": "Objets Connectes",
+  "composants": "Composants (RAM, SSD, Cartes Meres)", "imprimantes": "Imprimantes & Scanners",
+  "cameras": "Cameras", "telephones-accessoires": "Telephones et Accessoires",
   "vente-appartement": "Location Appartements",
-  "vente-maison-villa": "Vente Maisons & Villas", "location-meublee": "Location MeublÃ©e",
+  "vente-maison-villa": "Vente Maisons & Villas", "location-meublee": "Location Meublee",
   "location-vide": "Location Vide", "colocation": "Colocation", "terrains": "Terrains avec ACD",
-  "bureaux-boutiques": "Bureaux & Commerces", "vetements": "VÃªtements & Chaussures",
+  "bureaux-boutiques": "Bureaux & Commerces", "vetements": "Vetements & Chaussures",
   "chaussures": "Chaussures", "sacs-accessoires": "Sacs & Accessoires", "montres": "Montres & Bijoux",
-  "cosmetiques": "CosmÃ©tiques & Parfums", "meubles": "Meubles", "decoration": "DÃ©coration",
+  "cosmetiques": "Cosmetiques & Parfums", "meubles": "Meubles", "decoration": "Decoration",
   "jardin-bricolage": "Jardin & Bricolage", "offres-emploi": "Offres d'Emploi",
   "freelance-it": "Freelance IT & Design", "batiment": "BTP & Artisanat",
   "cours-formation": "Cours & Formations", "transport": "Transport & Livraison",
-  "menage": "MÃ©nage & Nettoyage", "securite": "SÃ©curitÃ© & Gardiennage",
-  "evenementiel": "Ã‰vÃ©nementiel", "equipements-sport": "Ã‰quipements de Sport",
+  "menage": "Menage & Nettoyage", "securite": "Securite & Gardiennage",
+  "evenementiel": "Ã‰venementiel", "equipements-sport": "Ã‰quipements de Sport",
   "instruments-musique": "Instruments de Musique", "jouets": "Jouets & Jeux",
-  "voyages": "Voyages & Tourisme", "velos": "VÃ©los & Trottinettes",
+  "voyages": "Voyages & Tourisme", "velos": "Velos & Trottinettes",
   "animaux": "Animaux & Accessoires", "collection": "Objets de Collection", "inclassables": "Inclassables",
 }
 
@@ -188,7 +188,7 @@ function AdCard({ ad, view = "grid" }: { ad: Ad; view?: "grid" | "list" }) {
         {isBoosted && (
           <div className="absolute top-0 left-0 right-0 z-10 flex items-center gap-1.5 bg-gradient-to-r from-amber-400 to-orange-400 px-3 py-1">
             <Zap size={10} className="text-white fill-white" />
-            <span className="text-white text-[10px] font-bold uppercase tracking-wider">Annonce boostÃ©e</span>
+            <span className="text-white text-[10px] font-bold uppercase tracking-wider">Annonce boostee</span>
           </div>
         )}
         <div className={`relative overflow-hidden bg-gray-50 ${isBoosted ? "pt-6" : ""}`} style={{ height: 188 }}>
@@ -215,7 +215,7 @@ function AdCard({ ad, view = "grid" }: { ad: Ad; view?: "grid" | "list" }) {
 }
 
 function EmptyState({ query, label }: { query: string; label: string }) {
-  const suggestions = ["Voitures d'occasion", "iPhone 14", "Appartement Cocody", "MacBook Pro", "Groupe Ã©lectrogÃ¨ne"]
+  const suggestions = ["Voitures d'occasion", "iPhone 14", "Appartement Cocody", "MacBook Pro", "Groupe electrogene"]
   return (
     <div className="col-span-full">
       <div className="flex flex-col items-center justify-center py-20 text-center max-w-md mx-auto">
@@ -223,10 +223,10 @@ function EmptyState({ query, label }: { query: string; label: string }) {
           <Search size={48} className="text-orange-300" strokeWidth={1.5} />
         </div>
         <h2 className="text-xl font-bold text-gray-800 mb-2">
-          {query ? `Aucun rÃ©sultat pour "${query}"` : `Aucune annonce dans ${label}`}
+          {query ? `Aucun resultat pour "${query}"` : `Aucune annonce dans ${label}`}
         </h2>
         <p className="text-gray-400 text-sm leading-relaxed mb-8">
-          {query ? "Essayez d'autres mots-clÃ©s ou explorez les catÃ©gories." : "Soyez le premier Ã  publier dans cette catÃ©gorie !"}
+          {query ? "Essayez d'autres mots-cles ou explorez les categories." : "Soyez le premier Ã  publier dans cette categorie !"}
         </p>
         <div className="flex flex-wrap gap-2 justify-center mb-6">
           {suggestions.map((s) => <Link key={s} href={`/search?q=${encodeURIComponent(s)}`} className="px-3 py-1.5 bg-white border border-gray-200 text-gray-600 text-xs font-medium rounded-full hover:border-orange-300 transition-colors">{s}</Link>)}
@@ -261,8 +261,8 @@ function SearchContentV2() {
 
   const dbCategoryId = resolveDbCategoryId(categorySlug)
 
-  // RÃ©solution synchrone : slug URL â†’ label texte stockÃ© dans la colonne 'subcategory'
-  // Exemple : 'telephones-accessoires' â†’ 'TÃ©lÃ©phones & Accessoires'
+  // Resolution synchrone : slug URL â†’ label texte stocke dans la colonne 'subcategory'
+  // Exemple : 'telephones-accessoires' â†’ 'Telephones et Accessoires'
   const subcatLabel = null
 
   const supabase = useMemo(() => createBrowserClient(
@@ -364,16 +364,16 @@ function SearchContentV2() {
     setShowFilters(false)
   }
 
-  const pageLabel = subcatLabel ?? (subcategorySlug ? getLabel(subcategorySlug) : null) ?? (categorySlug ? getLabel(categorySlug) : null) ?? (q ? `RÃ©sultats pour "${q}"` : "Toutes les annonces")
+  const pageLabel = subcatLabel ?? (subcategorySlug ? getLabel(subcategorySlug) : null) ?? (categorySlug ? getLabel(categorySlug) : null) ?? (q ? `Resultats pour "${q}"` : "Toutes les annonces")
   const pageEmoji = subcategorySlug ? getCatEmoji(subcategorySlug) : getCatEmoji(categorySlug)
 
   const sortOptions = [
-    { value: "recent", label: "Plus rÃ©cents", icon: Clock },
+    { value: "recent", label: "Plus recents", icon: Clock },
     { value: "price_asc", label: "Prix croissant", icon: Tag },
-    { value: "price_desc", label: "Prix dÃ©croissant", icon: Tag },
+    { value: "price_desc", label: "Prix decroissant", icon: Tag },
     { value: "popular", label: "Populaires", icon: TrendingUp },
   ]
-  const etats = ["Neuf", "Comme neuf", "Bon Ã©tat", "Ã‰tat correct", "Disponible"]
+  const etats = ["Neuf", "Comme neuf", "Bon etat", "Ã‰tat correct", "Disponible"]
   const hasActiveFilters = priceMin || priceMax || selectedEtat
 
   return (
@@ -452,7 +452,7 @@ function SearchContentV2() {
                   </div>
                 </div>
                 <div className="flex gap-2 ml-auto">
-                  {hasActiveFilters && <button onClick={() => { setPriceMin(""); setPriceMax(""); setSelectedEtat("") }} className="px-4 py-2 text-xs font-semibold text-gray-500 hover:text-gray-700 bg-white border border-gray-200 rounded-xl transition-colors">RÃ©initialiser</button>}
+                  {hasActiveFilters && <button onClick={() => { setPriceMin(""); setPriceMax(""); setSelectedEtat("") }} className="px-4 py-2 text-xs font-semibold text-gray-500 hover:text-gray-700 bg-white border border-gray-200 rounded-xl transition-colors">Reinitialiser</button>}
                   <button onClick={handleApplyFilters} className="px-5 py-2 bg-orange-500 hover:bg-orange-600 text-white text-xs font-bold rounded-xl transition-colors">Appliquer</button>
                 </div>
               </div>
@@ -464,13 +464,13 @@ function SearchContentV2() {
       <div className="max-w-7xl mx-auto px-4 py-6 md:px-8">
         {!loading && !error && ads.length > 0 && ageCleared && (
           <div className="flex items-center justify-between mb-5">
-            <p className="text-sm text-gray-500"><span className="font-semibold text-gray-800">{ads.length}</span> annonce{ads.length > 1 ? "s" : ""} affichÃ©e{ads.length > 1 ? "s" : ""}{total > ads.length ? ` sur ${total.toLocaleString("fr-CI")}` : ""}</p>
+            <p className="text-sm text-gray-500"><span className="font-semibold text-gray-800">{ads.length}</span> annonce{ads.length > 1 ? "s" : ""} affichee{ads.length > 1 ? "s" : ""}{total > ads.length ? ` sur ${total.toLocaleString("fr-CI")}` : ""}</p>
             {(categorySlug || subcategorySlug || q) && <Link href="/search" className="text-xs text-gray-400 hover:text-orange-500 transition-colors flex items-center gap-1"><X size={11} /> Effacer les filtres</Link>}
           </div>
         )}
 
         {!ageCleared ? (
-          <div className="flex flex-col items-center justify-center py-32 text-center"><span className="text-6xl mb-4">ðŸ”ž</span><p className="text-gray-400 text-sm">VÃ©rification de l'Ã¢ge en cours...</p></div>
+          <div className="flex flex-col items-center justify-center py-32 text-center"><span className="text-6xl mb-4">ðŸ”ž</span><p className="text-gray-400 text-sm">Verification de l'age en cours...</p></div>
         ) : loading ? (
           <div className={view === "grid" ? "grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4" : "flex flex-col gap-3"}>
             {Array.from({ length: 10 }).map((_, i) => view === "grid" ? <AdCardSkeleton key={i} /> : <div key={i} className="h-28 bg-white rounded-2xl border border-gray-100 animate-pulse" />)}
@@ -522,6 +522,7 @@ function PageSkeleton() {
 export default function SearchPage() {
   return <Suspense fallback={<PageSkeleton />}><SearchContentV2 /></Suspense>
 }
+
 
 
 
