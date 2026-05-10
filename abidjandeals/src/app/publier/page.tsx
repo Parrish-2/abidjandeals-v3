@@ -276,11 +276,7 @@ export default function PublierPage() {
     if (type === 'image') {
       const compressed = await Promise.all(fileArray.map(async (file) => {
         try {
-          const compressedFile = await imageCompression(file, {
-            maxSizeMB: 0.5,
-            maxWidthOrHeight: 1200,
-            useWebWorker: true,
-          })
+          const compressedFile = file
           return { file: compressedFile, url: URL.createObjectURL(compressedFile), type: 'image' as const }
         } catch {
           return { file, url: URL.createObjectURL(file), type: 'image' as const }
@@ -739,6 +735,7 @@ export default function PublierPage() {
     </div>
   )
 }
+
 
 
 
