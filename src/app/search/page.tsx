@@ -346,11 +346,11 @@ function SearchContentV2() {
   }, [supabase])
 
   useEffect(() => {
-    if (!ageCleared) return
-    fetchAds({
+      dbCategoryId,
       subcatLabel,
-      subcatLabel: null,
       q, sort, priceMin, priceMax, selectedEtat
+    })
+  }, [ageCleared, dbCategoryId, subcatLabel, q, sort, priceMin, priceMax, selectedEtat, fetchAds])
     })
   }, [ageCleared, dbCategoryId, q, sort, priceMin, priceMax, selectedEtat, fetchAds])
 
