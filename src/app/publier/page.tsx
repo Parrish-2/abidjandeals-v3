@@ -30,6 +30,15 @@ type ExtraField = { name: string; label: string; type?: string; options?: string
 type CatConfig = { etats: string[]; extraFields: ExtraField[] }
 
 // â”€â”€ CATEGORY_FIELDS â€” clÃ©s alignÃ©es sur les IDs rÃ©els de data.ts â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+const SUBCAT_LABELS: Record<string, string> = {
+  'telephones-accessoires': 'Telephones et Accessoires',
+  'ordinateurs': 'Ordinateurs',
+  'tablettes': 'Tablettes',
+  'objets-connectes': 'Objets Connectes',
+  'voitures-d-occasion': 'Voitures occasion',
+  'voitures-neuves': 'Voitures Neuves',
+  'motos-scooters': 'Motos et Scooters',
+}
 const CATEGORY_FIELDS: Record<string, CatConfig> = {
   cat_tech: {
     etats: ['Neuf', 'ReconditionnÃ©', 'TrÃ¨s bon Ã©tat', 'Bon Ã©tat', 'Ã€ rÃ©parer'],
@@ -260,7 +269,7 @@ export default function PublierPage() {
     setForm(f => ({ ...f, category: catId, subcategory: '', etat: '' }))
   }
 
-  →async function addMedia(files: FileList | null, type: 'image' | 'video') {
+  async function addMedia(files: FileList | null, type: 'image' | 'video') {
     if (!files) return
     const limit = type === 'video' ? 1 : 5 - media.filter(m => m.type === 'image').length
     const fileArray = Array.from(files).slice(0, limit)
@@ -730,4 +739,6 @@ export default function PublierPage() {
     </div>
   )
 }
+
+
 
