@@ -13,7 +13,7 @@ import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 
 import { CATEGORIES as CAT_DATA } from '@/lib/data';
 
-const ADULT_CATEGORIES = ['lingerie', 'cat_lingerie']
+const ADULT_CATEGORIES = ['lingerie', 'cat_lingerie', 'cat_adulte', 'bien-etre-intime']
 const STORAGE_KEY = 'abidjandeals_age_verified'
 
 function isAgeVerified(): boolean {
@@ -525,6 +525,7 @@ function PageSkeleton() {
 export default function SearchPage() {
   return <Suspense fallback={<PageSkeleton />}><SearchContentV2 /></Suspense>
 }
+
 
 
 
