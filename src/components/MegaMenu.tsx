@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { AgeGate } from '@/components/AgeGate'
 import { useI18n } from '@/contexts/i18nContext'
@@ -8,7 +8,7 @@ import { useRouter } from 'next/navigation'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 
-// ── Types ────────────────────────────────────────────────────────────────────
+// â”€â”€ Types â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export interface SubCat {
   id: string
@@ -29,17 +29,17 @@ export interface MegaCat {
   isAdult?: boolean
 }
 
-// ── Age gate ─────────────────────────────────────────────────────────────────
+// â”€â”€ Age gate â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 const STORAGE_KEY = 'abidjandeals_age_verified'
 function isAgeVerified(): boolean {
   try { return sessionStorage.getItem(STORAGE_KEY) === 'true' } catch { return false }
 }
 
-// ── Config visuelle par catégorie ────────────────────────────────────────────
-// Les données métier viennent de CATEGORIES (data.ts).
+// â”€â”€ Config visuelle par catÃ©gorie â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// Les donnÃ©es mÃ©tier viennent de CATEGORIES (data.ts).
 // Ce bloc centralise uniquement ce qui ne peut pas en venir :
-// gradient, image Unsplash, clé de description et badges par sous-cat.
+// gradient, image Unsplash, clÃ© de description et badges par sous-cat.
 
 const CAT_VISUAL: Record<string, {
   gradient: string
@@ -51,7 +51,7 @@ const CAT_VISUAL: Record<string, {
     gradient: 'linear-gradient(135deg,#6366f1,#8b5cf6)',
     imageUrl: 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=400&q=80&auto=format&fit=crop',
     descKey: 'cat.hightech_desc',
-    subBadges: { 'Téléphones & Accessoires': 'TOP', 'TV & Home Cinéma': 'NEW' },
+    subBadges: { 'TÃ©lÃ©phones & Accessoires': 'TOP', 'TV & Home CinÃ©ma': 'NEW' },
   },
   cat_auto: {
     gradient: 'linear-gradient(135deg,#ef4444,#f97316)',
@@ -80,7 +80,7 @@ const CAT_VISUAL: Record<string, {
     gradient: 'linear-gradient(135deg,#f97316,#ef4444)',
     imageUrl: 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=400&q=80&auto=format&fit=crop',
     descKey: 'cat.mode_desc',
-    subBadges: { 'Vêtements & Chaussures': 'NEW' },
+    subBadges: { 'VÃªtements & Chaussures': 'NEW' },
   },
   cat_beaute: {
     gradient: 'linear-gradient(135deg,#ec4899,#db2777)',
@@ -91,7 +91,7 @@ const CAT_VISUAL: Record<string, {
     gradient: 'linear-gradient(135deg,#f43f5e,#e11d48)',
     imageUrl: 'https://images.unsplash.com/photo-1578632292335-df3abbb0d586?w=400&q=80&auto=format&fit=crop',
     descKey: 'cat.lingerie_desc',
-    subBadges: { 'Lingerie & Sous-vêtements': 'NEW' },
+    subBadges: { 'Lingerie & Sous-vÃªtements': 'NEW' },
   },
   cat_bebe: {
     gradient: 'linear-gradient(135deg,#f59e0b,#f97316)',
@@ -108,11 +108,11 @@ const CAT_VISUAL: Record<string, {
     gradient: 'linear-gradient(135deg,#14b8a6,#0d9488)',
     imageUrl: 'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=400&q=80&auto=format&fit=crop',
     descKey: 'cat.sport_desc',
-    subBadges: { 'Équipements de Sport': 'TOP' },
+    subBadges: { 'Ã‰quipements de Sport': 'TOP' },
   },
 }
 
-// ── Dérivation de MEGA_CATS depuis CATEGORIES ────────────────────────────────
+// â”€â”€ DÃ©rivation de MEGA_CATS depuis CATEGORIES â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function slugify(str: string): string {
   return str
@@ -126,9 +126,9 @@ function toSubCat(
   sub: string | { name: string; slug?: string },
   badges: Record<string, 'TOP' | 'NEW' | 'PROMO' | 'URGENT'> = {}
 ): SubCat {
-  // ✅ FIX CRITIQUE : on utilise sub.slug (slug DB exact) au lieu de slugify(sub.name)
-  // slugify("Voitures d'occasion") → "voitures-d-occasion" (FAUX)
-  // sub.slug                       → "voitures-d-occasion" (VRAI, calé sur la DB)
+  // âœ… FIX CRITIQUE : on utilise sub.slug (slug DB exact) au lieu de slugify(sub.name)
+  // slugify("Voitures d'occasion") â†’ "voitures-d-occasion" (FAUX)
+  // sub.slug                       â†’ "voitures-d-occasion" (VRAI, calÃ© sur la DB)
   const name = typeof sub === 'string' ? sub : sub.name
   const id = typeof sub === 'string'
     ? slugify(sub)
@@ -156,101 +156,101 @@ export const MEGA_CATS: MegaCat[] = CATEGORIES.map(cat => {
   }
 })
 
-// ── Labels ───────────────────────────────────────────────────────────────────
+// â”€â”€ Labels â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 const CAT_LABELS: Record<string, { en: string; fr: string }> = {
   'High-Tech': { en: 'High-Tech', fr: 'High-Tech' },
   'Automobile': { en: 'Auto & Vehicles', fr: 'Automobile' },
   'Immobilier': { en: 'Real Estate', fr: 'Immobilier' },
   'Services': { en: 'Services', fr: 'Services' },
-  'Maison & Équipement': { en: 'Home & Appliances', fr: 'Maison & Équipement' },
+  'Maison & Ã‰quipement': { en: 'Home & Appliances', fr: 'Maison & Ã‰quipement' },
   'Mode & Accessoires': { en: 'Fashion', fr: 'Mode & Accessoires' },
-  'Beauté & Bien-être': { en: 'Beauty & Wellness', fr: 'Beauté & Bien-être' },
-  'Bien-être & Intimité': { en: 'Intimacy & Wellness', fr: 'Bien-être & Intimité' },
-  'Bébé & Maman': { en: 'Baby & Mom', fr: 'Bébé & Maman' },
-  'Épicerie & Produits locaux': { en: 'Grocery & Local', fr: 'Épicerie & Produits locaux' },
+  'BeautÃ© & Bien-Ãªtre': { en: 'Beauty & Wellness', fr: 'BeautÃ© & Bien-Ãªtre' },
+  'Bien-Ãªtre & IntimitÃ©': { en: 'Intimacy & Wellness', fr: 'Bien-Ãªtre & IntimitÃ©' },
+  'BÃ©bÃ© & Maman': { en: 'Baby & Mom', fr: 'BÃ©bÃ© & Maman' },
+  'Ã‰picerie & Produits locaux': { en: 'Grocery & Local', fr: 'Ã‰picerie & Produits locaux' },
   'Sport & Loisirs': { en: 'Sport & Leisure', fr: 'Sport & Loisirs' },
   // descriptions
   'cat.hightech_desc': { en: 'Smartphones, PCs, tablets & accessories', fr: 'Smartphones, PC, tablettes & accessoires' },
-  'cat.auto_desc': { en: 'Cars, motorbikes, parts & equipment', fr: 'Voitures, motos, pièces & équipements' },
+  'cat.auto_desc': { en: 'Cars, motorbikes, parts & equipment', fr: 'Voitures, motos, piÃ¨ces & Ã©quipements' },
   'cat.realestate_desc': { en: 'Apartments, houses, land & offices', fr: 'Appartements, maisons, terrains & bureaux' },
-  'cat.services_desc': { en: 'IT, beauty, training & construction', fr: 'Informatique, beauté, formation & BTP' },
-  'cat.appliances_desc': { en: 'Fridges, ACs, washing machines & more', fr: 'Électroménager, meubles & décoration' },
-  'cat.mode_desc': { en: 'Clothes, shoes, bags & jewellery', fr: 'Vêtements, chaussures, sacs & bijoux' },
-  'cat.pharma_desc': { en: 'Face care, body care & supplements', fr: 'Soins visage, corps & compléments' },
-  'cat.lingerie_desc': { en: 'Intimacy & wellness — 18+', fr: 'Bien-être & intimité — 18+' },
-  'cat.baby_desc': { en: 'Clothes, toys, strollers & nutrition', fr: 'Vêtements, jouets, poussettes & alimentation' },
+  'cat.services_desc': { en: 'IT, beauty, training & construction', fr: 'Informatique, beautÃ©, formation & BTP' },
+  'cat.appliances_desc': { en: 'Fridges, ACs, washing machines & more', fr: 'Ã‰lectromÃ©nager, meubles & dÃ©coration' },
+  'cat.mode_desc': { en: 'Clothes, shoes, bags & jewellery', fr: 'VÃªtements, chaussures, sacs & bijoux' },
+  'cat.pharma_desc': { en: 'Face care, body care & supplements', fr: 'Soins visage, corps & complÃ©ments' },
+  'cat.lingerie_desc': { en: 'Intimacy & wellness â€” 18+', fr: 'Bien-Ãªtre & intimitÃ© â€” 18+' },
+  'cat.baby_desc': { en: 'Clothes, toys, strollers & nutrition', fr: 'VÃªtements, jouets, poussettes & alimentation' },
   'cat.grocery_desc': { en: 'Food, drinks & local CI products', fr: 'Alimentation, boissons & produits locaux CI' },
-  'cat.sport_desc': { en: 'Equipment, fitness & leisure', fr: 'Équipements, fitness & loisirs' },
+  'cat.sport_desc': { en: 'Equipment, fitness & leisure', fr: 'Ã‰quipements, fitness & loisirs' },
 }
 
-// SUB_LABELS : clé = sub.name (champ affiché dans data.ts), valeur = traductions EN/FR
-// ⚠️ Les clés DOIVENT correspondre exactement aux champs { name } définis dans data.ts
 const SUB_LABELS: Record<string, { en: string; fr: string }> = {
-  // ── High-Tech ──────────────────────────────────────────────────────────────
-  'Téléphones & Accessoires':   { en: 'Phones & Accessories',      fr: 'Téléphones & Accessoires' },
-  'Ordinateurs & Laptops':      { en: 'Computers & Laptops',       fr: 'Ordinateurs & Laptops' },
-  'Tablettes':                  { en: 'Tablets',                   fr: 'Tablettes' },
-  'TV & Home Cinéma':           { en: 'TV & Home Cinema',          fr: 'TV & Home Cinéma' },
-  'Photo & Vidéo':              { en: 'Photo & Video',             fr: 'Photo & Vidéo' },
-  'Consoles & Jeux Vidéo':      { en: 'Consoles & Video Games',    fr: 'Consoles & Jeux Vidéo' },
-  'Objets Connectés':           { en: 'Connected Devices',         fr: 'Objets Connectés' },
-  'Cameras':                    { en: 'Cameras',                   fr: 'Cameras' },
-  'Pièces & Périphériques':     { en: 'Parts & Peripherals',       fr: 'Pièces & Périphériques' },
-  // ── Automobile ────────────────────────────────────────────────────────────
-  "Voitures d'occasion":        { en: 'Used Cars',                 fr: "Voitures d'occasion" },
-  'Voitures Neuves':            { en: 'New Cars',                  fr: 'Voitures Neuves' },
-  'Motos & Scooters':           { en: 'Motorbikes & Scooters',     fr: 'Motos & Scooters' },
-  'Pièces détachées & Pneus':   { en: 'Parts & Tyres',             fr: 'Pièces détachées & Pneus' },
-  'Location Auto':              { en: 'Car Rental',                fr: 'Location Auto' },
-  'Camions & Utilitaires':      { en: 'Trucks & Vans',             fr: 'Camions & Utilitaires' },
-  'Groupes Électrogènes':       { en: 'Generators',                fr: 'Groupes Électrogènes' },
-  'Matériel Agricole':          { en: 'Agricultural Equipment',    fr: 'Matériel Agricole' },
-  'Outillage Industriel':       { en: 'Industrial Tools',          fr: 'Outillage Industriel' },
-  'Engins de Chantier':         { en: 'Construction Equipment',    fr: 'Engins de Chantier' },
-  // ── Immobilier ────────────────────────────────────────────────────────────
-  'Vente Appartements':         { en: 'Apartment Sales',           fr: 'Vente Appartements' },
-  'Vente Maisons & Villas':     { en: 'House & Villa Sales',       fr: 'Vente Maisons & Villas' },
-  'Location Meublée':           { en: 'Furnished Rental',          fr: 'Location Meublée' },
-  'Location Vide':              { en: 'Unfurnished Rental',        fr: 'Location Vide' },
-  'Colocation':                 { en: 'Flatsharing',               fr: 'Colocation' },
-  'Terrains avec ACD':          { en: 'Land with Title Deed',      fr: 'Terrains avec ACD' },
-  'Bureaux & Commerces':        { en: 'Offices & Retail',          fr: 'Bureaux & Commerces' },
-  // ── Services ──────────────────────────────────────────────────────────────
-  'Freelance IT & Design':      { en: 'Freelance IT & Design',     fr: 'Freelance IT & Design' },
-  'BTP & Artisanat':            { en: 'Construction & Trades',     fr: 'BTP & Artisanat' },
-  'Cours & Formations':         { en: 'Courses & Training',        fr: 'Cours & Formations' },
-  "Offres d'Emploi":            { en: 'Job Offers',                fr: "Offres d'Emploi" },
-  'Transport & Livraison':      { en: 'Transport & Delivery',      fr: 'Transport & Livraison' },
-  'Ménage & Nettoyage':         { en: 'Cleaning Services',         fr: 'Ménage & Nettoyage' },
-  'Sécurité & Gardiennage':     { en: 'Security & Guarding',       fr: 'Sécurité & Gardiennage' },
-  'Événementiel':               { en: 'Events & Entertainment',    fr: 'Événementiel' },
-  // ── Maison ────────────────────────────────────────────────────────────────
-  'Meubles':                    { en: 'Furniture',                 fr: 'Meubles' },
-  'Électroménager':             { en: 'Appliances',                fr: 'Électroménager' },
-  'Décoration':                 { en: 'Decoration',                fr: 'Décoration' },
-  'Jardin & Bricolage':         { en: 'Garden & DIY',              fr: 'Jardin & Bricolage' },
-  // ── Mode ──────────────────────────────────────────────────────────────────
-  'Vêtements & Chaussures':     { en: 'Clothing & Shoes',          fr: 'Vêtements & Chaussures' },
-  'Chaussures':                 { en: 'Shoes',                     fr: 'Chaussures' },
-  'Sacs & Accessoires':         { en: 'Bags & Accessories',        fr: 'Sacs & Accessoires' },
-  'Montres & Bijoux':           { en: 'Watches & Jewellery',       fr: 'Montres & Bijoux' },
-  'Cosmétiques & Parfums':      { en: 'Cosmetics & Perfumes',      fr: 'Cosmétiques & Parfums' },
-  // ── Sport & Loisirs ───────────────────────────────────────────────────────
-  'Équipements de Sport':       { en: 'Sports Equipment',          fr: 'Équipements de Sport' },
-  'Instruments de Musique':     { en: 'Musical Instruments',       fr: 'Instruments de Musique' },
-  'Jouets & Jeux':              { en: 'Toys & Games',              fr: 'Jouets & Jeux' },
-  'Voyages & Tourisme':         { en: 'Travel & Tourism',          fr: 'Voyages & Tourisme' },
-  'Vélos & Trottinettes':       { en: 'Bikes & Scooters',          fr: 'Vélos & Trottinettes' },
-  // ── Autres ────────────────────────────────────────────────────────────────
-  'Animaux & Accessoires':      { en: 'Pets & Accessories',        fr: 'Animaux & Accessoires' },
-  'Objets de Collection':       { en: 'Collectibles',              fr: 'Objets de Collection' },
-  'Inclassables':               { en: 'Miscellaneous',             fr: 'Inclassables' },
-  // ── Adulte ────────────────────────────────────────────────────────────────
-  'Lingerie & Sous-vêtements':  { en: 'Lingerie & Underwear',      fr: 'Lingerie & Sous-vêtements' },
-  'Maillots de Bain':           { en: 'Swimwear',                  fr: 'Maillots de Bain' },
-  'Cosmétiques & Bien-être':    { en: 'Cosmetics & Wellness',      fr: 'Cosmétiques & Bien-être' },
-  'Accessoires Mode':           { en: 'Fashion Accessories',       fr: 'Accessoires Mode' },
+  'telephones-accessoires': { en: 'Phones & Accessories', fr: 'Telephones & Accessoires' },
+  'ordinateurs': { en: 'Computers', fr: 'Ordinateurs' },
+  'tablettes': { en: 'Tablets', fr: 'Tablettes' },
+  'tv-son': { en: 'TV & Audio', fr: 'TV & Audio' },
+  'photo-video-cameras': { en: 'Photo, Video & Cameras', fr: 'Photo, Video & Cameras' },
+  'consoles-jeux': { en: 'Consoles & Games', fr: 'Jeux Video' },
+  'objets-connectes': { en: 'Connected Devices', fr: 'Objets Connectes' },
+  'composants': { en: 'Components', fr: 'Composants' },
+  'voitures-d-occasion': { en: 'Used Cars', fr: "Voitures d'occasion" },
+  'voitures-neuves': { en: 'New Cars', fr: 'Voitures Neuves' },
+  'motos-scooters': { en: 'Motorbikes', fr: 'Motos & Scooters' },
+  'pieces-pneus': { en: 'Parts & Tyres', fr: 'Pieces & Pneus' },
+  'location-auto': { en: 'Car Rental', fr: 'Location Auto' },
+  'camions-utilitaires': { en: 'Trucks', fr: 'Camions & Utilitaires' },
+  'groupes-electrogenes': { en: 'Generators', fr: 'Groupes Electrogenes' },
+  'materiel-agricole': { en: 'Agricultural Equipment', fr: 'Materiel Agricole' },
+  'outillage-industriel': { en: 'Industrial Tools', fr: 'Outillage Industriel' },
+  'engins-chantier': { en: 'Construction Equipment', fr: 'Engins de Chantier' },
+  'vente-appartement': { en: 'Apartment Sales', fr: 'Vente Appartements' },
+  'vente-maison-villa': { en: 'House Sales', fr: 'Vente Maisons & Villas' },
+  'location-meublee': { en: 'Furnished Rental', fr: 'Location Meublee' },
+  'location-vide': { en: 'Unfurnished Rental', fr: 'Location Vide' },
+  'location-saisonniere': { en: 'Seasonal Rental', fr: 'Locations saisonnieres' },
+  'colocation': { en: 'Flatsharing', fr: 'Colocation' },
+  'terrains-acd': { en: 'Land with Title Deed', fr: 'Terrains avec ACD' },
+  'bureaux-boutiques': { en: 'Offices & Retail', fr: 'Bureaux & Boutiques' },
+  'freelance-it': { en: 'Freelance IT', fr: 'Freelance IT & Design' },
+  'batiment': { en: 'Construction', fr: 'BTP & Artisanat' },
+  'cours-formation': { en: 'Training', fr: 'Cours & Formations' },
+  'offres-emploi': { en: 'Job Offers', fr: "Offres d'emploi" },
+  'transport-livraison': { en: 'Transport & Delivery', fr: 'Transport & Livraison' },
+  'menage': { en: 'Cleaning', fr: 'Menage & Nettoyage' },
+  'securite': { en: 'Security', fr: 'Securite & Gardiennage' },
+  'evenementiel': { en: 'Events', fr: 'Evenementiel' },
+  'services-divers': { en: 'Other Services', fr: 'Services divers' },
+  'meubles': { en: 'Furniture', fr: 'Meubles' },
+  'electromenager': { en: 'Appliances', fr: 'Electromenager' },
+  'decoration': { en: 'Decoration', fr: 'Decoration' },
+  'jardin-bricolage': { en: 'Garden & DIY', fr: 'Jardin & Bricolage' },
+  'autres-equipements': { en: 'Other Equipment', fr: 'Autres equipements' },
+  'vetements-femme': { en: 'Women Clothing', fr: 'Vetements femme' },
+  'vetements-homme': { en: 'Men Clothing', fr: 'Vetements homme' },
+  'chaussures': { en: 'Shoes', fr: 'Chaussures' },
+  'sacs-accessoires': { en: 'Bags & Accessories', fr: 'Sacs & Accessoires' },
+  'montres-bijoux': { en: 'Watches & Jewellery', fr: 'Montres & Bijoux' },
+  'cosmetiques': { en: 'Cosmetics', fr: 'Cosmetiques' },
+  'parfums': { en: 'Perfumes', fr: 'Parfums' },
+  'soins-corps': { en: 'Body Care', fr: 'Soins du corps' },
+  'coiffure-cheveux': { en: 'Hair Care', fr: 'Coiffure & Cheveux' },
+  'complements-alimentaires': { en: 'Food Supplements', fr: 'Complements alimentaires' },
+  'vetements-bebe': { en: 'Baby Clothes', fr: 'Vetements bebe' },
+  'chaussures-bebe': { en: 'Baby Shoes', fr: 'Chaussures bebe' },
+  'jouets-eveil': { en: 'Toys & Development', fr: 'Jouets & Eveil' },
+  'accessoires-bebe': { en: 'Baby Accessories', fr: 'Accessoires bebe' },
+  'articles-maman': { en: 'Mom Items', fr: 'Articles pour maman' },
+  'produits-alimentaires': { en: 'Food Products', fr: 'Produits alimentaires' },
+  'boissons': { en: 'Drinks', fr: 'Boissons' },
+  'produits-locaux': { en: 'Local Products', fr: 'Produits locaux' },
+  'equipements-sportifs': { en: 'Sports Equipment', fr: 'Equipements sportifs' },
+  'fitness-musculation': { en: 'Fitness', fr: 'Fitness & Musculation' },
+  'jeux-loisirs': { en: 'Games & Leisure', fr: 'Jeux & Loisirs' },
+  'bien-etre-couple': { en: 'Couple Wellness', fr: 'Bien-etre du couple' },
+  'lubrifiants-gels': { en: 'Lubricants & Gels', fr: 'Lubrifiants & Gels intimes' },
+  'hygiene-intime': { en: 'Intimate Hygiene', fr: 'Hygiene intime' },
+  'accessoires-massage': { en: 'Massage Accessories', fr: 'Accessoires de massage' },
+  'accessoires-adultes': { en: 'Adult Accessories', fr: 'Accessoires pour adultes' },
 }
 
 function getLabel(key: string, locale: string): string {
@@ -258,7 +258,7 @@ function getLabel(key: string, locale: string): string {
   return map[key]?.[locale as 'en' | 'fr'] ?? key
 }
 
-// ── Badge ────────────────────────────────────────────────────────────────────
+// â”€â”€ Badge â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 const BADGE_CFG = {
   TOP: { bg: 'rgba(249,115,22,0.10)', color: '#ea580c', border: 'rgba(249,115,22,0.25)' },
@@ -283,7 +283,7 @@ function Badge({ type }: { type: keyof typeof BADGE_CFG }) {
   )
 }
 
-// ── MegaPanelPortal ──────────────────────────────────────────────────────────
+// â”€â”€ MegaPanelPortal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 interface MegaPanelPortalProps {
   cat: MegaCat
@@ -301,11 +301,11 @@ function MegaPanelPortal({ cat, locale, navbarRef, onNavigate, onClose }: MegaPa
   const desc = getLabel(cat.descKey, locale)
   const seeAllBtn = locale === 'en' ? 'See all' : 'Voir tout'
   const seeAllLabel = locale === 'en' ? `See all in ${label}` : `Voir tout en ${label}`
-  const subcatTitle = locale === 'en' ? 'Subcategories' : 'Sous-catégories'
+  const subcatTitle = locale === 'en' ? 'Subcategories' : 'Sous-catÃ©gories'
   const trendLabel = locale === 'en' ? 'Trending' : 'Tendance'
   const catsLabel = locale === 'en'
     ? `${cat.subs.length} categories`
-    : `${cat.subs.length} catégories`
+    : `${cat.subs.length} catÃ©gories`
 
   const calc = useCallback(() => {
     if (!navbarRef.current) return
@@ -353,7 +353,7 @@ function MegaPanelPortal({ cat, locale, navbarRef, onNavigate, onClose }: MegaPa
           animation: 'mmSlideDown 0.2s cubic-bezier(0.16,1,0.3,1)',
         }}
       >
-        {/* Barre couleur catégorie */}
+        {/* Barre couleur catÃ©gorie */}
         <div style={{ height: 3, background: cat.gradient }} />
 
         <div style={{
@@ -365,7 +365,7 @@ function MegaPanelPortal({ cat, locale, navbarRef, onNavigate, onClose }: MegaPa
           alignItems: 'start',
         }}>
 
-          {/* Gauche : carte catégorie */}
+          {/* Gauche : carte catÃ©gorie */}
           <div>
             <button
               onClick={() => onNavigate(`/search?category=${cat.id}`, cat.id)}
@@ -409,7 +409,7 @@ function MegaPanelPortal({ cat, locale, navbarRef, onNavigate, onClose }: MegaPa
                 </span>
                 {cat.isAdult && (
                   <span style={{ position: 'absolute', top: 6, right: 6, background: '#f43f5e', color: '#fff', fontSize: 9, fontWeight: 800, padding: '2px 6px', borderRadius: 20 }}>
-                    🔞 18+
+                    ðŸ”ž 18+
                   </span>
                 )}
               </div>
@@ -436,7 +436,7 @@ function MegaPanelPortal({ cat, locale, navbarRef, onNavigate, onClose }: MegaPa
                 background: '#f8fafc', border: '1px solid #f1f5f9',
                 textAlign: 'center',
               }}>
-                <p style={{ fontSize: 16, margin: '0 0 2px' }}>🔥</p>
+                <p style={{ fontSize: 16, margin: '0 0 2px' }}>ðŸ”¥</p>
                 <p style={{ fontSize: 10, color: '#94a3b8', margin: 0, fontWeight: 600 }}>{catsLabel}</p>
               </div>
               <div style={{
@@ -451,10 +451,10 @@ function MegaPanelPortal({ cat, locale, navbarRef, onNavigate, onClose }: MegaPa
             </div>
           </div>
 
-          {/* Séparateur vertical */}
+          {/* SÃ©parateur vertical */}
           <div style={{ alignSelf: 'stretch', background: '#f1f5f9' }} />
 
-          {/* Droite : sous-catégories */}
+          {/* Droite : sous-catÃ©gories */}
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
               <div style={{
@@ -572,7 +572,7 @@ function MegaPanelPortal({ cat, locale, navbarRef, onNavigate, onClose }: MegaPa
   )
 }
 
-// ── MegaMenu ─────────────────────────────────────────────────────────────────
+// â”€â”€ MegaMenu â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 interface MegaMenuProps {
   activeCategoryId: string | null
@@ -706,7 +706,7 @@ export function MegaMenu({ activeCategoryId, onCategoryClick }: MegaMenuProps) {
         {canScrollLeft && (
           <button
             onClick={() => scroll('left')}
-            aria-label="Défiler à gauche"
+            aria-label="DÃ©filer Ã  gauche"
             style={{
               position: 'absolute', left: 0, top: 0, bottom: 0, zIndex: 10,
               width: 36, display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -722,7 +722,7 @@ export function MegaMenu({ activeCategoryId, onCategoryClick }: MegaMenuProps) {
 
         <nav
           ref={scrollRef}
-          aria-label="Catégories"
+          aria-label="CatÃ©gories"
           onScroll={checkScroll}
           style={{
             display: 'flex', alignItems: 'stretch',
@@ -770,7 +770,7 @@ export function MegaMenu({ activeCategoryId, onCategoryClick }: MegaMenuProps) {
         {canScrollRight && (
           <button
             onClick={() => scroll('right')}
-            aria-label="Défiler à droite"
+            aria-label="DÃ©filer Ã  droite"
             style={{
               position: 'absolute', right: 0, top: 0, bottom: 0, zIndex: 10,
               width: 36, display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -797,3 +797,5 @@ export function MegaMenu({ activeCategoryId, onCategoryClick }: MegaMenuProps) {
     </>
   )
 }
+
+
