@@ -13,7 +13,7 @@ export const CATEGORIES = [
       'ordinateurs',
       'tablettes',
       'tv-son',
-      'photo-video',       // Fusion : photo-video + cameras
+      'photo-video',
       'consoles-jeux',
       'objets-connectes',
       'composants',
@@ -28,7 +28,7 @@ export const CATEGORIES = [
       'voitures-d-occasion',
       'voitures-neuves',
       'motos-scooters',
-      'pieces-detachees-pneus',   // Fusion : pièces détachées & pneus
+      'pieces-detachees-pneus',
       'location-auto',
       'camions-utilitaires',
       'groupes-electrogenes',
@@ -48,7 +48,7 @@ export const CATEGORIES = [
       'location-meublee',
       'maison-a-louer',
       'colocation',
-      'terrains-acd',             // Corrigé : terrains avec ACD
+      'terrains-acd',
       'bureaux-boutiques',
     ],
     requiresCertified: true,
@@ -80,7 +80,14 @@ export const CATEGORIES = [
     name: 'Mode & Accessoires',
     icon: '👕',
     color: '#f97316',
-    subcats: ['vetements', 'chaussures', 'sacs-accessoires', 'montres', 'cosmetiques'],
+    subcats: [
+      'vetements-homme',
+      'vetements-femme',
+      'chaussures-homme',
+      'chaussures-femme',
+      'sacs-accessoires',
+      'montres',
+    ],
   },
   {
     id: 'cat_beaute',
@@ -91,8 +98,33 @@ export const CATEGORIES = [
       'soins-visage',
       'soins-corps',
       'parfums',
+      'cosmetique',
       'complements-alimentaires',
       'materiel-coiffure',
+    ],
+  },
+  {
+    id: 'cat_bebe',
+    name: 'Bébé & Maman',
+    icon: '👶',
+    color: '#f59e0b',
+    subcats: [
+      'vetements-bebe',
+      'chaussures-bebe',
+      'jouets-eveil',
+      'accessoires-bebe',
+      'articles-maman',
+    ],
+  },
+  {
+    id: 'cat_epicerie',
+    name: 'Épicerie & Produits locaux',
+    icon: '🛒',
+    color: '#84cc16',
+    subcats: [
+      'produits-alimentaires',
+      'boissons',
+      'produits-locaux',
     ],
   },
   {
@@ -101,13 +133,6 @@ export const CATEGORIES = [
     icon: '⚽',
     color: '#14b8a6',
     subcats: ['equipements-sport', 'instruments-musique', 'jouets', 'voyages', 'velos'],
-  },
-  {
-    id: 'cat_autres',
-    name: 'Autres & Divers',
-    icon: '📦',
-    color: '#64748b',
-    subcats: ['animaux', 'collection', 'inclassables'],
   },
   {
     id: 'cat_adulte',
