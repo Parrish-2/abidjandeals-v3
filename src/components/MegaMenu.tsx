@@ -91,10 +91,17 @@ const CAT_VISUAL: Record<string, {
     descKey: 'cat.sport_desc',
     subBadges: { 'equipements-sport': 'TOP' },
   },
-  cat_autres: {
-    gradient: 'linear-gradient(135deg,#64748b,#475569)',
-    imageUrl: '',
-    descKey: 'cat.autres_desc',
+  cat_bebe: {
+    gradient: 'linear-gradient(135deg,#f59e0b,#f97316)',
+    imageUrl: 'https://images.unsplash.com/photo-1515488042361-ee00e0ddd4e4?w=400&q=80&auto=format&fit=crop',
+    descKey: 'cat.bebe_desc',
+    subBadges: { 'vetements-bebe': 'NEW' },
+  },
+  cat_epicerie: {
+    gradient: 'linear-gradient(135deg,#84cc16,#65a30d)',
+    imageUrl: 'https://images.unsplash.com/photo-1542838132-92c53300491e?w=400&q=80&auto=format&fit=crop',
+    descKey: 'cat.epicerie_desc',
+    subBadges: { 'produits-locaux': 'NEW' },
   },
   cat_adulte: {
     gradient: 'linear-gradient(135deg,#f43f5e,#e11d48)',
@@ -154,7 +161,8 @@ const CAT_LABELS: Record<string, { en: string; fr: string }> = {
   'Mode & Accessoires':         { en: 'Fashion',               fr: 'Mode & Accessoires' },
   'Beauté & Bien-être':         { en: 'Beauty & Wellness',     fr: 'Beauté & Bien-être' },
   'Sport & Loisirs':            { en: 'Sport & Leisure',       fr: 'Sport & Loisirs' },
-  'Autres & Divers':            { en: 'Miscellaneous',         fr: 'Autres & Divers' },
+  'Bébé & Maman':               { en: 'Baby & Mom',            fr: 'Bébé & Maman' },
+  'Épicerie & Produits locaux': { en: 'Grocery & Local',        fr: 'Épicerie & Produits locaux' },
   'Bien-être & Intimité':       { en: 'Intimacy & Wellness',   fr: 'Bien-être & Intimité' },
   // descriptions
   'cat.hightech_desc':   { en: 'Smartphones, PCs, tablets & accessories', fr: 'Smartphones, PC, tablettes & accessoires' },
@@ -165,16 +173,21 @@ const CAT_LABELS: Record<string, { en: string; fr: string }> = {
   'cat.mode_desc':       { en: 'Clothes, shoes, bags & jewellery',         fr: 'Vêtements, chaussures, sacs & bijoux' },
   'cat.beaute_desc':     { en: 'Skincare, perfumes & supplements',         fr: 'Soins, parfums & compléments alimentaires' },
   'cat.sport_desc':      { en: 'Equipment, fitness & leisure',             fr: 'Équipements, fitness & loisirs' },
-  'cat.autres_desc':     { en: 'Pets, collectibles & more',                fr: 'Animaux, collection & divers' },
+  'cat.bebe_desc':       { en: 'Clothes, toys, strollers & nutrition',      fr: 'Vêtements, jouets, poussettes & alimentation' },
+  'cat.epicerie_desc':   { en: 'Food, drinks & local CI products',          fr: 'Alimentation, boissons & produits locaux CI' },
   'cat.lingerie_desc':   { en: 'Intimacy & wellness — 18+',               fr: 'Bien-être & intimité — 18+' },
 }
 
 // ── SUB_LABELS : clés = slugs exacts de data.ts ──────────────────────────────
-// ⚠️  Retraits appliqués :
+// ⚠️  Retraits / modifications appliqués :
 //   - location-saisonniere  : retiré
 //   - location-vide         : renommé → "Maison à louer"
 //   - securite              : retiré
 //   - materiel-agricole     : retiré
+//   - cat_autres            : supprimé
+//   - vetements / chaussures: éclatés en Homme / Femme
+//   - cosmetiques           : migré vers Beauté sous "cosmetique"
+//   - cat_bebe + cat_epicerie : restaurés
 
 const SUB_LABELS: Record<string, { en: string; fr: string }> = {
   // ── High-Tech ───────────────────────────────────────────────────────────────
@@ -221,15 +234,17 @@ const SUB_LABELS: Record<string, { en: string; fr: string }> = {
   'decoration':              { en: 'Decoration',              fr: 'Décoration' },
   'jardin-bricolage':        { en: 'Garden & DIY',            fr: 'Jardin & Bricolage' },
   // ── Mode & Accessoires ──────────────────────────────────────────────────────
-  'vetements':               { en: 'Clothing & Shoes',        fr: 'Vêtements & Chaussures' },
-  'chaussures':              { en: 'Shoes',                   fr: 'Chaussures' },
+  'vetements-homme':         { en: 'Men Clothing',            fr: 'Vêtements Homme' },
+  'vetements-femme':         { en: 'Women Clothing',          fr: 'Vêtements Femme' },
+  'chaussures-homme':        { en: 'Men Shoes',               fr: 'Chaussures Homme' },
+  'chaussures-femme':        { en: 'Women Shoes',             fr: 'Chaussures Femme' },
   'sacs-accessoires':        { en: 'Bags & Accessories',      fr: 'Sacs & Accessoires' },
   'montres':                 { en: 'Watches & Jewellery',     fr: 'Montres & Bijoux' },
-  'cosmetiques':             { en: 'Cosmetics & Perfumes',    fr: 'Cosmétiques & Parfums' },
   // ── Beauté & Bien-être ──────────────────────────────────────────────────────
   'soins-visage':            { en: 'Face Care',               fr: 'Soins du visage' },
   'soins-corps':             { en: 'Body Care',               fr: 'Soins du corps' },
   'parfums':                 { en: 'Perfumes',                fr: 'Parfums' },
+  'cosmetique':              { en: 'Cosmetics',               fr: 'Cosmétique' },
   'complements-alimentaires':{ en: 'Food Supplements',        fr: 'Compléments alimentaires' },
   'materiel-coiffure':       { en: 'Hair Care & Styling',     fr: 'Matériel de coiffure' },
   // ── Sport & Loisirs ─────────────────────────────────────────────────────────
@@ -238,10 +253,16 @@ const SUB_LABELS: Record<string, { en: string; fr: string }> = {
   'jouets':                  { en: 'Toys & Games',            fr: 'Jouets & Jeux' },
   'voyages':                 { en: 'Travel & Tourism',        fr: 'Voyages & Tourisme' },
   'velos':                   { en: 'Bikes & Scooters',        fr: 'Vélos & Trottinettes' },
-  // ── Autres & Divers ─────────────────────────────────────────────────────────
-  'animaux':                 { en: 'Pets & Accessories',      fr: 'Animaux & Accessoires' },
-  'collection':              { en: 'Collectibles',            fr: 'Objets de Collection' },
-  'inclassables':            { en: 'Miscellaneous',           fr: 'Inclassables' },
+  // ── Bébé & Maman ────────────────────────────────────────────────────────────
+  'vetements-bebe':          { en: 'Baby Clothes',            fr: 'Vêtements bébé' },
+  'chaussures-bebe':         { en: 'Baby Shoes',              fr: 'Chaussures bébé' },
+  'jouets-eveil':            { en: 'Toys & Development',      fr: 'Jouets & Éveil' },
+  'accessoires-bebe':        { en: 'Baby Accessories',        fr: 'Accessoires bébé' },
+  'articles-maman':          { en: 'Mom Items',               fr: 'Articles pour maman' },
+  // ── Épicerie & Produits locaux ───────────────────────────────────────────────
+  'produits-alimentaires':   { en: 'Food Products',           fr: 'Produits alimentaires' },
+  'boissons':                { en: 'Drinks',                  fr: 'Boissons (eau, jus, sodas...)' },
+  'produits-locaux':         { en: 'Local Products CI',       fr: 'Produits locaux (attiéké, huile...)' },
   // ── Bien-être & Intimité ────────────────────────────────────────────────────
   'lingerie-sous-vetements': { en: 'Lingerie & Underwear',    fr: 'Lingerie & Sous-vêtements' },
   'maillots-de-bain':        { en: 'Swimwear',                fr: 'Maillots de Bain' },
