@@ -8,7 +8,7 @@ import { useRouter } from 'next/navigation'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 
-// â”€â”€ Types â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Types ─────────────────────────────────────────────────────────────────────
 
 export interface SubCat {
   id: string
@@ -29,17 +29,14 @@ export interface MegaCat {
   isAdult?: boolean
 }
 
-// â”€â”€ Age gate â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Age gate ──────────────────────────────────────────────────────────────────
 
 const STORAGE_KEY = 'abidjandeals_age_verified'
 function isAgeVerified(): boolean {
   try { return sessionStorage.getItem(STORAGE_KEY) === 'true' } catch { return false }
 }
 
-// â”€â”€ Config visuelle par catÃ©gorie â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-// Les donnÃ©es mÃ©tier viennent de CATEGORIES (data.ts).
-// Ce bloc centralise uniquement ce qui ne peut pas en venir :
-// gradient, image Unsplash, clÃ© de description et badges par sous-cat.
+// ── Config visuelle par catégorie ─────────────────────────────────────────────
 
 const CAT_VISUAL: Record<string, {
   gradient: string
@@ -51,25 +48,25 @@ const CAT_VISUAL: Record<string, {
     gradient: 'linear-gradient(135deg,#6366f1,#8b5cf6)',
     imageUrl: 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=400&q=80&auto=format&fit=crop',
     descKey: 'cat.hightech_desc',
-    subBadges: { 'TÃ©lÃ©phones & Accessoires': 'TOP', 'TV & Home CinÃ©ma': 'NEW' },
+    subBadges: { 'telephones-accessoires': 'TOP', 'tv-son': 'NEW' },
   },
   cat_auto: {
     gradient: 'linear-gradient(135deg,#ef4444,#f97316)',
     imageUrl: 'https://images.unsplash.com/photo-1494976388531-d1058494cdd8?w=400&q=80&auto=format&fit=crop',
     descKey: 'cat.auto_desc',
-    subBadges: { 'Motos & Scooters': 'PROMO' },
+    subBadges: { 'motos-scooters': 'PROMO' },
   },
   cat_immo: {
     gradient: 'linear-gradient(135deg,#10b981,#059669)',
     imageUrl: 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=400&q=80&auto=format&fit=crop',
     descKey: 'cat.realestate_desc',
-    subBadges: { 'Vente Maisons & Villas': 'TOP' },
+    subBadges: { 'vente-maison-villa': 'TOP' },
   },
   cat_serv: {
     gradient: 'linear-gradient(135deg,#8b5cf6,#6366f1)',
     imageUrl: 'https://images.unsplash.com/photo-1521791136064-7986c2920216?w=400&q=80&auto=format&fit=crop',
     descKey: 'cat.services_desc',
-    subBadges: { 'Freelance IT & Design': 'TOP', 'Cours & Formations': 'NEW' },
+    subBadges: { 'freelance-it': 'TOP', 'cours-formation': 'NEW' },
   },
   cat_maison: {
     gradient: 'linear-gradient(135deg,#06b6d4,#0284c7)',
@@ -80,39 +77,34 @@ const CAT_VISUAL: Record<string, {
     gradient: 'linear-gradient(135deg,#f97316,#ef4444)',
     imageUrl: 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=400&q=80&auto=format&fit=crop',
     descKey: 'cat.mode_desc',
-    subBadges: { 'VÃªtements & Chaussures': 'NEW' },
+    subBadges: { 'vetements': 'NEW' },
   },
   cat_beaute: {
     gradient: 'linear-gradient(135deg,#ec4899,#db2777)',
     imageUrl: 'https://images.unsplash.com/photo-1596755389378-c31d21fd1273?w=400&q=80&auto=format&fit=crop',
-    descKey: 'cat.pharma_desc',
-  },
-  cat_adulte: {
-    gradient: 'linear-gradient(135deg,#f43f5e,#e11d48)',
-    imageUrl: 'https://images.unsplash.com/photo-1578632292335-df3abbb0d586?w=400&q=80&auto=format&fit=crop',
-    descKey: 'cat.lingerie_desc',
-    subBadges: { 'Lingerie & Sous-vÃªtements': 'NEW' },
-  },
-  cat_bebe: {
-    gradient: 'linear-gradient(135deg,#f59e0b,#f97316)',
-    imageUrl: 'https://images.unsplash.com/photo-1515488042361-ee00e0ddd4e4?w=400&q=80&auto=format&fit=crop',
-    descKey: 'cat.baby_desc',
-  },
-  cat_epicerie: {
-    gradient: 'linear-gradient(135deg,#84cc16,#65a30d)',
-    imageUrl: 'https://images.unsplash.com/photo-1542838132-92c53300491e?w=400&q=80&auto=format&fit=crop',
-    descKey: 'cat.grocery_desc',
-    subBadges: { 'Produits locaux CI': 'NEW' },
+    descKey: 'cat.beaute_desc',
+    subBadges: { 'complements-alimentaires': 'NEW' },
   },
   cat_sport: {
     gradient: 'linear-gradient(135deg,#14b8a6,#0d9488)',
     imageUrl: 'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=400&q=80&auto=format&fit=crop',
     descKey: 'cat.sport_desc',
-    subBadges: { 'Ã‰quipements de Sport': 'TOP' },
+    subBadges: { 'equipements-sport': 'TOP' },
+  },
+  cat_autres: {
+    gradient: 'linear-gradient(135deg,#64748b,#475569)',
+    imageUrl: '',
+    descKey: 'cat.autres_desc',
+  },
+  cat_adulte: {
+    gradient: 'linear-gradient(135deg,#f43f5e,#e11d48)',
+    imageUrl: 'https://images.unsplash.com/photo-1578632292335-df3abbb0d586?w=400&q=80&auto=format&fit=crop',
+    descKey: 'cat.lingerie_desc',
+    subBadges: { 'lingerie-sous-vetements': 'NEW' },
   },
 }
 
-// â”€â”€ DÃ©rivation de MEGA_CATS depuis CATEGORIES â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Dérivation de MEGA_CATS depuis CATEGORIES ─────────────────────────────────
 
 function slugify(str: string): string {
   return str
@@ -126,14 +118,9 @@ function toSubCat(
   sub: string | { name: string; slug?: string },
   badges: Record<string, 'TOP' | 'NEW' | 'PROMO' | 'URGENT'> = {}
 ): SubCat {
-  // âœ… FIX CRITIQUE : on utilise sub.slug (slug DB exact) au lieu de slugify(sub.name)
-  // slugify("Voitures d'occasion") â†’ "voitures-d-occasion" (FAUX)
-  // sub.slug                       â†’ "voitures-d-occasion" (VRAI, calÃ© sur la DB)
   const name = typeof sub === 'string' ? sub : sub.name
-  const id = typeof sub === 'string'
-    ? slugify(sub)
-    : (sub.slug ?? slugify(sub.name))
-  return { id, nameKey: name, badge: badges[name] }
+  const id = typeof sub === 'string' ? slugify(sub) : (sub.slug ?? slugify(sub.name))
+  return { id, nameKey: id, badge: badges[id] }
 }
 
 export const MEGA_CATS: MegaCat[] = CATEGORIES.map(cat => {
@@ -156,101 +143,110 @@ export const MEGA_CATS: MegaCat[] = CATEGORIES.map(cat => {
   }
 })
 
-// â”€â”€ Labels â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Labels catégories ─────────────────────────────────────────────────────────
 
 const CAT_LABELS: Record<string, { en: string; fr: string }> = {
   'High-Tech': { en: 'High-Tech', fr: 'High-Tech' },
   'Automobile': { en: 'Auto & Vehicles', fr: 'Automobile' },
   'Immobilier': { en: 'Real Estate', fr: 'Immobilier' },
   'Services': { en: 'Services', fr: 'Services' },
-  'Maison & Ã‰quipement': { en: 'Home & Appliances', fr: 'Maison & Ã‰quipement' },
+  'Maison & Équipement': { en: 'Home & Appliances', fr: 'Maison & Équipement' },
   'Mode & Accessoires': { en: 'Fashion', fr: 'Mode & Accessoires' },
-  'BeautÃ© & Bien-Ãªtre': { en: 'Beauty & Wellness', fr: 'BeautÃ© & Bien-Ãªtre' },
-  'Bien-Ãªtre & IntimitÃ©': { en: 'Intimacy & Wellness', fr: 'Bien-Ãªtre & IntimitÃ©' },
-  'BÃ©bÃ© & Maman': { en: 'Baby & Mom', fr: 'BÃ©bÃ© & Maman' },
-  'Ã‰picerie & Produits locaux': { en: 'Grocery & Local', fr: 'Ã‰picerie & Produits locaux' },
+  'Beauté & Bien-être': { en: 'Beauty & Wellness', fr: 'Beauté & Bien-être' },
   'Sport & Loisirs': { en: 'Sport & Leisure', fr: 'Sport & Loisirs' },
+  'Autres & Divers': { en: 'Miscellaneous', fr: 'Autres & Divers' },
+  'Bien-être & Intimité': { en: 'Intimacy & Wellness', fr: 'Bien-être & Intimité' },
   // descriptions
   'cat.hightech_desc': { en: 'Smartphones, PCs, tablets & accessories', fr: 'Smartphones, PC, tablettes & accessoires' },
-  'cat.auto_desc': { en: 'Cars, motorbikes, parts & equipment', fr: 'Voitures, motos, piÃ¨ces & Ã©quipements' },
+  'cat.auto_desc': { en: 'Cars, motorbikes, parts & equipment', fr: 'Voitures, motos, pièces & équipements' },
   'cat.realestate_desc': { en: 'Apartments, houses, land & offices', fr: 'Appartements, maisons, terrains & bureaux' },
-  'cat.services_desc': { en: 'IT, beauty, training & construction', fr: 'Informatique, beautÃ©, formation & BTP' },
-  'cat.appliances_desc': { en: 'Fridges, ACs, washing machines & more', fr: 'Ã‰lectromÃ©nager, meubles & dÃ©coration' },
-  'cat.mode_desc': { en: 'Clothes, shoes, bags & jewellery', fr: 'VÃªtements, chaussures, sacs & bijoux' },
-  'cat.pharma_desc': { en: 'Face care, body care & supplements', fr: 'Soins visage, corps & complÃ©ments' },
-  'cat.lingerie_desc': { en: 'Intimacy & wellness â€” 18+', fr: 'Bien-Ãªtre & intimitÃ© â€” 18+' },
-  'cat.baby_desc': { en: 'Clothes, toys, strollers & nutrition', fr: 'VÃªtements, jouets, poussettes & alimentation' },
-  'cat.grocery_desc': { en: 'Food, drinks & local CI products', fr: 'Alimentation, boissons & produits locaux CI' },
-  'cat.sport_desc': { en: 'Equipment, fitness & leisure', fr: 'Ã‰quipements, fitness & loisirs' },
+  'cat.services_desc': { en: 'IT, training, construction & more', fr: 'Informatique, formation, BTP & plus' },
+  'cat.appliances_desc': { en: 'Furniture, appliances & decoration', fr: 'Meubles, électroménager & décoration' },
+  'cat.mode_desc': { en: 'Clothes, shoes, bags & jewellery', fr: 'Vêtements, chaussures, sacs & bijoux' },
+  'cat.beaute_desc': { en: 'Skincare, perfumes & supplements', fr: 'Soins, parfums & compléments alimentaires' },
+  'cat.sport_desc': { en: 'Equipment, fitness & leisure', fr: 'Équipements, fitness & loisirs' },
+  'cat.autres_desc': { en: 'Pets, collectibles & more', fr: 'Animaux, collection & divers' },
+  'cat.lingerie_desc': { en: 'Intimacy & wellness — 18+', fr: 'Bien-être & intimité — 18+' },
 }
 
+// ── SUB_LABELS : clés = slugs exacts de data.ts ──────────────────────────────
+// ⚠️  3 retraits appliqués :
+//   - location-saisonniere  : retiré
+//   - location-vide         : renommé → "Maison à louer"
+//   - securite              : retiré
+
 const SUB_LABELS: Record<string, { en: string; fr: string }> = {
-  'telephones-accessoires': { en: 'Phones & Accessories', fr: 'Telephones & Accessoires' },
+  // ── High-Tech ───────────────────────────────────────────────────────────────
+  'telephones-accessoires': { en: 'Phones & Accessories', fr: 'Téléphones & Accessoires' },
   'ordinateurs': { en: 'Computers', fr: 'Ordinateurs' },
   'tablettes': { en: 'Tablets', fr: 'Tablettes' },
-  'tv-son': { en: 'TV & Audio', fr: 'TV & Audio' },
-  'photo-video-cameras': { en: 'Photo, Video & Cameras', fr: 'Photo, Video & Cameras' },
-  'consoles-jeux': { en: 'Consoles & Games', fr: 'Jeux Video' },
-  'objets-connectes': { en: 'Connected Devices', fr: 'Objets Connectes' },
-  'composants': { en: 'Components', fr: 'Composants' },
+  'tv-son': { en: 'TV & Sound', fr: 'TV & Son' },
+  'photo-video': { en: 'Photo, Video & Cameras', fr: 'Photo, Vidéo & Caméras' },
+  'consoles-jeux': { en: 'Consoles & Games', fr: 'Consoles & Jeux Vidéo' },
+  'objets-connectes': { en: 'Connected Devices', fr: 'Objets Connectés' },
+  'composants': { en: 'Parts & Peripherals', fr: 'Pièces & Périphériques' },
+  // ── Automobile ──────────────────────────────────────────────────────────────
   'voitures-d-occasion': { en: 'Used Cars', fr: "Voitures d'occasion" },
   'voitures-neuves': { en: 'New Cars', fr: 'Voitures Neuves' },
-  'motos-scooters': { en: 'Motorbikes', fr: 'Motos & Scooters' },
-  'pieces-pneus': { en: 'Parts & Tyres', fr: 'Pieces & Pneus' },
+  'motos-scooters': { en: 'Motorbikes & Scooters', fr: 'Motos & Scooters' },
+  'pieces-detachees-pneus': { en: 'Spare Parts & Tyres', fr: 'Pièces détachées & Pneus' },
   'location-auto': { en: 'Car Rental', fr: 'Location Auto' },
-  'camions-utilitaires': { en: 'Trucks', fr: 'Camions & Utilitaires' },
-  'groupes-electrogenes': { en: 'Generators', fr: 'Groupes Electrogenes' },
-  'materiel-agricole': { en: 'Agricultural Equipment', fr: 'Materiel Agricole' },
+  'camions-utilitaires': { en: 'Trucks & Vans', fr: 'Camions & Utilitaires' },
+  'groupes-electrogenes': { en: 'Generators', fr: 'Groupes Électrogènes' },
+  'materiel-agricole': { en: 'Agricultural Equipment', fr: 'Matériel Agricole' },
   'outillage-industriel': { en: 'Industrial Tools', fr: 'Outillage Industriel' },
   'engins-chantier': { en: 'Construction Equipment', fr: 'Engins de Chantier' },
+  // ── Immobilier ──────────────────────────────────────────────────────────────
   'vente-appartement': { en: 'Apartment Sales', fr: 'Vente Appartements' },
-  'vente-maison-villa': { en: 'House Sales', fr: 'Vente Maisons & Villas' },
-  'location-meublee': { en: 'Furnished Rental', fr: 'Location Meublee' },
-  'location-vide': { en: 'Unfurnished Rental', fr: 'Location Vide' },
-  'location-saisonniere': { en: 'Seasonal Rental', fr: 'Locations saisonnieres' },
+  'vente-maison-villa': { en: 'House & Villa Sales', fr: 'Vente Maisons & Villas' },
+  'location-meublee': { en: 'Furnished Rental', fr: 'Location Meublée' },
+  'maison-a-louer': { en: 'House for Rent', fr: 'Maison à louer' },
+  // ↑ renommé : "Location Vide" → "Maison à louer"
+  // location-saisonniere : RETIRÉ
   'colocation': { en: 'Flatsharing', fr: 'Colocation' },
   'terrains-acd': { en: 'Land with Title Deed', fr: 'Terrains avec ACD' },
   'bureaux-boutiques': { en: 'Offices & Retail', fr: 'Bureaux & Boutiques' },
-  'freelance-it': { en: 'Freelance IT', fr: 'Freelance IT & Design' },
-  'batiment': { en: 'Construction', fr: 'BTP & Artisanat' },
-  'cours-formation': { en: 'Training', fr: 'Cours & Formations' },
-  'offres-emploi': { en: 'Job Offers', fr: "Offres d'emploi" },
-  'transport-livraison': { en: 'Transport & Delivery', fr: 'Transport & Livraison' },
-  'menage': { en: 'Cleaning', fr: 'Menage & Nettoyage' },
-  'securite': { en: 'Security', fr: 'Securite & Gardiennage' },
-  'evenementiel': { en: 'Events', fr: 'Evenementiel' },
-  'services-divers': { en: 'Other Services', fr: 'Services divers' },
+  // ── Services ────────────────────────────────────────────────────────────────
+  'freelance-it': { en: 'Freelance IT & Design', fr: 'Freelance IT & Design' },
+  'batiment': { en: 'Construction & Trades', fr: 'BTP & Artisanat' },
+  'cours-formation': { en: 'Courses & Training', fr: 'Cours & Formations' },
+  'offres-emploi': { en: 'Job Offers', fr: "Offres d'Emploi" },
+  'transport': { en: 'Transport & Delivery', fr: 'Transport & Livraison' },
+  'menage': { en: 'Cleaning Services', fr: 'Ménage & Nettoyage' },
+  // securite : RETIRÉ
+  'evenementiel': { en: 'Events & Entertainment', fr: 'Événementiel' },
+  // ── Maison & Équipement ─────────────────────────────────────────────────────
   'meubles': { en: 'Furniture', fr: 'Meubles' },
-  'electromenager': { en: 'Appliances', fr: 'Electromenager' },
-  'decoration': { en: 'Decoration', fr: 'Decoration' },
+  'electromenager': { en: 'Appliances', fr: 'Électroménager' },
+  'decoration': { en: 'Decoration', fr: 'Décoration' },
   'jardin-bricolage': { en: 'Garden & DIY', fr: 'Jardin & Bricolage' },
-  'autres-equipements': { en: 'Other Equipment', fr: 'Autres equipements' },
-  'vetements-femme': { en: 'Women Clothing', fr: 'Vetements femme' },
-  'vetements-homme': { en: 'Men Clothing', fr: 'Vetements homme' },
+  // ── Mode & Accessoires ──────────────────────────────────────────────────────
+  'vetements': { en: 'Clothing & Shoes', fr: 'Vêtements & Chaussures' },
   'chaussures': { en: 'Shoes', fr: 'Chaussures' },
   'sacs-accessoires': { en: 'Bags & Accessories', fr: 'Sacs & Accessoires' },
-  'montres-bijoux': { en: 'Watches & Jewellery', fr: 'Montres & Bijoux' },
-  'cosmetiques': { en: 'Cosmetics', fr: 'Cosmetiques' },
-  'parfums': { en: 'Perfumes', fr: 'Parfums' },
+  'montres': { en: 'Watches & Jewellery', fr: 'Montres & Bijoux' },
+  'cosmetiques': { en: 'Cosmetics & Perfumes', fr: 'Cosmétiques & Parfums' },
+  // ── Beauté & Bien-être ──────────────────────────────────────────────────────
+  'soins-visage': { en: 'Face Care', fr: 'Soins du visage' },
   'soins-corps': { en: 'Body Care', fr: 'Soins du corps' },
-  'coiffure-cheveux': { en: 'Hair Care', fr: 'Coiffure & Cheveux' },
-  'complements-alimentaires': { en: 'Food Supplements', fr: 'Complements alimentaires' },
-  'vetements-bebe': { en: 'Baby Clothes', fr: 'Vetements bebe' },
-  'chaussures-bebe': { en: 'Baby Shoes', fr: 'Chaussures bebe' },
-  'jouets-eveil': { en: 'Toys & Development', fr: 'Jouets & Eveil' },
-  'accessoires-bebe': { en: 'Baby Accessories', fr: 'Accessoires bebe' },
-  'articles-maman': { en: 'Mom Items', fr: 'Articles pour maman' },
-  'produits-alimentaires': { en: 'Food Products', fr: 'Produits alimentaires' },
-  'boissons': { en: 'Drinks', fr: 'Boissons' },
-  'produits-locaux': { en: 'Local Products', fr: 'Produits locaux' },
-  'equipements-sportifs': { en: 'Sports Equipment', fr: 'Equipements sportifs' },
-  'fitness-musculation': { en: 'Fitness', fr: 'Fitness & Musculation' },
-  'jeux-loisirs': { en: 'Games & Leisure', fr: 'Jeux & Loisirs' },
-  'bien-etre-couple': { en: 'Couple Wellness', fr: 'Bien-etre du couple' },
-  'lubrifiants-gels': { en: 'Lubricants & Gels', fr: 'Lubrifiants & Gels intimes' },
-  'hygiene-intime': { en: 'Intimate Hygiene', fr: 'Hygiene intime' },
-  'accessoires-massage': { en: 'Massage Accessories', fr: 'Accessoires de massage' },
-  'accessoires-adultes': { en: 'Adult Accessories', fr: 'Accessoires pour adultes' },
+  'parfums': { en: 'Perfumes', fr: 'Parfums' },
+  'complements-alimentaires': { en: 'Food Supplements', fr: 'Compléments alimentaires' },
+  'materiel-coiffure': { en: 'Hair Care & Styling', fr: 'Matériel de coiffure' },
+  // ── Sport & Loisirs ─────────────────────────────────────────────────────────
+  'equipements-sport': { en: 'Sports Equipment', fr: 'Équipements de Sport' },
+  'instruments-musique': { en: 'Musical Instruments', fr: 'Instruments de Musique' },
+  'jouets': { en: 'Toys & Games', fr: 'Jouets & Jeux' },
+  'voyages': { en: 'Travel & Tourism', fr: 'Voyages & Tourisme' },
+  'velos': { en: 'Bikes & Scooters', fr: 'Vélos & Trottinettes' },
+  // ── Autres & Divers ─────────────────────────────────────────────────────────
+  'animaux': { en: 'Pets & Accessories', fr: 'Animaux & Accessoires' },
+  'collection': { en: 'Collectibles', fr: 'Objets de Collection' },
+  'inclassables': { en: 'Miscellaneous', fr: 'Inclassables' },
+  // ── Bien-être & Intimité ────────────────────────────────────────────────────
+  'lingerie-sous-vetements': { en: 'Lingerie & Underwear', fr: 'Lingerie & Sous-vêtements' },
+  'maillots-de-bain': { en: 'Swimwear', fr: 'Maillots de Bain' },
+  'cosmetiques-bien-etre': { en: 'Cosmetics & Wellness', fr: 'Cosmétiques & Bien-être' },
+  'accessoires-mode': { en: 'Fashion Accessories', fr: 'Accessoires Mode' },
 }
 
 function getLabel(key: string, locale: string): string {
@@ -258,7 +254,7 @@ function getLabel(key: string, locale: string): string {
   return map[key]?.[locale as 'en' | 'fr'] ?? key
 }
 
-// â”€â”€ Badge â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Badge ─────────────────────────────────────────────────────────────────────
 
 const BADGE_CFG = {
   TOP: { bg: 'rgba(249,115,22,0.10)', color: '#ea580c', border: 'rgba(249,115,22,0.25)' },
@@ -271,19 +267,16 @@ function Badge({ type }: { type: keyof typeof BADGE_CFG }) {
   const s = BADGE_CFG[type]
   return (
     <span style={{
-      background: s.bg, color: s.color,
-      border: `1px solid ${s.border}`,
-      fontSize: 9, fontWeight: 700,
-      padding: '2px 6px', borderRadius: 20,
-      letterSpacing: '0.05em', lineHeight: 1, flexShrink: 0,
-      textTransform: 'uppercase',
+      background: s.bg, color: s.color, border: `1px solid ${s.border}`,
+      fontSize: 9, fontWeight: 700, padding: '2px 6px', borderRadius: 20,
+      letterSpacing: '0.05em', lineHeight: 1, flexShrink: 0, textTransform: 'uppercase',
     }}>
       {type}
     </span>
   )
 }
 
-// â”€â”€ MegaPanelPortal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── MegaPanelPortal ───────────────────────────────────────────────────────────
 
 interface MegaPanelPortalProps {
   cat: MegaCat
@@ -300,12 +293,10 @@ function MegaPanelPortal({ cat, locale, navbarRef, onNavigate, onClose }: MegaPa
   const label = getLabel(cat.labelKey, locale)
   const desc = getLabel(cat.descKey, locale)
   const seeAllBtn = locale === 'en' ? 'See all' : 'Voir tout'
-  const seeAllLabel = locale === 'en' ? `See all in ${label}` : `Voir tout en ${label}`
-  const subcatTitle = locale === 'en' ? 'Subcategories' : 'Sous-catÃ©gories'
+  const seeAllLbl = locale === 'en' ? `See all in ${label}` : `Voir tout en ${label}`
+  const subcatTitle = locale === 'en' ? 'Subcategories' : 'Sous-catégories'
   const trendLabel = locale === 'en' ? 'Trending' : 'Tendance'
-  const catsLabel = locale === 'en'
-    ? `${cat.subs.length} categories`
-    : `${cat.subs.length} catÃ©gories`
+  const catsLabel = locale === 'en' ? `${cat.subs.length} categories` : `${cat.subs.length} catégories`
 
   const calc = useCallback(() => {
     if (!navbarRef.current) return
@@ -317,86 +308,45 @@ function MegaPanelPortal({ cat, locale, navbarRef, onNavigate, onClose }: MegaPa
     calc()
     window.addEventListener('resize', calc, { passive: true })
     window.addEventListener('scroll', calc, { passive: true })
-    return () => {
-      window.removeEventListener('resize', calc)
-      window.removeEventListener('scroll', calc)
-    }
+    return () => { window.removeEventListener('resize', calc); window.removeEventListener('scroll', calc) }
   }, [calc])
 
   if (typeof document === 'undefined') return null
 
   return createPortal(
     <>
-      {/* Overlay */}
-      <div
-        data-megamenu-overlay
-        onClick={onClose}
-        style={{
-          position: 'fixed', inset: 0, zIndex: 9998,
-          background: 'rgba(15,17,23,0.08)',
-          animation: 'mmFadeIn 0.18s ease',
-          cursor: 'default',
-        }}
-      />
+      <div data-megamenu-overlay onClick={onClose} style={{
+        position: 'fixed', inset: 0, zIndex: 9998,
+        background: 'rgba(15,17,23,0.08)', animation: 'mmFadeIn 0.18s ease', cursor: 'default',
+      }} />
 
-      {/* Panel */}
-      <div
-        data-megamenu-panel
-        style={{
-          position: 'absolute',
-          top,
-          left: 0, right: 0,
-          zIndex: 9999,
-          background: '#ffffff',
-          borderBottom: '1px solid #e2e8f0',
-          boxShadow: '0 8px 32px rgba(0,0,0,0.10), 0 2px 8px rgba(0,0,0,0.06)',
-          animation: 'mmSlideDown 0.2s cubic-bezier(0.16,1,0.3,1)',
-        }}
-      >
-        {/* Barre couleur catÃ©gorie */}
+      <div data-megamenu-panel style={{
+        position: 'absolute', top, left: 0, right: 0, zIndex: 9999,
+        background: '#ffffff', borderBottom: '1px solid #e2e8f0',
+        boxShadow: '0 8px 32px rgba(0,0,0,0.10), 0 2px 8px rgba(0,0,0,0.06)',
+        animation: 'mmSlideDown 0.2s cubic-bezier(0.16,1,0.3,1)',
+      }}>
         <div style={{ height: 3, background: cat.gradient }} />
 
         <div style={{
-          maxWidth: 1200, margin: '0 auto',
-          padding: '16px 24px 20px',
-          display: 'grid',
-          gridTemplateColumns: '200px 1px 1fr',
-          gap: 20,
-          alignItems: 'start',
+          maxWidth: 1200, margin: '0 auto', padding: '16px 24px 20px',
+          display: 'grid', gridTemplateColumns: '200px 1px 1fr', gap: 20, alignItems: 'start',
         }}>
-
-          {/* Gauche : carte catÃ©gorie */}
+          {/* Gauche : carte catégorie */}
           <div>
-            <button
-              onClick={() => onNavigate(`/search?category=${cat.id}`, cat.id)}
-              style={{
-                display: 'flex', flexDirection: 'column',
-                borderRadius: 12, overflow: 'hidden',
-                border: `1px solid ${cat.color}25`,
-                cursor: 'pointer', width: '100%',
-                textAlign: 'left', background: 'none', padding: 0,
-                boxShadow: `0 4px 16px ${cat.color}20`,
-                transition: 'transform 0.2s, box-shadow 0.2s',
-              }}
-              onMouseEnter={e => {
-                const el = e.currentTarget as HTMLElement
-                el.style.transform = 'translateY(-2px)'
-                el.style.boxShadow = `0 10px 28px ${cat.color}35`
-              }}
-              onMouseLeave={e => {
-                const el = e.currentTarget as HTMLElement
-                el.style.transform = 'translateY(0)'
-                el.style.boxShadow = `0 4px 16px ${cat.color}20`
-              }}
+            <button onClick={() => onNavigate(`/search?category=${cat.id}`, cat.id)} style={{
+              display: 'flex', flexDirection: 'column', borderRadius: 12, overflow: 'hidden',
+              border: `1px solid ${cat.color}25`, cursor: 'pointer', width: '100%',
+              textAlign: 'left', background: 'none', padding: 0,
+              boxShadow: `0 4px 16px ${cat.color}20`, transition: 'transform 0.2s, box-shadow 0.2s',
+            }}
+              onMouseEnter={e => { const el = e.currentTarget as HTMLElement; el.style.transform = 'translateY(-2px)'; el.style.boxShadow = `0 10px 28px ${cat.color}35` }}
+              onMouseLeave={e => { const el = e.currentTarget as HTMLElement; el.style.transform = 'translateY(0)'; el.style.boxShadow = `0 4px 16px ${cat.color}20` }}
             >
-              {/* Image */}
               <div style={{ height: 100, overflow: 'hidden', position: 'relative', background: `${cat.color}12` }}>
                 {!imgError ? (
-                  <img
-                    src={cat.imageUrl} alt={label}
-                    onError={() => setImgError(true)}
-                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                  />
+                  <img src={cat.imageUrl} alt={label} onError={() => setImgError(true)}
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                 ) : (
                   <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 44 }}>
                     {cat.icon}
@@ -409,65 +359,44 @@ function MegaPanelPortal({ cat, locale, navbarRef, onNavigate, onClose }: MegaPa
                 </span>
                 {cat.isAdult && (
                   <span style={{ position: 'absolute', top: 6, right: 6, background: '#f43f5e', color: '#fff', fontSize: 9, fontWeight: 800, padding: '2px 6px', borderRadius: 20 }}>
-                    ðŸ”ž 18+
+                    🔞 18+
                   </span>
                 )}
               </div>
-
-              {/* Body */}
               <div style={{ padding: '10px 12px 12px', background: '#fafafa', borderTop: `2px solid ${cat.color}20` }}>
                 <p style={{ fontSize: 11, color: '#94a3b8', margin: '0 0 8px', lineHeight: 1.4 }}>{desc}</p>
                 <span style={{
                   display: 'inline-flex', alignItems: 'center', gap: 4,
-                  fontSize: 11, color: '#fff', fontWeight: 700,
-                  background: cat.gradient,
-                  padding: '5px 10px', borderRadius: 20,
-                  boxShadow: `0 3px 10px ${cat.color}40`,
+                  fontSize: 11, color: '#fff', fontWeight: 700, background: cat.gradient,
+                  padding: '5px 10px', borderRadius: 20, boxShadow: `0 3px 10px ${cat.color}40`,
                 }}>
                   {seeAllBtn} <ArrowRight size={10} />
                 </span>
               </div>
             </button>
 
-            {/* Stats row */}
             <div style={{ marginTop: 8, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
-              <div style={{
-                padding: '8px 10px', borderRadius: 10,
-                background: '#f8fafc', border: '1px solid #f1f5f9',
-                textAlign: 'center',
-              }}>
-                <p style={{ fontSize: 16, margin: '0 0 2px' }}>ðŸ”¥</p>
+              <div style={{ padding: '8px 10px', borderRadius: 10, background: '#f8fafc', border: '1px solid #f1f5f9', textAlign: 'center' }}>
+                <p style={{ fontSize: 16, margin: '0 0 2px' }}>🔥</p>
                 <p style={{ fontSize: 10, color: '#94a3b8', margin: 0, fontWeight: 600 }}>{catsLabel}</p>
               </div>
-              <div style={{
-                padding: '8px 10px', borderRadius: 10,
-                background: `${cat.color}0d`,
-                border: `1px solid ${cat.color}25`,
-                textAlign: 'center',
-              }}>
+              <div style={{ padding: '8px 10px', borderRadius: 10, background: `${cat.color}0d`, border: `1px solid ${cat.color}25`, textAlign: 'center' }}>
                 <TrendingUp size={14} style={{ color: cat.color, margin: '0 auto 2px', display: 'block' }} />
                 <p style={{ fontSize: 10, color: cat.color, margin: 0, fontWeight: 700 }}>{trendLabel}</p>
               </div>
             </div>
           </div>
 
-          {/* SÃ©parateur vertical */}
+          {/* Séparateur */}
           <div style={{ alignSelf: 'stretch', background: '#f1f5f9' }} />
 
-          {/* Droite : sous-catÃ©gories */}
+          {/* Droite : sous-catégories */}
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
-              <div style={{
-                width: 24, height: 24, borderRadius: 7,
-                background: cat.gradient,
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-              }}>
+              <div style={{ width: 24, height: 24, borderRadius: 7, background: cat.gradient, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <Sparkles size={12} color="#fff" />
               </div>
-              <p style={{
-                fontSize: 10, fontWeight: 700, color: '#94a3b8',
-                textTransform: 'uppercase', letterSpacing: '0.10em', margin: 0,
-              }}>
+              <p style={{ fontSize: 10, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.10em', margin: 0 }}>
                 {subcatTitle}
               </p>
             </div>
@@ -476,43 +405,29 @@ function MegaPanelPortal({ cat, locale, navbarRef, onNavigate, onClose }: MegaPa
               {cat.subs.map(sub => {
                 const subLabel = getLabel(sub.nameKey, locale)
                 return (
-                  <button
-                    key={sub.id}
+                  <button key={sub.id}
                     onClick={() => onNavigate(`/search?category=${cat.id}&sub=${sub.id}`, cat.id)}
                     style={{
                       display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                       gap: 8, padding: '9px 10px', borderRadius: 9,
                       background: 'transparent', border: '1px solid transparent',
-                      cursor: 'pointer', width: '100%', textAlign: 'left',
-                      transition: 'all 0.12s ease',
+                      cursor: 'pointer', width: '100%', textAlign: 'left', transition: 'all 0.12s ease',
                     }}
                     onMouseEnter={e => {
                       const el = e.currentTarget as HTMLElement
-                      el.style.background = '#f8fafc'
-                      el.style.borderColor = '#e2e8f0'
-                      el.style.transform = 'translateX(3px)'
-                      const lbl = el.querySelector<HTMLElement>('.sub-lbl')
-                      if (lbl) { lbl.style.color = '#1e293b'; lbl.style.fontWeight = '500' }
-                      const chev = el.querySelector<HTMLElement>('.sub-chev')
-                      if (chev) { chev.style.color = cat.color }
+                      el.style.background = '#f8fafc'; el.style.borderColor = '#e2e8f0'; el.style.transform = 'translateX(3px)'
+                      const lbl = el.querySelector<HTMLElement>('.sub-lbl'); if (lbl) { lbl.style.color = '#1e293b'; lbl.style.fontWeight = '500' }
+                      const chev = el.querySelector<HTMLElement>('.sub-chev'); if (chev) chev.style.color = cat.color
                     }}
                     onMouseLeave={e => {
                       const el = e.currentTarget as HTMLElement
-                      el.style.background = 'transparent'
-                      el.style.borderColor = 'transparent'
-                      el.style.transform = 'translateX(0)'
-                      const lbl = el.querySelector<HTMLElement>('.sub-lbl')
-                      if (lbl) { lbl.style.color = '#475569'; lbl.style.fontWeight = '400' }
-                      const chev = el.querySelector<HTMLElement>('.sub-chev')
-                      if (chev) { chev.style.color = '#d1d5db' }
+                      el.style.background = 'transparent'; el.style.borderColor = 'transparent'; el.style.transform = 'translateX(0)'
+                      const lbl = el.querySelector<HTMLElement>('.sub-lbl'); if (lbl) { lbl.style.color = '#475569'; lbl.style.fontWeight = '400' }
+                      const chev = el.querySelector<HTMLElement>('.sub-chev'); if (chev) chev.style.color = '#d1d5db'
                     }}
                   >
                     <span style={{ display: 'flex', alignItems: 'center', gap: 7, minWidth: 0, flex: 1 }}>
-                      <ChevronRight
-                        size={10}
-                        className="sub-chev"
-                        style={{ color: '#d1d5db', flexShrink: 0, transition: 'color 0.12s' }}
-                      />
+                      <ChevronRight size={10} className="sub-chev" style={{ color: '#d1d5db', flexShrink: 0, transition: 'color 0.12s' }} />
                       <span className="sub-lbl" style={{
                         fontSize: 13, color: '#475569', fontWeight: 400,
                         overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
@@ -527,36 +442,17 @@ function MegaPanelPortal({ cat, locale, navbarRef, onNavigate, onClose }: MegaPa
               })}
             </div>
 
-            {/* Bouton voir tout */}
-            <div style={{
-              marginTop: 14, paddingTop: 14,
-              borderTop: '1px solid #f1f5f9',
-              display: 'flex', alignItems: 'center', gap: 10,
-            }}>
-              <button
-                onClick={() => onNavigate(`/search?category=${cat.id}`, cat.id)}
-                style={{
-                  display: 'inline-flex', alignItems: 'center', gap: 6,
-                  padding: '8px 18px', borderRadius: 9,
-                  background: cat.gradient,
-                  color: '#fff', border: 'none', cursor: 'pointer',
-                  fontSize: 12, fontWeight: 700,
-                  boxShadow: `0 4px 14px ${cat.color}40`,
-                  transition: 'all 0.2s cubic-bezier(0.34,1.56,0.64,1)',
-                }}
-                onMouseEnter={e => {
-                  const el = e.currentTarget as HTMLElement
-                  el.style.transform = 'translateY(-2px) scale(1.02)'
-                  el.style.boxShadow = `0 8px 24px ${cat.color}55`
-                }}
-                onMouseLeave={e => {
-                  const el = e.currentTarget as HTMLElement
-                  el.style.transform = 'translateY(0) scale(1)'
-                  el.style.boxShadow = `0 4px 14px ${cat.color}40`
-                }}
+            <div style={{ marginTop: 14, paddingTop: 14, borderTop: '1px solid #f1f5f9', display: 'flex', alignItems: 'center', gap: 10 }}>
+              <button onClick={() => onNavigate(`/search?category=${cat.id}`, cat.id)} style={{
+                display: 'inline-flex', alignItems: 'center', gap: 6,
+                padding: '8px 18px', borderRadius: 9, background: cat.gradient,
+                color: '#fff', border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: 700,
+                boxShadow: `0 4px 14px ${cat.color}40`, transition: 'all 0.2s cubic-bezier(0.34,1.56,0.64,1)',
+              }}
+                onMouseEnter={e => { const el = e.currentTarget as HTMLElement; el.style.transform = 'translateY(-2px) scale(1.02)'; el.style.boxShadow = `0 8px 24px ${cat.color}55` }}
+                onMouseLeave={e => { const el = e.currentTarget as HTMLElement; el.style.transform = 'translateY(0) scale(1)'; el.style.boxShadow = `0 4px 14px ${cat.color}40` }}
               >
-                <ArrowRight size={13} />
-                {seeAllLabel}
+                <ArrowRight size={13} /> {seeAllLbl}
               </button>
             </div>
           </div>
@@ -572,7 +468,7 @@ function MegaPanelPortal({ cat, locale, navbarRef, onNavigate, onClose }: MegaPa
   )
 }
 
-// â”€â”€ MegaMenu â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── MegaMenu ──────────────────────────────────────────────────────────────────
 
 interface MegaMenuProps {
   activeCategoryId: string | null
@@ -585,14 +481,12 @@ export function MegaMenu({ activeCategoryId, onCategoryClick }: MegaMenuProps) {
 
   const [openId, setOpenId] = useState<string | null>(null)
   const [mounted, setMounted] = useState(false)
-
   const [showAgeGate, setShowAgeGate] = useState(false)
   const [pendingUrl, setPendingUrl] = useState('')
   const [pendingCatId, setPendingCatId] = useState('')
 
   const navbarRef = useRef<HTMLDivElement>(null)
   const scrollRef = useRef<HTMLElement>(null)
-
   const [canScrollLeft, setCanScrollLeft] = useState(false)
   const [canScrollRight, setCanScrollRight] = useState(false)
 
@@ -621,13 +515,8 @@ export function MegaMenu({ activeCategoryId, onCategoryClick }: MegaMenuProps) {
   useEffect(() => {
     const h = (e: MouseEvent) => {
       const target = e.target as HTMLElement
-      if (
-        !navbarRef.current?.contains(target) &&
-        !target.closest('[data-megamenu-panel]') &&
-        !target.closest('[data-megamenu-overlay]')
-      ) {
+      if (!navbarRef.current?.contains(target) && !target.closest('[data-megamenu-panel]') && !target.closest('[data-megamenu-overlay]'))
         setOpenId(null)
-      }
     }
     document.addEventListener('mousedown', h)
     return () => document.removeEventListener('mousedown', h)
@@ -647,7 +536,6 @@ export function MegaMenu({ activeCategoryId, onCategoryClick }: MegaMenuProps) {
       setShowAgeGate(true)
       return
     }
-
     if (!cat.subs.length) {
       setOpenId(null)
       onCategoryClick(cat.id)
@@ -669,90 +557,48 @@ export function MegaMenu({ activeCategoryId, onCategoryClick }: MegaMenuProps) {
     <>
       {mounted && showAgeGate && (
         <AgeGate
-          onConfirm={() => {
-            setShowAgeGate(false)
-            onCategoryClick(pendingCatId)
-            router.push(pendingUrl)
-          }}
+          onConfirm={() => { setShowAgeGate(false); onCategoryClick(pendingCatId); router.push(pendingUrl) }}
           onRefuse={() => { setShowAgeGate(false); setPendingUrl(''); setPendingCatId('') }}
         />
       )}
 
       <style>{`
-        .mm-tab {
-          position: relative; display: flex; align-items: center; gap: 5px;
-          padding: 0 11px; height: 40px;
-          font-size: 12.5px; font-weight: 500;
-          color: rgba(255,255,255,0.55);
-          white-space: nowrap; background: transparent; border: none;
-          border-bottom: 2.5px solid transparent;
-          cursor: pointer; flex-shrink: 0;
-          transition: color .15s, background .15s, border-color .15s;
-          z-index: 1;
-        }
-        .mm-tab:hover     { color: #ffffff; background: rgba(255,255,255,0.07); }
-        .mm-tab.is-open   { color: #F97316; background: rgba(249,115,22,0.08); border-bottom-color: #F97316; font-weight: 700; }
-        .mm-chev          { width: 10px; height: 10px; color: rgba(255,255,255,0.25); margin-left: 1px; transition: transform .2s, color .15s; }
-        .mm-tab.is-open .mm-chev { transform: rotate(180deg); color: #F97316; }
-        .mm-dot           { position: absolute; top: 7px; right: 6px; width: 5px; height: 5px; border-radius: 50%; animation: mmPulse 2s ease-in-out infinite; }
-        .mm-adult-badge   { font-size: 9px; font-weight: 800; background: #f43f5e; color: #fff; padding: 2px 5px; border-radius: 10px; margin-left: 3px; }
-        @keyframes mmPulse { 0%, 100% { opacity:1; transform:scale(1) } 50% { opacity:.5; transform:scale(.7) } }
+        .mm-tab { position:relative; display:flex; align-items:center; gap:5px; padding:0 11px; height:40px; font-size:12.5px; font-weight:500; color:rgba(255,255,255,0.55); white-space:nowrap; background:transparent; border:none; border-bottom:2.5px solid transparent; cursor:pointer; flex-shrink:0; transition:color .15s,background .15s,border-color .15s; z-index:1; }
+        .mm-tab:hover     { color:#ffffff; background:rgba(255,255,255,0.07); }
+        .mm-tab.is-open   { color:#F97316; background:rgba(249,115,22,0.08); border-bottom-color:#F97316; font-weight:700; }
+        .mm-chev          { width:10px; height:10px; color:rgba(255,255,255,0.25); margin-left:1px; transition:transform .2s,color .15s; }
+        .mm-tab.is-open .mm-chev { transform:rotate(180deg); color:#F97316; }
+        .mm-dot           { position:absolute; top:7px; right:6px; width:5px; height:5px; border-radius:50%; animation:mmPulse 2s ease-in-out infinite; }
+        .mm-adult-badge   { font-size:9px; font-weight:800; background:#f43f5e; color:#fff; padding:2px 5px; border-radius:10px; margin-left:3px; }
+        @keyframes mmPulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.5;transform:scale(.7)} }
       `}</style>
 
-      <div
-        ref={navbarRef}
-        style={{ position: 'relative', display: 'flex', alignItems: 'stretch' }}
-      >
+      <div ref={navbarRef} style={{ position: 'relative', display: 'flex', alignItems: 'stretch' }}>
         {canScrollLeft && (
-          <button
-            onClick={() => scroll('left')}
-            aria-label="DÃ©filer Ã  gauche"
-            style={{
-              position: 'absolute', left: 0, top: 0, bottom: 0, zIndex: 10,
-              width: 36, display: 'flex', alignItems: 'center', justifyContent: 'center',
-              background: 'linear-gradient(to right, #0F1117 60%, transparent)',
-              border: 'none', cursor: 'pointer',
-            }}
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="2.5">
-              <polyline points="15 18 9 12 15 6" />
-            </svg>
+          <button onClick={() => scroll('left')} aria-label="Défiler à gauche" style={{
+            position: 'absolute', left: 0, top: 0, bottom: 0, zIndex: 10, width: 36,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            background: 'linear-gradient(to right, #0F1117 60%, transparent)', border: 'none', cursor: 'pointer',
+          }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="2.5"><polyline points="15 18 9 12 15 6" /></svg>
           </button>
         )}
 
-        <nav
-          ref={scrollRef}
-          aria-label="CatÃ©gories"
-          onScroll={checkScroll}
-          style={{
-            display: 'flex', alignItems: 'stretch',
-            overflowX: 'auto', scrollbarWidth: 'none',
-            msOverflowStyle: 'none', flex: 1,
-            scrollBehavior: 'smooth',
-            paddingLeft: canScrollLeft ? 36 : 0,
-            paddingRight: canScrollRight ? 36 : 0,
-          }}
-        >
+        <nav ref={scrollRef} aria-label="Catégories" onScroll={checkScroll} style={{
+          display: 'flex', alignItems: 'stretch', overflowX: 'auto', scrollbarWidth: 'none',
+          msOverflowStyle: 'none', flex: 1, scrollBehavior: 'smooth',
+          paddingLeft: canScrollLeft ? 36 : 0, paddingRight: canScrollRight ? 36 : 0,
+        }}>
           {MEGA_CATS.map(cat => {
             const isOpen = cat.id === openId
             const hasSubs = cat.subs.length > 0
             const label = getLabel(cat.labelKey, locale)
             const hasNew = cat.subs.some(s => s.badge === 'NEW')
-
             return (
-              <button
-                key={cat.id}
-                className={`mm-tab${isOpen ? ' is-open' : ''}`}
-                onClick={() => handleTabClick(cat)}
-                aria-expanded={isOpen}
-                aria-haspopup={hasSubs ? 'true' : undefined}
-              >
+              <button key={cat.id} className={`mm-tab${isOpen ? ' is-open' : ''}`}
+                onClick={() => handleTabClick(cat)} aria-expanded={isOpen} aria-haspopup={hasSubs ? 'true' : undefined}>
                 {hasNew && <span className="mm-dot" style={{ background: cat.color }} />}
-                <span style={{
-                  fontSize: 15, lineHeight: 1,
-                  transition: 'transform 0.15s',
-                  transform: isOpen ? 'scale(1.15)' : 'scale(1)',
-                }}>
+                <span style={{ fontSize: 15, lineHeight: 1, transition: 'transform 0.15s', transform: isOpen ? 'scale(1.15)' : 'scale(1)' }}>
                   {cat.icon}
                 </span>
                 {label}
@@ -768,34 +614,19 @@ export function MegaMenu({ activeCategoryId, onCategoryClick }: MegaMenuProps) {
         </nav>
 
         {canScrollRight && (
-          <button
-            onClick={() => scroll('right')}
-            aria-label="DÃ©filer Ã  droite"
-            style={{
-              position: 'absolute', right: 0, top: 0, bottom: 0, zIndex: 10,
-              width: 36, display: 'flex', alignItems: 'center', justifyContent: 'center',
-              background: 'linear-gradient(to left, #0F1117 60%, transparent)',
-              border: 'none', cursor: 'pointer',
-            }}
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="2.5">
-              <polyline points="9 18 15 12 9 6" />
-            </svg>
+          <button onClick={() => scroll('right')} aria-label="Défiler à droite" style={{
+            position: 'absolute', right: 0, top: 0, bottom: 0, zIndex: 10, width: 36,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            background: 'linear-gradient(to left, #0F1117 60%, transparent)', border: 'none', cursor: 'pointer',
+          }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="2.5"><polyline points="9 18 15 12 9 6" /></svg>
           </button>
         )}
       </div>
 
       {mounted && openId && openCat && (
-        <MegaPanelPortal
-          cat={openCat}
-          locale={locale}
-          navbarRef={navbarRef}
-          onNavigate={handleNavigate}
-          onClose={() => setOpenId(null)}
-        />
+        <MegaPanelPortal cat={openCat} locale={locale} navbarRef={navbarRef} onNavigate={handleNavigate} onClose={() => setOpenId(null)} />
       )}
     </>
   )
 }
-
-
