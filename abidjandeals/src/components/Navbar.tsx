@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { AuthModal } from '@/components/AuthModal'
 import { MegaMenu } from '@/components/MegaMenu'
@@ -29,7 +29,7 @@ import { useRouter } from 'next/navigation'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 
-// ─── Types ────────────────────────────────────────────────────────────────────
+// â”€â”€â”€ Types â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 interface Location {
   id: string
@@ -39,7 +39,7 @@ interface Location {
 }
 type GroupedLocations = Record<string, Location[]>
 
-// ─── UserMenu Portal ──────────────────────────────────────────────────────────
+// â”€â”€â”€ UserMenu Portal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 interface UserMenuProps {
   user: Profile
@@ -162,7 +162,7 @@ function UserMenu({ user, onClose, anchorRef }: UserMenuProps) {
   )
 }
 
-// ─── Navbar ───────────────────────────────────────────────────────────────────
+// â”€â”€â”€ Navbar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export function Navbar({ hideCategories = false }: { hideCategories?: boolean }) {
   const router = useRouter()
@@ -222,7 +222,7 @@ export function Navbar({ hideCategories = false }: { hideCategories?: boolean })
     return () => document.removeEventListener('mousedown', handler)
   }, [userMenuOpen])
 
-  // ── Bloquer le scroll body quand le menu mobile est ouvert ──
+  // â”€â”€ Bloquer le scroll body quand le menu mobile est ouvert â”€â”€
   useEffect(() => {
     if (mobileMenu) {
       document.body.style.overflow = 'hidden'
@@ -246,7 +246,7 @@ export function Navbar({ hideCategories = false }: { hideCategories?: boolean })
 
   return (
     <>
-      {/* ── Overlay sombre derrière le menu mobile ── */}
+      {/* â”€â”€ Overlay sombre derriÃ¨re le menu mobile â”€â”€ */}
       {mobileMenu && (
         <div
           onClick={() => setMobileMenu(false)}
@@ -266,18 +266,18 @@ export function Navbar({ hideCategories = false }: { hideCategories?: boolean })
         borderBottom: `1px solid ${scrolled ? 'rgba(229,231,235,0.7)' : '#f1f5f9'}`,
         boxShadow: scrolled ? '0 1px 12px rgba(0,0,0,0.06)' : 'none',
         transition: 'background 0.25s, box-shadow 0.25s, border-color 0.25s',
-        // ✅ FIX PRINCIPAL : empêcher le débordement horizontal
+        // âœ… FIX PRINCIPAL : empÃªcher le dÃ©bordement horizontal
         width: '100%',
         maxWidth: '100vw',
         overflow: 'hidden',
       }}>
 
-        {/* ── Main bar ── */}
+        {/* â”€â”€ Main bar â”€â”€ */}
         <div style={{
           display: 'flex',
           alignItems: 'center',
           gap: 8,
-          // ✅ padding réduit sur mobile pour éviter le débordement
+          // âœ… padding rÃ©duit sur mobile pour Ã©viter le dÃ©bordement
           padding: '0 12px',
           height: 52,
           width: '100%',
@@ -290,10 +290,10 @@ export function Navbar({ hideCategories = false }: { hideCategories?: boolean })
             <span style={{ fontWeight: 800, fontSize: 16, color: '#1e293b', letterSpacing: '-0.5px', whiteSpace: 'nowrap' }}>
               Abidjan<span style={{ color: '#F97316' }}>Deals</span>
             </span>
-            <span style={{ fontSize: 13 }}>🇨🇮</span>
+            <span style={{ fontSize: 13 }}>ðŸ‡¨ðŸ‡®</span>
           </Link>
 
-          {/* ── Desktop search ── */}
+          {/* â”€â”€ Desktop search â”€â”€ */}
           <form
             onSubmit={handleSearch}
             className="hidden md:flex"
@@ -326,7 +326,7 @@ export function Navbar({ hideCategories = false }: { hideCategories?: boolean })
                   <button type="button" onClick={() => { setCity(null); setCityDropdown(false) }}
                     style={{ width: '100%', textAlign: 'left', padding: '10px 16px', fontSize: 13, fontWeight: !filters.city ? 700 : 400, color: !filters.city ? '#F97316' : '#374151', background: !filters.city ? '#FFF7ED' : 'none', border: 'none', cursor: 'pointer' }}
                   >
-                    🇨🇮 {t('search.all_ci')}
+                    ðŸ‡¨ðŸ‡® {t('search.all_ci')}
                   </button>
                   <div style={{ height: 1, background: '#f3f4f6', margin: '4px 0' }} />
                   {locationsLoading
@@ -363,7 +363,7 @@ export function Navbar({ hideCategories = false }: { hideCategories?: boolean })
             </button>
           </form>
 
-          {/* ── Mobile search ── */}
+          {/* â”€â”€ Mobile search â”€â”€ */}
           <form onSubmit={handleSearch} className="flex md:hidden"
             style={{ flex: 1, alignItems: 'center', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 9, overflow: 'hidden', height: 34, minWidth: 0 }}
           >
@@ -375,10 +375,10 @@ export function Navbar({ hideCategories = false }: { hideCategories?: boolean })
             </button>
           </form>
 
-          {/* ── Séparateur visuel desktop ── */}
+          {/* â”€â”€ SÃ©parateur visuel desktop â”€â”€ */}
           <div className="hidden md:block" style={{ width: 1, height: 28, background: '#e2e8f0', flexShrink: 0 }} />
 
-          {/* ── Right actions ── */}
+          {/* â”€â”€ Right actions â”€â”€ */}
           <div style={{
             display: 'flex',
             alignItems: 'center',
@@ -427,7 +427,7 @@ export function Navbar({ hideCategories = false }: { hideCategories?: boolean })
 
             <div className="hidden md:block" style={{ width: 1, height: 24, background: '#e2e8f0', margin: '0 4px', flexShrink: 0 }} />
 
-            {/* User connecté desktop */}
+            {/* User connectÃ© desktop */}
             {user ? (
               <div ref={userMenuRef} className="hidden md:block" style={{ position: 'relative' }}>
                 <button onClick={() => setUserMenuOpen(prev => !prev)}
@@ -460,7 +460,7 @@ export function Navbar({ hideCategories = false }: { hideCategories?: boolean })
               </button>
             )}
 
-            {/* Bouton Publier — icône seule sur mobile, texte sur desktop */}
+            {/* Bouton Publier â€” icÃ´ne seule sur mobile, texte sur desktop */}
             <button onClick={handlePublish}
               style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '7px 10px', borderRadius: 9, background: 'linear-gradient(135deg, #F97316 0%, #ef4444 100%)', color: '#fff', border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: 700, flexShrink: 0, boxShadow: '0 2px 8px rgba(249,115,22,0.35)', transition: 'all 0.2s ease', whiteSpace: 'nowrap' }}
               onMouseEnter={e => { const el = e.currentTarget as HTMLElement; el.style.background = 'linear-gradient(135deg, #ea580c 0%, #dc2626 100%)'; el.style.boxShadow = '0 4px 16px rgba(249,115,22,0.45)' }}
@@ -479,7 +479,7 @@ export function Navbar({ hideCategories = false }: { hideCategories?: boolean })
           </div>
         </div>
 
-        {/* ── Desktop categories bar ── */}
+        {/* â”€â”€ Desktop categories bar â”€â”€ */}
         {!hideCategories && (
           <div className="hidden md:block" style={{ background: '#0F1117', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
             <div style={{ maxWidth: 1400, margin: '0 auto', padding: '0 16px' }}>
@@ -488,7 +488,7 @@ export function Navbar({ hideCategories = false }: { hideCategories?: boolean })
           </div>
         )}
 
-        {/* ── Mobile menu — panneau latéral droit ── */}
+        {/* â”€â”€ Mobile menu â€” panneau latÃ©ral droit â”€â”€ */}
         <AnimatePresence>
           {mobileMenu && (
             <motion.div
@@ -514,7 +514,7 @@ export function Navbar({ hideCategories = false }: { hideCategories?: boolean })
               {/* Header du panneau */}
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px', borderBottom: '1px solid #f1f5f9', position: 'sticky', top: 0, background: '#fff', zIndex: 1 }}>
                 <span style={{ fontWeight: 800, fontSize: 16, color: '#1e293b' }}>
-                  Abidjan<span style={{ color: '#F97316' }}>Deals</span> 🇨🇮
+                  Abidjan<span style={{ color: '#F97316' }}>Deals</span> ðŸ‡¨ðŸ‡®
                 </span>
                 <button onClick={() => setMobileMenu(false)} style={{ padding: 6, borderRadius: 8, background: '#f1f5f9', border: 'none', cursor: 'pointer', display: 'flex' }}>
                   <X size={18} color="#475569" />
@@ -563,8 +563,8 @@ export function Navbar({ hideCategories = false }: { hideCategories?: boolean })
                   </button>
                 )}
 
-                {/* Catégories */}
-                <p style={{ fontSize: 11, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>Catégories</p>
+                {/* CatÃ©gories */}
+                <p style={{ fontSize: 11, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>CatÃ©gories</p>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
                   {CATEGORIES.map(cat => (
                     <button key={cat.id} onClick={() => { setCategory(cat.id); router.push(`/search?category=${cat.id}`); setMobileMenu(false) }}
