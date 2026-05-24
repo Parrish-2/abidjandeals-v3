@@ -1,0 +1,8 @@
+<svg width="160" height="40" viewBox="0 0 160 40" xmlns="http://www.w3.org/2000/svg">
+  <rect x="0" y="2" width="16" height="16" rx="4" fill="#f97316"/>
+  <rect x="20" y="2" width="16" height="16" rx="4" fill="#fed7aa"/>
+  <rect x="0" y="22" width="16" height="16" rx="4" fill="#fed7aa"/>
+  <rect x="20" y="22" width="16" height="16" rx="4" fill="#f97316"/>
+  <text x="44" y="28" font-family="'Inter','Helvetica Neue',sans-serif" font-size="22" font-weight="800" fill="#ffffff" letter-spacing="-0.5">ki</text>
+  <text x="70" y="28" font-family="'Inter','Helvetica Neue',sans-serif" font-size="22" font-weight="800" fill="#f97316" letter-spacing="-0.5">voo</text>
+</svg>

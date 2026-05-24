@@ -1,0 +1,7 @@
+<svg width="200" height="56" viewBox="0 0 200 56" xmlns="http://www.w3.org/2000/svg">
+  <rect x="0" y="4" width="22" height="22" rx="5" fill="#111111"/>
+  <rect x="26" y="4" width="22" height="22" rx="5" fill="#111111" opacity="0.4"/>
+  <rect x="0" y="30" width="22" height="22" rx="5" fill="#111111" opacity="0.4"/>
+  <rect x="26" y="30" width="22" height="22" rx="5" fill="#111111"/>
+  <text x="60" y="37" font-family="'Inter','Helvetica Neue',sans-serif" font-size="30" font-weight="800" fill="#111111" letter-spacing="-1">kivoo</text>
+</svg>

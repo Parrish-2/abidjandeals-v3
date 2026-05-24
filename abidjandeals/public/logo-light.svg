@@ -1,0 +1,9 @@
+<svg width="280" height="80" viewBox="0 0 280 80" xmlns="http://www.w3.org/2000/svg">
+  <rect x="0" y="8" width="28" height="28" rx="7" fill="#f97316"/>
+  <rect x="32" y="8" width="28" height="28" rx="7" fill="#fed7aa"/>
+  <rect x="0" y="40" width="28" height="28" rx="7" fill="#fed7aa"/>
+  <rect x="32" y="40" width="28" height="28" rx="7" fill="#f97316"/>
+  <text x="78" y="46" font-family="'Inter','Helvetica Neue',sans-serif" font-size="38" font-weight="800" fill="#111111" letter-spacing="-1">ki</text>
+  <text x="122" y="46" font-family="'Inter','Helvetica Neue',sans-serif" font-size="38" font-weight="800" fill="#f97316" letter-spacing="-1">voo</text>
+  <text x="79" y="64" font-family="'Inter','Helvetica Neue',sans-serif" font-size="11" font-weight="400" fill="#888888" letter-spacing="3">MARKETPLACE · CI</text>
+</svg>

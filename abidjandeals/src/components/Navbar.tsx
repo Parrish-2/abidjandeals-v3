@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 
 import { AuthModal } from '@/components/AuthModal'
 import { MegaMenu } from '@/components/MegaMenu'
@@ -287,10 +287,7 @@ export function Navbar({ hideCategories = false }: { hideCategories?: boolean })
 
           {/* Logo */}
           <Link href="/" style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: 4, textDecoration: 'none' }}>
-            <span style={{ fontWeight: 800, fontSize: 16, color: '#1e293b', letterSpacing: '-0.5px', whiteSpace: 'nowrap' }}>
-              Abidjan<span style={{ color: '#F97316' }}>Deals</span>
-            </span>
-            <span style={{ fontSize: 13 }}>ðŸ‡¨ðŸ‡®</span>
+            <img src="/logo-navbar.svg" alt="Kivoo" style={{ height: 36, width: 'auto' }} />
           </Link>
 
           {/* â”€â”€ Desktop search â”€â”€ */}
@@ -513,9 +510,7 @@ export function Navbar({ hideCategories = false }: { hideCategories?: boolean })
             >
               {/* Header du panneau */}
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px', borderBottom: '1px solid #f1f5f9', position: 'sticky', top: 0, background: '#fff', zIndex: 1 }}>
-                <span style={{ fontWeight: 800, fontSize: 16, color: '#1e293b' }}>
-                  Abidjan<span style={{ color: '#F97316' }}>Deals</span> ðŸ‡¨ðŸ‡®
-                </span>
+                <img src="/logo-navbar.svg" alt="Kivoo" style={{ height: 28, width: 'auto' }} />
                 <button onClick={() => setMobileMenu(false)} style={{ padding: 6, borderRadius: 8, background: '#f1f5f9', border: 'none', cursor: 'pointer', display: 'flex' }}>
                   <X size={18} color="#475569" />
                 </button>
