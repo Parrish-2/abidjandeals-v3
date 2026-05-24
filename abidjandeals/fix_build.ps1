@@ -1,4 +1,4 @@
-# AbidjanDeals — Fix imports + store + manifest
+# KIVOO — Fix imports + store + manifest
 $dest = Split-Path -Parent $MyInvocation.MyCommand.Path
 Write-Host "Correction des erreurs de build..." -ForegroundColor Cyan
 New-Item -ItemType Directory -Force -Path (Join-Path $dest "public") | Out-Null
