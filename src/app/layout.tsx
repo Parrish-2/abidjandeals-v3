@@ -1,4 +1,4 @@
-import type { Metadata, Viewport } from 'next'
+﻿import type { Metadata, Viewport } from 'next'
 import { Syne, DM_Sans } from 'next/font/google'
 import './globals.css'
 import { Providers } from '@/components/Providers'
@@ -15,7 +15,7 @@ const dmSans = DM_Sans({
   weight: ['300', '400', '500', '600', '700'],
 })
 
-const BASE_URL = 'https://abidjandeals-v3.vercel.app'
+const BASE_URL = 'https://Kivoo-v3.vercel.app'
 
 export const viewport: Viewport = {
   themeColor: '#F5620F',
@@ -28,18 +28,18 @@ export const metadata: Metadata = {
   metadataBase: new URL(BASE_URL),
 
   title: {
-    default: "AbidjanDeals – Marketplace N°1 de Côte d'Ivoire",
-    template: '%s | AbidjanDeals',
+    default: "Kivoo â€“ Marketplace NÂ°1 de CÃ´te d'Ivoire",
+    template: '%s | Kivoo',
   },
   description:
-    "Achetez et vendez en toute sécurité à Abidjan, Bouaké, Yamoussoukro et partout en Côte d'Ivoire. Des milliers d'annonces vérifiées.",
+    "Achetez et vendez en toute sÃ©curitÃ© Ã  Abidjan, BouakÃ©, Yamoussoukro et partout en CÃ´te d'Ivoire. Des milliers d'annonces vÃ©rifiÃ©es.",
   keywords: [
-    "marketplace côte d'ivoire",
+    "marketplace cÃ´te d'ivoire",
     'annonces abidjan',
     'vente achat ci',
     'immobilier ci',
     'petites annonces abidjan',
-    "achat vente côte d'ivoire",
+    "achat vente cÃ´te d'ivoire",
   ],
 
   alternates: {
@@ -47,11 +47,11 @@ export const metadata: Metadata = {
   },
 
   openGraph: {
-    title: "AbidjanDeals – Marketplace Côte d'Ivoire 🇨🇮",
+    title: "Kivoo â€“ Marketplace CÃ´te d'Ivoire ðŸ‡¨ðŸ‡®",
     description:
-      "Des milliers d'annonces vérifiées. Achetez et vendez en toute sécurité à Abidjan et partout en CI.",
+      "Des milliers d'annonces vÃ©rifiÃ©es. Achetez et vendez en toute sÃ©curitÃ© Ã  Abidjan et partout en CI.",
     url: BASE_URL,
-    siteName: 'AbidjanDeals',
+    siteName: 'Kivoo',
     type: 'website',
     locale: 'fr_CI',
     images: [
@@ -59,7 +59,7 @@ export const metadata: Metadata = {
         url: '/og-default.png',
         width: 1200,
         height: 630,
-        alt: "AbidjanDeals – Marketplace N°1 de Côte d'Ivoire",
+        alt: "Kivoo â€“ Marketplace NÂ°1 de CÃ´te d'Ivoire",
         type: 'image/png',
       },
     ],
@@ -67,9 +67,9 @@ export const metadata: Metadata = {
 
   twitter: {
     card: 'summary_large_image',
-    title: "AbidjanDeals – Marketplace Côte d'Ivoire 🇨🇮",
+    title: "Kivoo â€“ Marketplace CÃ´te d'Ivoire ðŸ‡¨ðŸ‡®",
     description:
-      "Des milliers d'annonces vérifiées. Achetez et vendez en toute sécurité.",
+      "Des milliers d'annonces vÃ©rifiÃ©es. Achetez et vendez en toute sÃ©curitÃ©.",
     images: ['/og-default.png'],
   },
 
