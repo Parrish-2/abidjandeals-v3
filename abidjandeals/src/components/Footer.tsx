@@ -1,7 +1,7 @@
 'use client'
-import Link from 'next/link'
-import { CATEGORIES } from '@/lib/data'
 import { useI18n } from '@/contexts/i18nContext'
+import { CATEGORIES } from '@/lib/data'
+import Link from 'next/link'
 
 export function Footer() {
   const { t } = useI18n()
@@ -14,7 +14,7 @@ export function Footer() {
           {/* Brand */}
           <div className="col-span-2 md:col-span-1">
             <div className="font-sans font-bold text-2xl mb-3">
-              Abidjan<span className="text-orange-500">Deals</span> 🇨🇮
+              Kivoo 🇨🇮
             </div>
             <p className="text-white/50 text-sm leading-relaxed mb-4">
               {t('footer.tagline')}
@@ -52,11 +52,11 @@ export function Footer() {
             </h4>
             <ul className="space-y-2 text-sm text-white/60">
               <li><Link href="/?auth=register" className="hover:text-orange-400 transition-colors">{t('footer.register')}</Link></li>
-              <li><Link href="/?auth=login"    className="hover:text-orange-400 transition-colors">{t('footer.login')}</Link></li>
-              <li><Link href="/publier"         className="hover:text-orange-400 transition-colors">{t('footer.post_ad')}</Link></li>
-              <li><Link href="/dashboard"       className="hover:text-orange-400 transition-colors">{t('footer.dashboard')}</Link></li>
-              <li><Link href="/messages"        className="hover:text-orange-400 transition-colors">{t('footer.messaging')}</Link></li>
-              <li><Link href="/favorites"       className="hover:text-orange-400 transition-colors">{t('footer.favorites')}</Link></li>
+              <li><Link href="/?auth=login" className="hover:text-orange-400 transition-colors">{t('footer.login')}</Link></li>
+              <li><Link href="/publier" className="hover:text-orange-400 transition-colors">{t('footer.post_ad')}</Link></li>
+              <li><Link href="/dashboard" className="hover:text-orange-400 transition-colors">{t('footer.dashboard')}</Link></li>
+              <li><Link href="/messages" className="hover:text-orange-400 transition-colors">{t('footer.messaging')}</Link></li>
+              <li><Link href="/favorites" className="hover:text-orange-400 transition-colors">{t('footer.favorites')}</Link></li>
             </ul>
           </div>
 
@@ -66,12 +66,12 @@ export function Footer() {
               {t('footer.about')}
             </h4>
             <ul className="space-y-2 text-sm text-white/60">
-              <li><Link href="/securite"       className="hover:text-orange-400 transition-colors">{t('footer.security')}</Link></li>
-              <li><Link href="/cgu"            className="hover:text-orange-400 transition-colors">{t('footer.terms')}</Link></li>
-              <li><Link href="/vendeur"        className="hover:text-orange-400 transition-colors">{t('footer.pricing')}</Link></li>
-              <li><Link href="/contact"        className="hover:text-orange-400 transition-colors">{t('footer.contact')}</Link></li>
-              <li><Link href="/contact"        className="hover:text-orange-400 transition-colors">{t('footer.press')}</Link></li>
-              <li><Link href="/contact"        className="hover:text-orange-400 transition-colors">{t('footer.jobs')}</Link></li>
+              <li><Link href="/securite" className="hover:text-orange-400 transition-colors">{t('footer.security')}</Link></li>
+              <li><Link href="/cgu" className="hover:text-orange-400 transition-colors">{t('footer.terms')}</Link></li>
+              <li><Link href="/vendeur" className="hover:text-orange-400 transition-colors">{t('footer.pricing')}</Link></li>
+              <li><Link href="/contact" className="hover:text-orange-400 transition-colors">{t('footer.contact')}</Link></li>
+              <li><Link href="/contact" className="hover:text-orange-400 transition-colors">{t('footer.press')}</Link></li>
+              <li><Link href="/contact" className="hover:text-orange-400 transition-colors">{t('footer.jobs')}</Link></li>
             </ul>
           </div>
 
@@ -93,10 +93,10 @@ export function Footer() {
             </h4>
             <ul className="space-y-1 text-sm text-white/60">
               {[
-                { name: 'Abidjan',       slug: 'Abidjan' },
-                { name: 'Bouaké',        slug: 'Bouaké' },
+                { name: 'Abidjan', slug: 'Abidjan' },
+                { name: 'Bouaké', slug: 'Bouaké' },
                 { name: 'Yamoussoukro', slug: 'Yamoussoukro' },
-                { name: 'San-Pédro',    slug: 'San-Pédro' },
+                { name: 'San-Pédro', slug: 'San-Pédro' },
               ].map(v => (
                 <li key={v.name}>
                   <Link
@@ -116,10 +116,10 @@ export function Footer() {
         <div className="flex flex-col md:flex-row items-center justify-between pt-6 gap-4">
           <p className="text-white/30 text-sm">{t('footer.copyright')}</p>
           <div className="flex gap-6 text-sm text-white/40">
-            <Link href="/cgu"              className="hover:text-orange-400 transition-colors">{t('footer.terms')}</Link>
-            <Link href="/confidentialite"  className="hover:text-orange-400 transition-colors">{t('footer.privacy')}</Link>
-            <Link href="/contact"          className="hover:text-orange-400 transition-colors">{t('footer.cookies')}</Link>
-            <Link href="/contact"          className="hover:text-orange-400 transition-colors">{t('footer.contact')}</Link>
+            <Link href="/cgu" className="hover:text-orange-400 transition-colors">{t('footer.terms')}</Link>
+            <Link href="/confidentialite" className="hover:text-orange-400 transition-colors">{t('footer.privacy')}</Link>
+            <Link href="/contact" className="hover:text-orange-400 transition-colors">{t('footer.cookies')}</Link>
+            <Link href="/contact" className="hover:text-orange-400 transition-colors">{t('footer.contact')}</Link>
           </div>
         </div>
       </div>

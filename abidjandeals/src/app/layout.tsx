@@ -1,7 +1,7 @@
-import type { Metadata, Viewport } from 'next'
-import { Syne, DM_Sans } from 'next/font/google'
-import './globals.css'
 import { Providers } from '@/components/Providers'
+import type { Metadata, Viewport } from 'next'
+import { DM_Sans, Syne } from 'next/font/google'
+import './globals.css'
 
 const syne = Syne({
   subsets: ['latin'],
@@ -15,7 +15,7 @@ const dmSans = DM_Sans({
   weight: ['300', '400', '500', '600', '700'],
 })
 
-const BASE_URL = 'https://abidjandeals-v3.vercel.app'
+const BASE_URL = 'https://kivoo.ci'
 
 export const viewport: Viewport = {
   themeColor: '#F5620F',
@@ -28,8 +28,8 @@ export const metadata: Metadata = {
   metadataBase: new URL(BASE_URL),
 
   title: {
-    default: "AbidjanDeals – Marketplace N°1 de Côte d'Ivoire",
-    template: '%s | AbidjanDeals',
+    default: "Kivoo – Marketplace N°1 de Côte d'Ivoire",
+    template: '%s | Kivoo',
   },
   description:
     "Achetez et vendez en toute sécurité à Abidjan, Bouaké, Yamoussoukro et partout en Côte d'Ivoire. Des milliers d'annonces vérifiées.",
@@ -47,11 +47,11 @@ export const metadata: Metadata = {
   },
 
   openGraph: {
-    title: "AbidjanDeals – Marketplace Côte d'Ivoire 🇨🇮",
+    title: "Kivoo – Marketplace Côte d'Ivoire 🇨🇮",
     description:
       "Des milliers d'annonces vérifiées. Achetez et vendez en toute sécurité à Abidjan et partout en CI.",
     url: BASE_URL,
-    siteName: 'AbidjanDeals',
+    siteName: 'Kivoo',
     type: 'website',
     locale: 'fr_CI',
     images: [
@@ -59,7 +59,7 @@ export const metadata: Metadata = {
         url: '/og-default.png',
         width: 1200,
         height: 630,
-        alt: "AbidjanDeals – Marketplace N°1 de Côte d'Ivoire",
+        alt: "Kivoo – Marketplace N°1 de Côte d'Ivoire",
         type: 'image/png',
       },
     ],
@@ -67,7 +67,7 @@ export const metadata: Metadata = {
 
   twitter: {
     card: 'summary_large_image',
-    title: "AbidjanDeals – Marketplace Côte d'Ivoire 🇨🇮",
+    title: "Kivoo – Marketplace Côte d'Ivoire 🇨🇮",
     description:
       "Des milliers d'annonces vérifiées. Achetez et vendez en toute sécurité.",
     images: ['/og-default.png'],
