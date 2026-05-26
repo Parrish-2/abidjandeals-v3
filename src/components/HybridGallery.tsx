@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { AnimatePresence, motion, useDragControls } from 'framer-motion'
 import { ArrowLeft, Minimize2, Share2, Volume2, VolumeX } from 'lucide-react'
@@ -17,7 +17,7 @@ const isVid = (u: string) => VIDEO_EXTS.some(e => u.toLowerCase().endsWith(e))
 export function HybridGallery({ images, videoUrl, alt = 'Photo' }: HybridGalleryProps) {
   const raw = images ?? []
 
-  // Séparation stricte images / vidéo
+  // SÃ©paration stricte images / vidÃ©o
   const cleanImages  = raw.filter(u => !isVid(u))
   const extractedVid = raw.find(u => isVid(u)) ?? null
   const finalVideo   = videoUrl ?? extractedVid
@@ -80,7 +80,7 @@ export function HybridGallery({ images, videoUrl, alt = 'Photo' }: HybridGallery
 
   if (!total && !hasVideo) {
     return (
-      <div className="w-full aspect-square bg-gray-900 flex items-center justify-center rounded-2xl text-gray-500 text-5xl">📷</div>
+      <div className="w-full aspect-square bg-gray-900 flex items-center justify-center rounded-2xl text-gray-500 text-5xl">ðŸ“·</div>
     )
   }
 
@@ -95,14 +95,14 @@ export function HybridGallery({ images, videoUrl, alt = 'Photo' }: HybridGallery
   return (
     <div className="w-full select-none bg-black rounded-2xl overflow-hidden relative">
 
-      {/* ── CARROUSEL ── */}
+      {/* â”€â”€ CARROUSEL â”€â”€ */}
       <div
         ref={stageRef}
         className="relative w-full aspect-square overflow-hidden bg-black"
         onTouchStart={onTouchStart}
         onTouchEnd={onTouchEnd}
       >
-        {/* Track — uniquement cleanImages */}
+        {/* Track â€” uniquement cleanImages */}
         {total > 0 && (
           <div
             className="absolute inset-0 flex transition-transform duration-300 ease-out will-change-transform"
@@ -110,20 +110,13 @@ export function HybridGallery({ images, videoUrl, alt = 'Photo' }: HybridGallery
           >
             {cleanImages.map((src, i) => (
               <div key={i} className="relative h-full" style={{ width: `${100 / total}%` }}>
-                <Image
-                  src={src}
-                  alt={`${alt} ${i + 1}`}
-                  fill
-                  className="object-cover"
-                  sizes="(max-width: 768px) 100vw, 60vw"
-                  priority={i === 0}
-                />
+                <img src={src} alt={`${alt} ${i + 1}`} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
               </div>
             ))}
           </div>
         )}
 
-        {/* ── PiP Vidéo ── */}
+        {/* â”€â”€ PiP VidÃ©o â”€â”€ */}
         {hasVideo && !pipHidden && !fullscreen && (
           <motion.div
             drag
@@ -147,7 +140,7 @@ export function HybridGallery({ images, videoUrl, alt = 'Photo' }: HybridGallery
                   exit={{ opacity: 0 }}
                   className="absolute -top-7 left-1/2 -translate-x-1/2 bg-black/80 text-white text-[10px] px-2 py-0.5 rounded-full pointer-events-none whitespace-nowrap z-30 border border-white/10"
                 >
-                  ✥ Glisser
+                  âœ¥ Glisser
                 </motion.div>
               )}
             </AnimatePresence>
@@ -176,18 +169,18 @@ export function HybridGallery({ images, videoUrl, alt = 'Photo' }: HybridGallery
                 onClick={e => { e.stopPropagation(); setPipHidden(true) }}
                 className="absolute top-1.5 right-1.5 w-5 h-5 rounded-full bg-black/60 text-white text-[10px] flex items-center justify-center border border-white/10"
                 aria-label="Masquer"
-              >✕</button>
+              >âœ•</button>
             </div>
           </motion.div>
         )}
 
-        {/* Réafficher vidéo */}
+        {/* RÃ©afficher vidÃ©o */}
         {hasVideo && pipHidden && (
           <button
             onClick={() => setPipHidden(false)}
             className="absolute bottom-4 left-4 z-20 flex items-center gap-1.5 bg-black/75 text-white text-xs font-medium px-3 py-2 rounded-full border border-white/20"
           >
-            ▶ Vidéo
+            â–¶ VidÃ©o
           </button>
         )}
 
@@ -205,22 +198,22 @@ export function HybridGallery({ images, videoUrl, alt = 'Photo' }: HybridGallery
           </button>
         </div>
 
-        {/* Flèches desktop */}
+        {/* FlÃ¨ches desktop */}
         {total > 1 && (
           <>
             <button onClick={() => goTo(idx - 1)} disabled={idx === 0}
               className="hidden md:flex absolute left-4 top-1/2 -translate-y-1/2 z-10 w-9 h-9 rounded-full bg-white/90 items-center justify-center text-gray-800 shadow-md font-bold disabled:opacity-30">
-              ‹
+              â€¹
             </button>
             <button onClick={() => goTo(idx + 1)} disabled={idx === total - 1}
               className="hidden md:flex absolute right-4 top-1/2 -translate-y-1/2 z-10 w-9 h-9 rounded-full bg-white/90 items-center justify-center text-gray-800 shadow-md font-bold disabled:opacity-30">
-              ›
+              â€º
             </button>
           </>
         )}
       </div>
 
-      {/* ── RUBAN ── */}
+      {/* â”€â”€ RUBAN â”€â”€ */}
       {total > 1 && (
         <div className="bg-black px-4 pb-4 pt-3 border-t border-white/5">
           <div ref={ribbonRef} className="flex gap-2.5 overflow-x-auto flex-nowrap"
@@ -234,14 +227,14 @@ export function HybridGallery({ images, videoUrl, alt = 'Photo' }: HybridGallery
                   opacity: idx === i ? 1 : 0.5,
                 }}
                 aria-current={idx === i}>
-                <Image src={src} alt={`Vignette ${i + 1}`} fill className="object-cover" sizes="60px" />
+                <img src={src} alt={`Vignette ${i + 1}`} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
               </button>
             ))}
           </div>
         </div>
       )}
 
-      {/* ── FULLSCREEN ── */}
+      {/* â”€â”€ FULLSCREEN â”€â”€ */}
       <AnimatePresence>
         {fullscreen && (
           <motion.div
@@ -266,7 +259,7 @@ export function HybridGallery({ images, videoUrl, alt = 'Photo' }: HybridGallery
                 className="max-w-full max-h-full rounded-xl object-contain shadow-2xl" />
             </div>
             <div className="p-4 text-center text-xs text-white/40 bg-gradient-to-t from-black/60 to-transparent">
-              Présentation vidéo du produit
+              PrÃ©sentation vidÃ©o du produit
             </div>
           </motion.div>
         )}
@@ -274,3 +267,4 @@ export function HybridGallery({ images, videoUrl, alt = 'Photo' }: HybridGallery
     </div>
   )
 }
+
