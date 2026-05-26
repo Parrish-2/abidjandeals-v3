@@ -5,8 +5,8 @@ import { ChevronLeft, ChevronRight } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 
-// ─── Type aligné sur AdCardProps ────────────────────────────────────────────
-type BoostLevel = 'STANDARD' | 'PREMIUM' | 'URGENT'   // ✅ retrait du `| string`
+// Types alignés sur AdCard
+type BoostLevel = 'STANDARD' | 'PREMIUM' | 'URGENT'
 
 interface MediaItem {
   url: string
@@ -34,12 +34,11 @@ interface Ad {
   boost_level?: BoostLevel | null
 }
 
-// ─── Props de la section ────────────────────────────────────────────────────
 interface AdsSectionProps {
   title: string
   ads: Ad[]
   seeAllHref: string
-  currentPage: number
+  currentPage: number      // ← présentes
   totalPages: number
   total: number
 }
@@ -57,10 +56,8 @@ export function AdsSection({
   if (!ads.length) return null
 
   const sorted = [...ads].sort((a, b) => {
-    const aActive =
-      a.is_boosted && (!a.boost_until || new Date(a.boost_until) > new Date())
-    const bActive =
-      b.is_boosted && (!b.boost_until || new Date(b.boost_until) > new Date())
+    const aActive = a.is_boosted && (!a.boost_until || new Date(a.boost_until) > new Date())
+    const bActive = b.is_boosted && (!b.boost_until || new Date(b.boost_until) > new Date())
     if (aActive && !bActive) return -1
     if (!aActive && bActive) return 1
     return 0
@@ -132,8 +129,8 @@ export function AdsSection({
                   key={p}
                   onClick={() => goTo(p as number)}
                   className={`w-9 h-9 rounded-xl text-sm font-semibold transition ${currentPage === p
-                      ? 'bg-orange-500 text-white shadow-sm shadow-orange-200'
-                      : 'bg-white border border-gray-200 text-gray-600 hover:border-orange-300 hover:text-orange-500'
+                    ? 'bg-orange-500 text-white shadow-sm shadow-orange-200'
+                    : 'bg-white border border-gray-200 text-gray-600 hover:border-orange-300 hover:text-orange-500'
                     }`}
                 >
                   {p}
