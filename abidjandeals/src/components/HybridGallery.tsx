@@ -48,9 +48,19 @@ export function HybridGallery({ images, videoUrl, alt = 'Photo' }: HybridGallery
     return () => clearTimeout(t)
   }, [hasVideo, pipHidden])
 
+  // ⚡ Fonction de navigation en boucle continue
+  const goTo = useCallback((direction: 'prev' | 'next') => {
+    if (total <= 1) return
+    setActiveIdx(prev => {
+      if (direction === 'next') return (prev + 1) % total
+      return (prev - 1 + total) % total
+    })
+  }, [total])
+
   const selectMedia = useCallback((idx: number) => {
     if (idx < 0 || idx >= total) return
     setActiveIdx(idx)
+    // Scroll de la ribbon (inchangé)
     const ribbon = ribbonRef.current
     if (ribbon) {
       const thumb = ribbon.children[idx] as HTMLElement
@@ -73,7 +83,7 @@ export function HybridGallery({ images, videoUrl, alt = 'Photo' }: HybridGallery
     const dx = e.changedTouches[0].clientX - touchStartX.current
     const dy = e.changedTouches[0].clientY - touchStartY.current
     if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 40) {
-      selectMedia(activeIdx + (dx < 0 ? 1 : -1))
+      goTo(dx < 0 ? 'next' : 'prev') // inverse car swipe gauche = suivant
     }
   }
 
@@ -117,14 +127,10 @@ export function HybridGallery({ images, videoUrl, alt = 'Photo' }: HybridGallery
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
       >
-        {/* Slides */}
         {hasImages && (
           <div
             className="absolute inset-0 flex transition-transform duration-300 ease-out will-change-transform"
             style={{
-              // ✅ FIX : translateX est relatif à l'élément lui-même (total*100% de large).
-              // Chaque slide occupe (100/total)% du container, donc on déplace de ce même
-              // pourcentage par index pour avancer exactement d'une slide à la fois.
               transform: `translateX(-${activeIdx * (100 / total)}%)`,
               width: `${total * 100}%`,
               zIndex: 1,
@@ -149,7 +155,7 @@ export function HybridGallery({ images, videoUrl, alt = 'Photo' }: HybridGallery
           </div>
         )}
 
-        {/* ── PiP Vidéo draggable ── */}
+        {/* ── PiP Vidéo draggable (inchangé) ── */}
         {hasVideo && !pipHidden && !isFullscreenVideo && (
           <motion.div
             drag
@@ -211,7 +217,6 @@ export function HybridGallery({ images, videoUrl, alt = 'Photo' }: HybridGallery
           </motion.div>
         )}
 
-        {/* Bouton réafficher vidéo */}
         {hasVideo && pipHidden && (
           <button
             onClick={() => setPipHidden(false)}
@@ -239,20 +244,18 @@ export function HybridGallery({ images, videoUrl, alt = 'Photo' }: HybridGallery
           </button>
         </div>
 
-        {/* Flèches desktop */}
+        {/* Flèches desktop – en boucle continue */}
         {total > 1 && (
           <>
             <button
-              onClick={() => selectMedia(activeIdx - 1)}
-              disabled={activeIdx === 0}
-              className="hidden md:flex absolute left-4 top-1/2 -translate-y-1/2 z-10 w-9 h-9 rounded-full bg-white/90 items-center justify-center text-gray-800 shadow-md font-bold disabled:opacity-30"
+              onClick={() => goTo('prev')}
+              className="hidden md:flex absolute left-4 top-1/2 -translate-y-1/2 z-10 w-9 h-9 rounded-full bg-white/90 items-center justify-center text-gray-800 shadow-md font-bold"
             >
               ‹
             </button>
             <button
-              onClick={() => selectMedia(activeIdx + 1)}
-              disabled={activeIdx === total - 1}
-              className="hidden md:flex absolute right-4 top-1/2 -translate-y-1/2 z-10 w-9 h-9 rounded-full bg-white/90 items-center justify-center text-gray-800 shadow-md font-bold disabled:opacity-30"
+              onClick={() => goTo('next')}
+              className="hidden md:flex absolute right-4 top-1/2 -translate-y-1/2 z-10 w-9 h-9 rounded-full bg-white/90 items-center justify-center text-gray-800 shadow-md font-bold"
             >
               ›
             </button>
@@ -260,7 +263,7 @@ export function HybridGallery({ images, videoUrl, alt = 'Photo' }: HybridGallery
         )}
       </div>
 
-      {/* ── RUBAN VIGNETTES ── */}
+      {/* ── RUBAN VIGNETTES (inchangé) ── */}
       {total > 1 && (
         <div className="bg-black px-4 pb-4 pt-3 border-t border-white/5">
           <div
@@ -294,7 +297,7 @@ export function HybridGallery({ images, videoUrl, alt = 'Photo' }: HybridGallery
         </div>
       )}
 
-      {/* ── FULLSCREEN VIDÉO ── */}
+      {/* ── FULLSCREEN VIDÉO (inchangé) ── */}
       <AnimatePresence>
         {isFullscreenVideo && (
           <motion.div

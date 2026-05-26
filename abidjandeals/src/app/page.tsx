@@ -7,6 +7,7 @@ import { cookies } from 'next/headers'
 
 const PAGE_SIZE = 24
 
+// ---------- helpers ----------
 async function getStats() {
     try {
         const cookieStore = await cookies()
@@ -16,8 +17,16 @@ async function getStats() {
             { cookies: { getAll: () => cookieStore.getAll() } }
         )
         const [{ count: total }, { count: vendors }] = await Promise.all([
-            supabase.from('ads').select('*', { count: 'exact', head: true }).eq('status', 'active').neq('category_id', 'cat_lingerie').neq('category_id', 'cat_adulte'),
-            supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('role', 'vendor'),
+            supabase
+                .from('ads')
+                .select('*', { count: 'exact', head: true })
+                .eq('status', 'active')
+                .neq('category_id', 'cat_lingerie')
+                .neq('category_id', 'cat_adulte'),
+            supabase
+                .from('profiles')
+                .select('*', { count: 'exact', head: true })
+                .eq('role', 'vendor'),
         ])
         return { total: total ?? 0, vendors: vendors ?? 0 }
     } catch {
@@ -37,14 +46,13 @@ async function getAds(page: number) {
         const from = (page - 1) * PAGE_SIZE
         const to = from + PAGE_SIZE - 1
 
-        // Récupère les annonces de la page + le total pour calculer les pages
         const { data, count } = await supabase
             .from('ads')
             .select('*', { count: 'exact' })
             .eq('status', 'active')
             .neq('category_id', 'cat_lingerie')
             .neq('category_id', 'cat_adulte')
-            .order('is_boosted', { ascending: false })   // boostées en tête
+            .order('is_boosted', { ascending: false })
             .order('created_at', { ascending: false })
             .range(from, to)
 
@@ -63,6 +71,7 @@ async function getAds(page: number) {
     }
 }
 
+// ---------- page ----------
 export default async function HomePage({
     searchParams,
 }: {
