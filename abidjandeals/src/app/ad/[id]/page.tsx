@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 import { Footer } from '@/components/Footer'
 import { HybridGallery } from '@/components/HybridGallery'
 import { Navbar } from '@/components/Navbar'
@@ -88,13 +88,13 @@ export default function AdDetailPage() {
         }
     }
 
-    // ── Génère le lien WhatsApp avec message pré-rempli ──────────────────────
+    // â”€â”€ GÃ©nÃ¨re le lien WhatsApp avec message prÃ©-rempli â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     function buildWhatsAppUrl() {
         if (!ad) return '#'
         const number = (ad.whatsapp || ad.tel)?.replace(/[\s+]/g, '')
         if (!number) return '#'
         const message = encodeURIComponent(
-            `Bonjour, je suis intéressé(e) par votre annonce "${ad.title}" sur AbidjanDeals. Est-ce encore disponible ?`
+            `Bonjour, je suis intÃ©ressÃ©(e) par votre annonce "${ad.title}" sur AbidjanDeals. Est-ce encore disponible ?`
         )
         return `https://wa.me/${number}?text=${message}`
     }
@@ -124,7 +124,10 @@ export default function AdDetailPage() {
         </div>
     )
 
-    const images = ad.images?.length ? ad.images : []
+    const videoExts = ['.mp4','.webm','.mov','.mkv','.avi']
+    const allMedia = ad.images ?? []
+    const images = allMedia.filter((u: string) => !videoExts.some(ext => u.toLowerCase().endsWith(ext)))
+    const extractedVideo = allMedia.find((u: string) => videoExts.some(ext => u.toLowerCase().endsWith(ext))) ?? null
     const isOwner = !!(sessionUid && sessionUid === ad.user_id)
     const hasWhatsApp = !!(ad.whatsapp || ad.tel)
     const whatsappUrl = buildWhatsAppUrl()
@@ -181,7 +184,7 @@ export default function AdDetailPage() {
                                             <span className="text-sm text-gray-500">
                                                 {ad.quartier ? `${ad.quartier}, ` : ''}{ad.city}
                                             </span>
-                                            <span className="text-gray-300">·</span>
+                                            <span className="text-gray-300">Â·</span>
                                             <Calendar size={13} className="text-gray-400" />
                                             <span className="text-sm text-gray-400">{timeAgo(ad.created_at)}</span>
                                         </div>
@@ -229,7 +232,7 @@ export default function AdDetailPage() {
                             )}
                         </div>
 
-                        {/* ── Colonne vendeur (desktop uniquement) ─────────────────────────── */}
+                        {/* â”€â”€ Colonne vendeur (desktop uniquement) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
                         <div className="space-y-4 hidden lg:block">
                             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
                                 <div className="flex items-center gap-3 mb-4 pb-4 border-b border-gray-100">
@@ -276,11 +279,11 @@ export default function AdDetailPage() {
                 <Footer />
             </div>
 
-            {/* ── Bouton WhatsApp fixe en bas — mobile uniquement ───────────────────
+            {/* â”€â”€ Bouton WhatsApp fixe en bas â€” mobile uniquement â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                 Visible uniquement sur mobile (lg:hidden).
                 Toujours au premier plan, au-dessus du footer.
-                Message pré-rempli via buildWhatsAppUrl().
-            ──────────────────────────────────────────────────────────────────── */}
+                Message prÃ©-rempli via buildWhatsAppUrl().
+            â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
             {hasWhatsApp && (
                 <div className="fixed bottom-0 left-0 right-0 z-50 lg:hidden px-4 pb-4 pt-2 bg-gradient-to-t from-white via-white/95 to-transparent">
                     <a
@@ -297,3 +300,4 @@ export default function AdDetailPage() {
         </>
     )
 }
+
