@@ -54,7 +54,6 @@ async function getAds(page: number) {
             .eq('status', 'active')
             .neq('category_id', 'cat_lingerie')
             .neq('category_id', 'cat_adulte')
-            .order('is_boosted', { ascending: false })
             .order('created_at', { ascending: false })
             .range(from, to)
 
@@ -65,9 +64,7 @@ async function getAds(page: number) {
             img: ad.images?.[0] ?? null,
         }))
 
-        const totalPages = Math.ceil((count ?? 0) / PAGE_SIZE)
-
-        return { ads, totalPages, total: count ?? 0 }
+        return { ads, totalPages: Math.ceil((count ?? 0) / PAGE_SIZE), total: count ?? 0 }
     } catch {
         return { ads: [], totalPages: 1, total: 0 }
     }
