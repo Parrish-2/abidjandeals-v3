@@ -1,9 +1,11 @@
-﻿import { AdsSection } from '@/components/AdsSection'
-import { Footer } from '@/components/Footer'
-import { HeroSection } from '@/components/HeroSection'
-import { Navbar } from '@/components/Navbar'
-import { createServerClient } from '@supabase/ssr'
-import { cookies } from 'next/headers'
+﻿export const dynamic = 'force-dynamic';
+
+import { AdsSection } from '@/components/AdsSection';
+import { Footer } from '@/components/Footer';
+import { HeroSection } from '@/components/HeroSection';
+import { Navbar } from '@/components/Navbar';
+import { createServerClient } from '@supabase/ssr';
+import { cookies } from 'next/headers';
 
 const PAGE_SIZE = 24
 
