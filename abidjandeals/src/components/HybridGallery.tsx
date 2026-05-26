@@ -13,8 +13,10 @@ interface HybridGalleryProps {
 
 export function HybridGallery({ images, videoUrl, alt = 'Photo' }: HybridGalleryProps) {
   const hasVideo = !!videoUrl
-  const hasImages = images && images.length > 0
-  const total = hasImages ? images.length : 0
+  const VIDEO_EXTS = ['.mp4','.webm','.mov','.mkv','.avi']
+  const cleanImages = (images ?? []).filter((u: string) => !VIDEO_EXTS.some(ext => u.toLowerCase().endsWith(ext)))
+  const hasImages = cleanImages.length > 0
+  const total = hasImages ? cleanImages.length : 0
 
   const [activeIdx, setActiveIdx] = useState(0)
   const [muted, setMuted] = useState(true)
