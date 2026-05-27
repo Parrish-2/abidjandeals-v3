@@ -388,6 +388,29 @@
     "mute": "Mute",
     "fullscreen": "Fullscreen"
   },
+  "ad_page": {
+    "safety_4": "Beware of prices that are too low",
+    "no_advance_payment": "Never pay in advance without seeing the product",
+    "your_ad": "Your ad",
+    "edit": "Edit",
+    "delete": "Delete",
+    "verified_ad": "Verified ad",
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "days_ago": "days ago"
+  },
+  "cat_names": {
+    "cat_tech": "High-Tech",
+    "cat_auto": "Auto & Vehicles",
+    "cat_immo": "Real Estate",
+    "cat_serv": "Services",
+    "cat_maison": "Home & Appliances",
+    "cat_mode": "Fashion",
+    "cat_beaute": "Beauty & Wellness",
+    "cat_sport": "Sport & Leisure",
+    "cat_autres": "Miscellaneous",
+    "cat_adulte": "Wellness & Intimacy"
+  },
   "categories": {
     "real_estate": "Real Estate",
     "vehicles_equipment": "Vehicles & Pro Equipment",

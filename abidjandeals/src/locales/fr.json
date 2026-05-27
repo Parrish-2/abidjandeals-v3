@@ -388,6 +388,29 @@
     "mute": "Muet",
     "fullscreen": "Plein écran"
   },
+  "ad_page": {
+    "safety_4": "Méfiez-vous des prix trop bas",
+    "no_advance_payment": "Ne payez jamais à l'avance sans voir le produit",
+    "your_ad": "Votre annonce",
+    "edit": "Modifier",
+    "delete": "Supprimer",
+    "verified_ad": "Annonce vérifiée",
+    "today": "Aujourd'hui",
+    "yesterday": "Hier",
+    "days_ago": "jours"
+  },
+  "cat_names": {
+    "cat_tech": "High-Tech",
+    "cat_auto": "Automobile",
+    "cat_immo": "Immobilier",
+    "cat_serv": "Services",
+    "cat_maison": "Maison & Équipement",
+    "cat_mode": "Mode & Accessoires",
+    "cat_beaute": "Beauté & Bien-être",
+    "cat_sport": "Sport & Loisirs",
+    "cat_autres": "Autres & Divers",
+    "cat_adulte": "Bien-être & Intimité"
+  },
   "categories": {
     "real_estate": "Immobilier",
     "vehicles_equipment": "Véhicules & Équipements Pro",
