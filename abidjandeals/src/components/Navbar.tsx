@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { AuthModal } from '@/components/AuthModal'
 import { MegaMenu } from '@/components/MegaMenu'
@@ -29,7 +29,38 @@ import { useRouter } from 'next/navigation'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 
-// â”€â”€â”€ Types â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Logo Kivoo premium inline (Version B — Grille 2×2) ──────────────────────
+function LogoLight() {
+  return (
+    <svg width="140" height="48" viewBox="0 0 140 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect x="0" y="0" width="17" height="17" rx="5" fill="#f97316" />
+      <rect x="20" y="0" width="17" height="17" rx="2" fill="#f97316" fillOpacity="0.25" />
+      <rect x="0" y="20" width="17" height="17" rx="2" fill="#f97316" fillOpacity="0.25" />
+      <rect x="20" y="20" width="17" height="17" rx="5" fill="#f97316" />
+      <line x1="48" y1="4" x2="48" y2="34" stroke="#e2e8f0" strokeWidth="1" />
+      <text x="58" y="26" fontFamily="system-ui,-apple-system,sans-serif" fontSize="24" fontWeight="700" letterSpacing="-0.5" fill="#0f172a">ki</text>
+      <text x="87" y="26" fontFamily="system-ui,-apple-system,sans-serif" fontSize="24" fontWeight="700" letterSpacing="-0.5" fill="#f97316">voo</text>
+      <text x="59" y="40" fontFamily="system-ui,sans-serif" fontSize="7" fontWeight="500" letterSpacing="3" fill="#94a3b8">MARKETPLACE</text>
+    </svg>
+  )
+}
+
+function LogoDark() {
+  return (
+    <svg width="140" height="48" viewBox="0 0 140 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect x="0" y="0" width="17" height="17" rx="5" fill="#f97316" />
+      <rect x="20" y="0" width="17" height="17" rx="2" fill="#f97316" fillOpacity="0.25" />
+      <rect x="0" y="20" width="17" height="17" rx="2" fill="#f97316" fillOpacity="0.25" />
+      <rect x="20" y="20" width="17" height="17" rx="5" fill="#f97316" />
+      <line x1="48" y1="4" x2="48" y2="34" stroke="#334155" strokeWidth="1" />
+      <text x="58" y="26" fontFamily="system-ui,-apple-system,sans-serif" fontSize="24" fontWeight="700" letterSpacing="-0.5" fill="#ffffff">ki</text>
+      <text x="87" y="26" fontFamily="system-ui,-apple-system,sans-serif" fontSize="24" fontWeight="700" letterSpacing="-0.5" fill="#f97316">voo</text>
+      <text x="59" y="40" fontFamily="system-ui,sans-serif" fontSize="7" fontWeight="500" letterSpacing="3" fill="#475569">MARKETPLACE</text>
+    </svg>
+  )
+}
+
+// ── Types ────────────────────────────────────────────────────────────────────
 
 interface Location {
   id: string
@@ -39,7 +70,7 @@ interface Location {
 }
 type GroupedLocations = Record<string, Location[]>
 
-// â”€â”€â”€ UserMenu Portal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── UserMenu Portal ──────────────────────────────────────────────────────────
 
 interface UserMenuProps {
   user: Profile
@@ -162,7 +193,7 @@ function UserMenu({ user, onClose, anchorRef }: UserMenuProps) {
   )
 }
 
-// â”€â”€â”€ Navbar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Navbar ───────────────────────────────────────────────────────────────────
 
 export function Navbar({ hideCategories = false }: { hideCategories?: boolean }) {
   const router = useRouter()
@@ -222,7 +253,6 @@ export function Navbar({ hideCategories = false }: { hideCategories?: boolean })
     return () => document.removeEventListener('mousedown', handler)
   }, [userMenuOpen])
 
-  // â”€â”€ Bloquer le scroll body quand le menu mobile est ouvert â”€â”€
   useEffect(() => {
     if (mobileMenu) {
       document.body.style.overflow = 'hidden'
@@ -246,7 +276,6 @@ export function Navbar({ hideCategories = false }: { hideCategories?: boolean })
 
   return (
     <>
-      {/* â”€â”€ Overlay sombre derriÃ¨re le menu mobile â”€â”€ */}
       {mobileMenu && (
         <div
           onClick={() => setMobileMenu(false)}
@@ -266,18 +295,16 @@ export function Navbar({ hideCategories = false }: { hideCategories?: boolean })
         borderBottom: `1px solid ${scrolled ? 'rgba(229,231,235,0.7)' : '#f1f5f9'}`,
         boxShadow: scrolled ? '0 1px 12px rgba(0,0,0,0.06)' : 'none',
         transition: 'background 0.25s, box-shadow 0.25s, border-color 0.25s',
-        // âœ… FIX PRINCIPAL : empÃªcher le dÃ©bordement horizontal
         width: '100%',
         maxWidth: '100vw',
         overflow: 'hidden',
       }}>
 
-        {/* â”€â”€ Main bar â”€â”€ */}
+        {/* ── Main bar ── */}
         <div style={{
           display: 'flex',
           alignItems: 'center',
           gap: 8,
-          // âœ… padding rÃ©duit sur mobile pour Ã©viter le dÃ©bordement
           padding: '0 12px',
           height: 52,
           width: '100%',
@@ -285,12 +312,12 @@ export function Navbar({ hideCategories = false }: { hideCategories?: boolean })
           overflow: 'hidden',
         }}>
 
-          {/* Logo */}
-          <Link href="/" style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: 4, textDecoration: 'none' }}>
-            <img src="/logo-navbar.svg" alt="Kivoo" style={{ height: 36, width: 'auto' }} />
+          {/* Logo fond clair */}
+          <Link href="/" style={{ flexShrink: 0, display: 'flex', alignItems: 'center', textDecoration: 'none' }}>
+            <LogoLight />
           </Link>
 
-          {/* â”€â”€ Desktop search â”€â”€ */}
+          {/* ── Desktop search ── */}
           <form
             onSubmit={handleSearch}
             className="hidden md:flex"
@@ -308,7 +335,6 @@ export function Navbar({ hideCategories = false }: { hideCategories?: boolean })
             onFocusCapture={e => { const f = e.currentTarget as HTMLFormElement; f.style.borderColor = '#F97316'; f.style.boxShadow = '0 0 0 3px rgba(249,115,22,0.12)' }}
             onBlurCapture={e => { const f = e.currentTarget as HTMLFormElement; f.style.borderColor = '#e2e8f0'; f.style.boxShadow = 'none' }}
           >
-            {/* City selector */}
             <div style={{ position: 'relative', flexShrink: 0 }} data-city-dropdown>
               <button type="button" onClick={() => setCityDropdown(prev => !prev)}
                 style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '0 12px', height: 40, fontSize: 12, fontWeight: 500, color: '#475569', background: 'none', border: 'none', borderRight: '1.5px solid #e2e8f0', cursor: 'pointer', whiteSpace: 'nowrap' }}
@@ -323,7 +349,7 @@ export function Navbar({ hideCategories = false }: { hideCategories?: boolean })
                   <button type="button" onClick={() => { setCity(null); setCityDropdown(false) }}
                     style={{ width: '100%', textAlign: 'left', padding: '10px 16px', fontSize: 13, fontWeight: !filters.city ? 700 : 400, color: !filters.city ? '#F97316' : '#374151', background: !filters.city ? '#FFF7ED' : 'none', border: 'none', cursor: 'pointer' }}
                   >
-                    ðŸ‡¨ðŸ‡® {t('search.all_ci')}
+                    🇨🇮 {t('search.all_ci')}
                   </button>
                   <div style={{ height: 1, background: '#f3f4f6', margin: '4px 0' }} />
                   {locationsLoading
@@ -345,12 +371,10 @@ export function Navbar({ hideCategories = false }: { hideCategories?: boolean })
               )}
             </div>
 
-            {/* Input */}
             <input type="text" placeholder={t('header.search_placeholder')} value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
               style={{ flex: 1, padding: '0 14px', height: 40, fontSize: 13, color: '#1e293b', background: 'none', border: 'none', outline: 'none' }}
             />
 
-            {/* Bouton recherche */}
             <button type="submit"
               style={{ padding: '0 18px', height: 40, background: '#F97316', color: '#fff', border: 'none', borderRadius: '0 8px 8px 0', cursor: 'pointer', display: 'flex', alignItems: 'center', transition: 'background 0.15s' }}
               onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = '#ea580c'}
@@ -360,7 +384,7 @@ export function Navbar({ hideCategories = false }: { hideCategories?: boolean })
             </button>
           </form>
 
-          {/* â”€â”€ Mobile search â”€â”€ */}
+          {/* ── Mobile search ── */}
           <form onSubmit={handleSearch} className="flex md:hidden"
             style={{ flex: 1, alignItems: 'center', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 9, overflow: 'hidden', height: 34, minWidth: 0 }}
           >
@@ -372,17 +396,10 @@ export function Navbar({ hideCategories = false }: { hideCategories?: boolean })
             </button>
           </form>
 
-          {/* â”€â”€ SÃ©parateur visuel desktop â”€â”€ */}
           <div className="hidden md:block" style={{ width: 1, height: 28, background: '#e2e8f0', flexShrink: 0 }} />
 
-          {/* â”€â”€ Right actions â”€â”€ */}
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 4,
-            flexShrink: 0,
-            marginLeft: 'auto',
-          }}>
+          {/* ── Right actions ── */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0, marginLeft: 'auto' }}>
 
             <Link href="/vendeur" className="hidden md:flex"
               style={{ alignItems: 'center', padding: '5px 12px', borderRadius: 7, color: '#475569', fontSize: 12, fontWeight: 500, textDecoration: 'none', transition: 'all 0.15s', whiteSpace: 'nowrap' }}
@@ -408,7 +425,6 @@ export function Navbar({ hideCategories = false }: { hideCategories?: boolean })
               <MessageCircle size={18} />
             </Link>
 
-            {/* Language switcher desktop */}
             <div className="hidden md:flex"
               style={{ alignItems: 'center', gap: 3, border: '1px solid #e2e8f0', borderRadius: 7, padding: '4px 9px', fontSize: 11 }}
             >
@@ -424,7 +440,6 @@ export function Navbar({ hideCategories = false }: { hideCategories?: boolean })
 
             <div className="hidden md:block" style={{ width: 1, height: 24, background: '#e2e8f0', margin: '0 4px', flexShrink: 0 }} />
 
-            {/* User connectÃ© desktop */}
             {user ? (
               <div ref={userMenuRef} className="hidden md:block" style={{ position: 'relative' }}>
                 <button onClick={() => setUserMenuOpen(prev => !prev)}
@@ -457,7 +472,6 @@ export function Navbar({ hideCategories = false }: { hideCategories?: boolean })
               </button>
             )}
 
-            {/* Bouton Publier â€” icÃ´ne seule sur mobile, texte sur desktop */}
             <button onClick={handlePublish}
               style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '7px 10px', borderRadius: 9, background: 'linear-gradient(135deg, #F97316 0%, #ef4444 100%)', color: '#fff', border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: 700, flexShrink: 0, boxShadow: '0 2px 8px rgba(249,115,22,0.35)', transition: 'all 0.2s ease', whiteSpace: 'nowrap' }}
               onMouseEnter={e => { const el = e.currentTarget as HTMLElement; el.style.background = 'linear-gradient(135deg, #ea580c 0%, #dc2626 100%)'; el.style.boxShadow = '0 4px 16px rgba(249,115,22,0.45)' }}
@@ -467,7 +481,6 @@ export function Navbar({ hideCategories = false }: { hideCategories?: boolean })
               <span className="hidden sm:inline">{t('header.post_ad')}</span>
             </button>
 
-            {/* Burger mobile */}
             <button onClick={() => setMobileMenu(prev => !prev)} className="md:hidden"
               style={{ padding: 7, borderRadius: 7, color: '#475569', background: 'none', border: 'none', cursor: 'pointer', flexShrink: 0 }}
             >
@@ -476,7 +489,7 @@ export function Navbar({ hideCategories = false }: { hideCategories?: boolean })
           </div>
         </div>
 
-        {/* â”€â”€ Desktop categories bar â”€â”€ */}
+        {/* ── Desktop categories bar ── */}
         {!hideCategories && (
           <div className="hidden md:block" style={{ background: '#0F1117', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
             <div style={{ maxWidth: 1400, margin: '0 auto', padding: '0 16px' }}>
@@ -485,7 +498,7 @@ export function Navbar({ hideCategories = false }: { hideCategories?: boolean })
           </div>
         )}
 
-        {/* â”€â”€ Mobile menu â€” panneau latÃ©ral droit â”€â”€ */}
+        {/* ── Mobile menu ── */}
         <AnimatePresence>
           {mobileMenu && (
             <motion.div
@@ -495,29 +508,23 @@ export function Navbar({ hideCategories = false }: { hideCategories?: boolean })
               exit={{ x: '100%' }}
               transition={{ type: 'tween', duration: 0.25, ease: 'easeInOut' }}
               style={{
-                position: 'fixed',
-                top: 0,
-                right: 0,
-                bottom: 0,
-                width: '80%',
-                maxWidth: 320,
-                background: '#fff',
-                zIndex: 51,
+                position: 'fixed', top: 0, right: 0, bottom: 0,
+                width: '80%', maxWidth: 320,
+                background: '#fff', zIndex: 51,
                 overflowY: 'auto',
                 boxShadow: '-4px 0 24px rgba(0,0,0,0.15)',
                 boxSizing: 'border-box',
               }}
             >
-              {/* Header du panneau */}
+              {/* Header du panneau — logo fond clair (menu blanc) */}
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px', borderBottom: '1px solid #f1f5f9', position: 'sticky', top: 0, background: '#fff', zIndex: 1 }}>
-                <img src="/logo-navbar.svg" alt="Kivoo" style={{ height: 28, width: 'auto' }} />
+                <LogoLight />
                 <button onClick={() => setMobileMenu(false)} style={{ padding: 6, borderRadius: 8, background: '#f1f5f9', border: 'none', cursor: 'pointer', display: 'flex' }}>
                   <X size={18} color="#475569" />
                 </button>
               </div>
 
               <div style={{ padding: '12px 16px', boxSizing: 'border-box' }}>
-                {/* Section utilisateur */}
                 {user ? (
                   <div style={{ background: '#f8fafc', borderRadius: 12, padding: '12px', marginBottom: 16, border: '0.5px solid #e2e8f0' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
@@ -558,8 +565,7 @@ export function Navbar({ hideCategories = false }: { hideCategories?: boolean })
                   </button>
                 )}
 
-                {/* CatÃ©gories */}
-                <p style={{ fontSize: 11, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>CatÃ©gories</p>
+                <p style={{ fontSize: 11, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>Catégories</p>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
                   {CATEGORIES.map(cat => (
                     <button key={cat.id} onClick={() => { setCategory(cat.id); router.push(`/search?category=${cat.id}`); setMobileMenu(false) }}
@@ -573,7 +579,6 @@ export function Navbar({ hideCategories = false }: { hideCategories?: boolean })
                   ))}
                 </div>
 
-                {/* Langue */}
                 <div style={{ marginTop: 16, paddingTop: 16, borderTop: '1px solid #f1f5f9', display: 'flex', alignItems: 'center', gap: 8 }}>
                   <Globe size={13} color="#94a3b8" />
                   <span style={{ fontSize: 12, color: '#64748b' }}>Langue :</span>
