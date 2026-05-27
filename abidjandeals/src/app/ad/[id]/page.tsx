@@ -2,6 +2,7 @@
 import { Footer } from '@/components/Footer'
 import { HybridGallery } from '@/components/HybridGallery'
 import { Navbar } from '@/components/Navbar'
+import { useI18n } from '@/contexts/i18nContext'
 import { supabase } from '@/lib/supabase'
 import { AlertTriangle, Calendar, Edit, Eye, Heart, Loader2, MapPin, MessageCircle, Phone, Share2, Shield, Trash2 } from 'lucide-react'
 import Link from 'next/link'
@@ -9,21 +10,18 @@ import { useParams, useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import toast, { Toaster } from 'react-hot-toast'
 
-// ─── Fonction utilitaire pour séparer images et vidéo ──────────────────────
 function filterMedia(images: string[]): { images: string[]; videoUrl: string | null } {
     const videoExtensions = ['.mp4', '.webm', '.mov', '.mkv', '.avi']
-    const isVideo = (url: string) =>
-        videoExtensions.some(ext => url.toLowerCase().endsWith(ext))
-
+    const isVideo = (url: string) => videoExtensions.some(ext => url.toLowerCase().endsWith(ext))
     const filteredImages = images.filter(url => !isVideo(url))
     const videoUrl = images.find(url => isVideo(url)) ?? null
-
     return { images: filteredImages, videoUrl }
 }
 
 export default function AdDetailPage() {
     const params = useParams()
     const router = useRouter()
+    const { t } = useI18n()
     const adId = params?.id as string
     const [ad, setAd] = useState<any>(null)
     const [found, setFound] = useState<boolean | null>(null)
@@ -57,7 +55,7 @@ export default function AdDetailPage() {
     }, [adId])
 
     function formatPrice(p: number) {
-        if (!p && p !== 0) return 'Prix non specifie'
+        if (!p && p !== 0) return t('publish.select')
         return new Intl.NumberFormat('fr-CI').format(p) + ' FCFA'
     }
 
@@ -65,9 +63,9 @@ export default function AdDetailPage() {
         if (!iso) return ''
         try {
             const days = Math.floor((Date.now() - new Date(iso).getTime()) / 86400000)
-            if (days === 0) return "Aujourd'hui"
-            if (days === 1) return 'Hier'
-            if (days < 7) return `Il y a ${days} jours`
+            if (days === 0) return t('ad_page.today')
+            if (days === 1) return t('ad_page.yesterday')
+            if (days < 7) return `${days} ${t('ad_page.days_ago')}`
             return new Date(iso).toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' })
         } catch (e) { return '' }
     }
@@ -78,12 +76,12 @@ export default function AdDetailPage() {
             navigator.share({ title: ad.title, url: window.location.href })
         } else {
             navigator.clipboard.writeText(window.location.href)
-            toast.success('Lien copie !')
+            toast.success(t('ad.link_copied'))
         }
     }
 
     async function handleDelete() {
-        if (!confirm('Supprimer cette annonce ?')) return
+        if (!confirm(t('moderation.confirm_delete'))) return
         setDeleting(true)
         try {
             const res = await fetch('/api/admin/ads', {
@@ -91,10 +89,10 @@ export default function AdDetailPage() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ id: adId, images: ad?.images || [] }),
             })
-            if (res.ok) { toast.success('Supprimee'); router.push('/dashboard') }
-            else toast.error('Erreur lors de la suppression')
+            if (res.ok) { toast.success(t('moderation.ad_deleted')); router.push('/dashboard') }
+            else toast.error(t('publish.error'))
         } catch (err) {
-            toast.error('Erreur reseau')
+            toast.error(t('publish.error'))
         } finally {
             setDeleting(false)
         }
@@ -105,7 +103,7 @@ export default function AdDetailPage() {
         const number = (ad.whatsapp || ad.tel)?.replace(/[\s+]/g, '')
         if (!number) return '#'
         const message = encodeURIComponent(
-            `Bonjour, je suis intéressé(e) par votre annonce "${ad.title}" sur KIVOO. Est-ce encore disponible ?`
+            `${t('ad.whatsapp_message')} "${ad.title}" sur KIVOO. Est-ce encore disponible ?`
         )
         return `https://wa.me/${number}?text=${message}`
     }
@@ -125,20 +123,18 @@ export default function AdDetailPage() {
             <Navbar />
             <div className="flex-1 flex flex-col items-center justify-center gap-4">
                 <AlertTriangle size={48} className="text-orange-400" />
-                <h1 className="text-xl font-bold">Annonce introuvable</h1>
-                <p className="text-gray-500">Cette annonce n'existe plus ou a ete supprimee.</p>
+                <h1 className="text-xl font-bold">{t('ads.no_results')}</h1>
+                <p className="text-gray-500">{t('ads.no_results')}</p>
                 <Link href="/" className="px-5 py-2.5 bg-orange-500 text-white rounded-2xl font-semibold text-sm">
-                    Retour accueil
+                    {t('ad.home')}
                 </Link>
             </div>
             <Footer />
         </div>
     )
 
-    // 🔥 Filtrage AVANT d'envoyer au composant
     const { images, videoUrl: extractedVideo } = filterMedia(ad.images ?? [])
     const finalVideoUrl = ad.video_url ?? extractedVideo
-
     const isOwner = !!(sessionUid && sessionUid === ad.user_id)
     const hasWhatsApp = !!(ad.whatsapp || ad.tel)
     const whatsappUrl = buildWhatsAppUrl()
@@ -150,7 +146,7 @@ export default function AdDetailPage() {
                 <Navbar />
                 <main className="flex-1 max-w-5xl mx-auto w-full px-4 py-6 pb-28 lg:pb-6">
                     <div className="flex items-center gap-2 text-sm text-gray-400 mb-4">
-                        <Link href="/" className="hover:text-orange-500">Accueil</Link>
+                        <Link href="/" className="hover:text-orange-500">{t('ad.home')}</Link>
                         <span>/</span>
                         <span className="text-gray-600 font-medium truncate">{ad.title}</span>
                     </div>
@@ -170,16 +166,16 @@ export default function AdDetailPage() {
                             {/* Boutons favoris et partage */}
                             <div className="flex gap-2 justify-end">
                                 <button
-                                    onClick={() => { setIsFav(f => !f); toast.success(isFav ? 'Retire' : 'Ajoute aux favoris') }}
+                                    onClick={() => { setIsFav(f => !f); toast.success(isFav ? t('ad.removed_favorite') : t('ad.added_favorite')) }}
                                     className={`flex items-center gap-2 px-4 py-2 rounded-xl border text-sm font-medium transition ${isFav ? 'bg-red-50 border-red-200 text-red-500' : 'bg-white border-gray-200 text-gray-500 hover:border-red-200'}`}>
                                     <Heart size={15} fill={isFav ? 'currentColor' : 'none'} />
-                                    {isFav ? 'Favori' : 'Ajouter aux favoris'}
+                                    {isFav ? t('ad.favorited') : t('ad.add_favorite')}
                                 </button>
                                 <button
                                     onClick={share}
                                     className="flex items-center gap-2 px-4 py-2 rounded-xl border border-gray-200 bg-white text-gray-500 text-sm font-medium hover:border-orange-200 transition">
                                     <Share2 size={15} />
-                                    Partager
+                                    {t('ad.share')}
                                 </button>
                             </div>
 
@@ -207,10 +203,10 @@ export default function AdDetailPage() {
                                 </div>
                                 <div className="flex gap-2 mb-4 flex-wrap">
                                     <span className="text-xs bg-gray-100 text-gray-500 px-3 py-1 rounded-full flex items-center gap-1">
-                                        <Eye size={11} /> {ad.views || 0} vues
+                                        <Eye size={11} /> {ad.views || 0} {t('ads.views')}
                                     </span>
                                     {ad.status === 'active' && (
-                                        <span className="text-xs bg-green-50 text-green-600 px-3 py-1 rounded-full">Annonce verifiee</span>
+                                        <span className="text-xs bg-green-50 text-green-600 px-3 py-1 rounded-full">{t('ad_page.verified_ad')}</span>
                                     )}
                                     {ad.marque && (
                                         <span className="text-xs bg-blue-50 text-blue-600 px-3 py-1 rounded-full">{ad.marque}</span>
@@ -221,40 +217,40 @@ export default function AdDetailPage() {
                                 )}
                             </div>
 
-                            {/* Actions proprietaire */}
+                            {/* Actions propriétaire */}
                             {isOwner && (
                                 <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex items-center gap-3">
                                     <Shield size={16} className="text-amber-600" />
-                                    <span className="text-sm text-amber-700 font-medium flex-1">Votre annonce</span>
+                                    <span className="text-sm text-amber-700 font-medium flex-1">{t('ad_page.your_ad')}</span>
                                     <div className="flex gap-2">
                                         <Link href={`/ad/${adId}/edit`}
                                             className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-amber-200 rounded-xl text-sm text-amber-700 font-medium">
-                                            <Edit size={13} /> Modifier
+                                            <Edit size={13} /> {t('ad_page.edit')}
                                         </Link>
                                         <button onClick={handleDelete} disabled={deleting}
                                             className="flex items-center gap-1.5 px-3 py-1.5 bg-red-50 border border-red-200 rounded-xl text-sm text-red-600 font-medium disabled:opacity-50">
                                             {deleting ? <Loader2 size={13} className="animate-spin" /> : <Trash2 size={13} />}
-                                            Supprimer
+                                            {t('ad_page.delete')}
                                         </button>
                                     </div>
                                 </div>
                             )}
                         </div>
 
-                        {/* ── Colonne vendeur (desktop uniquement) ─────────────────────────── */}
+                        {/* Colonne vendeur desktop */}
                         <div className="space-y-4 hidden lg:block">
                             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
                                 <div className="flex items-center gap-3 mb-4 pb-4 border-b border-gray-100">
                                     <div className="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center text-orange-600 font-bold">
                                         V
                                     </div>
-                                    <p className="font-bold text-gray-900">Vendeur</p>
+                                    <p className="font-bold text-gray-900">{t('ad.seller')}</p>
                                 </div>
                                 <div className="space-y-2.5">
                                     {ad.tel && (
                                         <a href={`tel:${ad.tel}`}
                                             className="flex items-center justify-center gap-2 w-full py-3 rounded-2xl bg-orange-500 hover:bg-orange-600 text-white font-bold text-sm transition">
-                                            <Phone size={16} /> Appeler
+                                            <Phone size={16} /> {t('ad.call')}
                                         </a>
                                     )}
                                     {hasWhatsApp && (
@@ -266,20 +262,21 @@ export default function AdDetailPage() {
                                     )}
                                 </div>
                                 <p className="text-xs text-gray-400 text-center mt-3">
-                                    Ne payez jamais a l avance sans voir le produit
+                                    {t('ad_page.no_advance_payment')}
                                 </p>
                             </div>
 
+                            {/* Conseils sécurité */}
                             <div className="bg-blue-50 border border-blue-100 rounded-2xl p-4">
                                 <div className="flex items-center gap-2 mb-2">
                                     <Shield size={15} className="text-blue-500" />
-                                    <p className="text-sm font-semibold text-blue-700">Conseils de securite</p>
+                                    <p className="text-sm font-semibold text-blue-700">{t('ad.safety_title')}</p>
                                 </div>
                                 <ul className="text-xs text-blue-600 space-y-1">
-                                    <li>Rencontrez le vendeur en lieu public</li>
-                                    <li>Verifiez le produit avant paiement</li>
-                                    <li>Mefiez-vous des prix trop bas</li>
-                                    <li>Ne transferez pas d argent a l avance</li>
+                                    <li>{t('ad.safety_2')}</li>
+                                    <li>{t('ad.safety_3')}</li>
+                                    <li>{t('ad_page.safety_4')}</li>
+                                    <li>{t('ad.safety_1')}</li>
                                 </ul>
                             </div>
                         </div>
@@ -288,7 +285,7 @@ export default function AdDetailPage() {
                 <Footer />
             </div>
 
-            {/* ── Bouton WhatsApp fixe en bas — mobile uniquement ─────────────────── */}
+            {/* Bouton WhatsApp fixe mobile */}
             {hasWhatsApp && (
                 <div className="fixed bottom-0 left-0 right-0 z-50 lg:hidden px-4 pb-4 pt-2 bg-gradient-to-t from-white via-white/95 to-transparent">
                     <a
@@ -298,7 +295,7 @@ export default function AdDetailPage() {
                         className="flex items-center justify-center gap-3 w-full py-4 rounded-2xl bg-[#25D366] hover:bg-[#20b858] active:scale-95 text-white font-extrabold text-base shadow-lg shadow-green-200 transition-all"
                     >
                         <MessageCircle size={20} />
-                        Contacter sur WhatsApp
+                        {t('ads.contact_seller')}
                     </a>
                 </div>
             )}

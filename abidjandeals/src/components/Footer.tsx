@@ -26,7 +26,7 @@ export function Footer() {
             </div>
           </div>
 
-          {/* Catégories */}
+          {/* Catégories — noms traduits via cat_names */}
           <div>
             <h4 className="font-semibold text-sm uppercase tracking-wider text-white/40 mb-4">
               {t('footer.categories')}
@@ -38,7 +38,7 @@ export function Footer() {
                     href={`/search?category=${c.id}`}
                     className="text-white/60 hover:text-orange-400 text-sm transition-colors"
                   >
-                    {c.icon} {c.name}
+                    {c.icon} {t(`cat_names.${c.id}` as any) || c.name}
                   </Link>
                 </li>
               ))}
