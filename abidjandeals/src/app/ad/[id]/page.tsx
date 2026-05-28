@@ -7,27 +7,35 @@ import { supabase } from '@/lib/supabase'
 import { AlertTriangle, Calendar, Edit, Eye, Heart, Loader2, MapPin, MessageCircle, Phone, Share2, Shield, Trash2 } from 'lucide-react'
 import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import toast, { Toaster } from 'react-hot-toast'
 
 function filterMedia(images: string[]): { images: string[]; videoUrl: string | null } {
     const videoExtensions = ['.mp4', '.webm', '.mov', '.mkv', '.avi']
     const isVideo = (url: string) => videoExtensions.some(ext => url.toLowerCase().endsWith(ext))
-    const filteredImages = images.filter(url => !isVideo(url))
-    const videoUrl = images.find(url => isVideo(url)) ?? null
-    return { images: filteredImages, videoUrl }
+    return {
+        images: images.filter(url => !isVideo(url)),
+        videoUrl: images.find(url => isVideo(url)) ?? null,
+    }
 }
 
 export default function AdDetailPage() {
     const params = useParams()
     const router = useRouter()
-    const { t } = useI18n()
+    const { t, locale } = useI18n()
     const adId = params?.id as string
+
     const [ad, setAd] = useState<any>(null)
     const [found, setFound] = useState<boolean | null>(null)
     const [sessionUid, setSessionUid] = useState<string | null>(null)
     const [isFav, setIsFav] = useState(false)
     const [deleting, setDeleting] = useState(false)
+
+    // ── Traduction DeepL ──────────────────────────────────────────────────────
+    const [translatedTitle, setTranslatedTitle] = useState<string | null>(null)
+    const [translatedDesc, setTranslatedDesc] = useState<string | null>(null)
+    const [translating, setTranslating] = useState(false)
+    const lastTranslatedLocale = useRef<string | null>(null)
 
     useEffect(() => {
         async function loadAd() {
@@ -36,23 +44,46 @@ export default function AdDetailPage() {
                 const { data: { session } } = await supabase.auth.getSession()
                 setSessionUid(session?.user?.id ?? null)
                 const { data, error } = await supabase
-                    .from('ads')
-                    .select('*')
-                    .eq('id', adId)
-                    .maybeSingle()
-                if (error) { setFound(false); return }
-                if (!data) { setFound(false); return }
+                    .from('ads').select('*').eq('id', adId).maybeSingle()
+                if (error || !data) { setFound(false); return }
                 setAd(data)
                 setFound(true)
                 if (data.status === 'active') {
                     await supabase.from('ads').update({ views: (data.views || 0) + 1 }).eq('id', adId)
                 }
-            } catch (err) {
-                setFound(false)
-            }
+            } catch { setFound(false) }
         }
         loadAd()
     }, [adId])
+
+    // Traduit titre + description quand locale passe à 'en'
+    useEffect(() => {
+        if (!ad || locale === lastTranslatedLocale.current) return
+
+        if (locale === 'en') {
+            setTranslating(true)
+            const texts = [ad.title, ad.description].filter(Boolean)
+            fetch('/api/translate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ text: texts, target_lang: 'EN' }),
+            })
+                .then(r => r.json())
+                .then(data => {
+                    if (data.translations) {
+                        setTranslatedTitle(data.translations[0] ?? ad.title)
+                        setTranslatedDesc(data.translations[1] ?? ad.description)
+                    }
+                })
+                .catch(() => {/* garde le texte original en cas d'erreur */ })
+                .finally(() => setTranslating(false))
+        } else {
+            // Retour en FR : réaffiche l'original
+            setTranslatedTitle(null)
+            setTranslatedDesc(null)
+        }
+        lastTranslatedLocale.current = locale
+    }, [locale, ad])
 
     function formatPrice(p: number) {
         if (!p && p !== 0) return t('publish.select')
@@ -66,8 +97,21 @@ export default function AdDetailPage() {
             if (days === 0) return t('ad_page.today')
             if (days === 1) return t('ad_page.yesterday')
             if (days < 7) return `${days} ${t('ad_page.days_ago')}`
-            return new Date(iso).toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' })
-        } catch (e) { return '' }
+            const dateLocale = locale === 'fr' ? 'fr-FR' : 'en-GB'
+            return new Date(iso).toLocaleDateString(dateLocale, { day: '2-digit', month: 'long', year: 'numeric' })
+        } catch { return '' }
+    }
+
+    function translateCondition(etat: string): string {
+        const map: Record<string, string> = {
+            'Neuf': t('publish.condition_new'),
+            'Comme neuf': t('publish.condition_like_new'),
+            'Bon état': t('publish.condition_good'),
+            'Très bon état': t('publish.condition_like_new'),
+            'État correct': t('publish.condition_correct'),
+            'Disponible': t('publish.condition_available'),
+        }
+        return map[etat] ?? etat
     }
 
     function share() {
@@ -91,11 +135,8 @@ export default function AdDetailPage() {
             })
             if (res.ok) { toast.success(t('moderation.ad_deleted')); router.push('/dashboard') }
             else toast.error(t('publish.error'))
-        } catch (err) {
-            toast.error(t('publish.error'))
-        } finally {
-            setDeleting(false)
-        }
+        } catch { toast.error(t('publish.error')) }
+        finally { setDeleting(false) }
     }
 
     function buildWhatsAppUrl() {
@@ -103,7 +144,7 @@ export default function AdDetailPage() {
         const number = (ad.whatsapp || ad.tel)?.replace(/[\s+]/g, '')
         if (!number) return '#'
         const message = encodeURIComponent(
-            `${t('ad.whatsapp_message')} "${ad.title}" sur KIVOO. Est-ce encore disponible ?`
+            `${t('ad.whatsapp_message')} "${ad.title}" sur KIVOO. ${t('ad.whatsapp_available')}`
         )
         return `https://wa.me/${number}?text=${message}`
     }
@@ -124,7 +165,6 @@ export default function AdDetailPage() {
             <div className="flex-1 flex flex-col items-center justify-center gap-4">
                 <AlertTriangle size={48} className="text-orange-400" />
                 <h1 className="text-xl font-bold">{t('ads.no_results')}</h1>
-                <p className="text-gray-500">{t('ads.no_results')}</p>
                 <Link href="/" className="px-5 py-2.5 bg-orange-500 text-white rounded-2xl font-semibold text-sm">
                     {t('ad.home')}
                 </Link>
@@ -139,6 +179,10 @@ export default function AdDetailPage() {
     const hasWhatsApp = !!(ad.whatsapp || ad.tel)
     const whatsappUrl = buildWhatsAppUrl()
 
+    // Titre et description : traduits si EN, originaux si FR
+    const displayTitle = (locale === 'en' && translatedTitle) ? translatedTitle : ad.title
+    const displayDesc = (locale === 'en' && translatedDesc) ? translatedDesc : ad.description
+
     return (
         <>
             <div className="min-h-screen flex flex-col bg-gray-50">
@@ -148,22 +192,16 @@ export default function AdDetailPage() {
                     <div className="flex items-center gap-2 text-sm text-gray-400 mb-4">
                         <Link href="/" className="hover:text-orange-500">{t('ad.home')}</Link>
                         <span>/</span>
-                        <span className="text-gray-600 font-medium truncate">{ad.title}</span>
+                        <span className="text-gray-600 font-medium truncate">{displayTitle}</span>
                     </div>
 
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                         <div className="lg:col-span-2 space-y-4">
 
-                            {/* Galerie hybride */}
                             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-                                <HybridGallery
-                                    images={images}
-                                    videoUrl={finalVideoUrl}
-                                    alt={ad.title}
-                                />
+                                <HybridGallery images={images} videoUrl={finalVideoUrl} alt={ad.title} />
                             </div>
 
-                            {/* Boutons favoris et partage */}
                             <div className="flex gap-2 justify-end">
                                 <button
                                     onClick={() => { setIsFav(f => !f); toast.success(isFav ? t('ad.removed_favorite') : t('ad.added_favorite')) }}
@@ -171,19 +209,20 @@ export default function AdDetailPage() {
                                     <Heart size={15} fill={isFav ? 'currentColor' : 'none'} />
                                     {isFav ? t('ad.favorited') : t('ad.add_favorite')}
                                 </button>
-                                <button
-                                    onClick={share}
+                                <button onClick={share}
                                     className="flex items-center gap-2 px-4 py-2 rounded-xl border border-gray-200 bg-white text-gray-500 text-sm font-medium hover:border-orange-200 transition">
-                                    <Share2 size={15} />
-                                    {t('ad.share')}
+                                    <Share2 size={15} /> {t('ad.share')}
                                 </button>
                             </div>
 
-                            {/* Infos */}
                             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
                                 <div className="flex items-start justify-between gap-3 mb-4">
                                     <div>
-                                        <h1 className="text-xl font-extrabold text-gray-900">{ad.title}</h1>
+                                        {/* Titre avec indicateur de traduction */}
+                                        <h1 className="text-xl font-extrabold text-gray-900 flex items-center gap-2">
+                                            {displayTitle}
+                                            {translating && <Loader2 size={14} className="animate-spin text-orange-400 flex-shrink-0" />}
+                                        </h1>
                                         <div className="flex items-center gap-2 mt-1.5">
                                             <MapPin size={13} className="text-orange-500" />
                                             <span className="text-sm text-gray-500">
@@ -197,27 +236,35 @@ export default function AdDetailPage() {
                                     <div className="text-right flex-shrink-0">
                                         <p className="text-2xl font-extrabold text-orange-500">{formatPrice(ad.price)}</p>
                                         {ad.etat && (
-                                            <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">{ad.etat}</span>
+                                            <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
+                                                {translateCondition(ad.etat)}
+                                            </span>
                                         )}
                                     </div>
                                 </div>
+
                                 <div className="flex gap-2 mb-4 flex-wrap">
                                     <span className="text-xs bg-gray-100 text-gray-500 px-3 py-1 rounded-full flex items-center gap-1">
                                         <Eye size={11} /> {ad.views || 0} {t('ads.views')}
                                     </span>
                                     {ad.status === 'active' && (
-                                        <span className="text-xs bg-green-50 text-green-600 px-3 py-1 rounded-full">{t('ad_page.verified_ad')}</span>
+                                        <span className="text-xs bg-green-50 text-green-600 px-3 py-1 rounded-full">
+                                            {t('ad_page.verified_ad')}
+                                        </span>
                                     )}
                                     {ad.marque && (
                                         <span className="text-xs bg-blue-50 text-blue-600 px-3 py-1 rounded-full">{ad.marque}</span>
                                     )}
                                 </div>
-                                {ad.description && (
-                                    <p className="text-sm text-gray-600 leading-relaxed whitespace-pre-line">{ad.description}</p>
+
+                                {/* Description traduite */}
+                                {displayDesc && (
+                                    <p className="text-sm text-gray-600 leading-relaxed whitespace-pre-line">
+                                        {displayDesc}
+                                    </p>
                                 )}
                             </div>
 
-                            {/* Actions propriétaire */}
                             {isOwner && (
                                 <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex items-center gap-3">
                                     <Shield size={16} className="text-amber-600" />
@@ -237,13 +284,10 @@ export default function AdDetailPage() {
                             )}
                         </div>
 
-                        {/* Colonne vendeur desktop */}
                         <div className="space-y-4 hidden lg:block">
                             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
                                 <div className="flex items-center gap-3 mb-4 pb-4 border-b border-gray-100">
-                                    <div className="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center text-orange-600 font-bold">
-                                        V
-                                    </div>
+                                    <div className="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center text-orange-600 font-bold">V</div>
                                     <p className="font-bold text-gray-900">{t('ad.seller')}</p>
                                 </div>
                                 <div className="space-y-2.5">
@@ -254,19 +298,15 @@ export default function AdDetailPage() {
                                         </a>
                                     )}
                                     {hasWhatsApp && (
-                                        <a href={whatsappUrl}
-                                            target="_blank" rel="noopener noreferrer"
+                                        <a href={whatsappUrl} target="_blank" rel="noopener noreferrer"
                                             className="flex items-center justify-center gap-2 w-full py-3 rounded-2xl bg-green-500 hover:bg-green-600 text-white font-bold text-sm transition">
                                             <MessageCircle size={16} /> WhatsApp
                                         </a>
                                     )}
                                 </div>
-                                <p className="text-xs text-gray-400 text-center mt-3">
-                                    {t('ad_page.no_advance_payment')}
-                                </p>
+                                <p className="text-xs text-gray-400 text-center mt-3">{t('ad_page.no_advance_payment')}</p>
                             </div>
 
-                            {/* Conseils sécurité */}
                             <div className="bg-blue-50 border border-blue-100 rounded-2xl p-4">
                                 <div className="flex items-center gap-2 mb-2">
                                     <Shield size={15} className="text-blue-500" />
@@ -285,15 +325,10 @@ export default function AdDetailPage() {
                 <Footer />
             </div>
 
-            {/* Bouton WhatsApp fixe mobile */}
             {hasWhatsApp && (
                 <div className="fixed bottom-0 left-0 right-0 z-50 lg:hidden px-4 pb-4 pt-2 bg-gradient-to-t from-white via-white/95 to-transparent">
-                    <a
-                        href={whatsappUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center justify-center gap-3 w-full py-4 rounded-2xl bg-[#25D366] hover:bg-[#20b858] active:scale-95 text-white font-extrabold text-base shadow-lg shadow-green-200 transition-all"
-                    >
+                    <a href={whatsappUrl} target="_blank" rel="noopener noreferrer"
+                        className="flex items-center justify-center gap-3 w-full py-4 rounded-2xl bg-[#25D366] hover:bg-[#20b858] active:scale-95 text-white font-extrabold text-base shadow-lg shadow-green-200 transition-all">
                         <MessageCircle size={20} />
                         {t('ads.contact_seller')}
                     </a>
