@@ -1,13 +1,13 @@
 'use client'
-import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
-import { X, Eye, EyeOff, Mail, Lock, User, Phone, CheckCircle, Loader2 } from 'lucide-react'
 import { useStore } from '@/lib/store'
-import { supabase, Profile } from '@/lib/supabase'
+import { Profile, supabase } from '@/lib/supabase'
+import { CheckCircle, Eye, EyeOff, Loader2, Lock, Mail, Phone, User, X } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
 
 // ── Étapes de l'inscription ──────────────────────────────────
-type RegisterStep = 'form' | 'verify-phone'
+type RegisterStep = 'form' | 'check-email'
 
 export function AuthModal() {
   const router = useRouter()
@@ -17,33 +17,21 @@ export function AuthModal() {
     pendingAction, setPendingAction,
   } = useStore()
 
-  const [tab,          setTab]          = useState<'login' | 'register'>('login')
-  const [regStep,      setRegStep]      = useState<RegisterStep>('form')
-  const [loading,      setLoading]      = useState(false)
-  const [showPwd,      setShowPwd]      = useState(false)
-  const [otpCode,      setOtpCode]      = useState('')
-  const [otpLoading,   setOtpLoading]   = useState(false)
-  const [otpSent,      setOtpSent]      = useState(false)
-  const [otpError,     setOtpError]     = useState('')
-  const [countdown,    setCountdown]    = useState(0)
+  const [tab, setTab] = useState<'login' | 'register'>('login')
+  const [regStep, setRegStep] = useState<RegisterStep>('form')
+  const [loading, setLoading] = useState(false)
+  const [showPwd, setShowPwd] = useState(false)
 
   // Login
   const [email, setEmail] = useState('')
-  const [pwd,   setPwd]   = useState('')
+  const [pwd, setPwd] = useState('')
 
   // Register
-  const [prenom,   setPrenom]   = useState('')
-  const [nom,      setNom]      = useState('')
-  const [tel,      setTel]      = useState('')
+  const [prenom, setPrenom] = useState('')
+  const [nom, setNom] = useState('')
+  const [tel, setTel] = useState('')
   const [regEmail, setRegEmail] = useState('')
-  const [regPwd,   setRegPwd]   = useState('')
-
-  // Countdown renvoi OTP
-  useEffect(() => {
-    if (countdown <= 0) return
-    const t = setTimeout(() => setCountdown(c => c - 1), 1000)
-    return () => clearTimeout(t)
-  }, [countdown])
+  const [regPwd, setRegPwd] = useState('')
 
   useEffect(() => {
     if (!user || !authModalOpen || !loading) return
@@ -81,15 +69,20 @@ export function AuthModal() {
       const { data, error } = await supabase.auth.signInWithPassword({ email, password: pwd })
 
       if (error) {
-        toast.error('Identifiants incorrects')
-        setLoading(false) // ✅ FIX
+        // Message clair si email non confirmé
+        if (error.message.includes('Email not confirmed')) {
+          toast.error('Confirmez votre email avant de vous connecter. Vérifiez votre boîte mail.')
+        } else {
+          toast.error('Identifiants incorrects')
+        }
+        setLoading(false)
         return
       }
 
       const userId = data.user?.id
       if (!userId) {
         toast.error('Erreur inattendue. Réessayez.')
-        setLoading(false) // ✅ FIX
+        setLoading(false)
         return
       }
 
@@ -98,8 +91,7 @@ export function AuthModal() {
 
       if (profileError || !profile) {
         toast.error('Profil introuvable. Contactez le support.')
-        console.error('Profile error:', profileError)
-        setLoading(false) // ✅ FIX
+        setLoading(false)
         return
       }
 
@@ -107,11 +99,11 @@ export function AuthModal() {
       closeAndRedirect(profile.prenom)
     } catch {
       toast.error('Erreur de connexion. Réessayez.')
-      setLoading(false) // ✅ FIX
+      setLoading(false)
     }
   }
 
-  // ── Inscription étape 1 : création du compte ─────────────────
+  // ── Inscription ──────────────────────────────────────────────
   async function handleRegister(e: React.FormEvent) {
     e.preventDefault()
     if (regPwd.length < 8) { toast.error('Mot de passe trop court (min. 8 caractères)'); return }
@@ -122,74 +114,27 @@ export function AuthModal() {
       const { error } = await supabase.auth.signUp({
         email: regEmail,
         password: regPwd,
-        options: { data: { prenom, nom, tel } },
+        options: {
+          data: { prenom, nom, tel },
+          // Supabase enverra un email de confirmation automatiquement
+        },
       })
-      if (error) { toast.error(error.message); return }
 
-      // Passer à la vérification téléphone
-      setRegStep('verify-phone')
-      await sendOtp()
+      if (error) {
+        if (error.message.includes('already registered')) {
+          toast.error('Cet email est déjà utilisé. Connectez-vous.')
+        } else {
+          toast.error(error.message)
+        }
+        return
+      }
+
+      // Passer à l'écran "Vérifiez votre email"
+      setRegStep('check-email')
     } catch {
       toast.error('Erreur lors de la création du compte.')
     } finally {
       setLoading(false)
-    }
-  }
-
-  // ── Envoi OTP ────────────────────────────────────────────────
-  async function sendOtp() {
-    setOtpLoading(true)
-    setOtpError('')
-    try {
-      const res = await fetch('/api/auth/verify-phone', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'send', phone: tel }),
-      })
-      const data = await res.json()
-
-      if (!res.ok) {
-        setOtpError(data.error ?? 'Erreur envoi SMS')
-        return
-      }
-
-      setOtpSent(true)
-      setCountdown(60)
-      toast.success(`SMS envoyé au ${tel}`)
-    } catch {
-      setOtpError('Impossible d\'envoyer le SMS. Vérifiez votre numéro.')
-    } finally {
-      setOtpLoading(false)
-    }
-  }
-
-  // ── Vérification OTP ─────────────────────────────────────────
-  async function handleVerifyOtp(e: React.FormEvent) {
-    e.preventDefault()
-    if (otpCode.length < 4) { setOtpError('Code trop court'); return }
-
-    setOtpLoading(true)
-    setOtpError('')
-    try {
-      const res = await fetch('/api/auth/verify-phone', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'verify', phone: tel, token: otpCode }),
-      })
-      const data = await res.json()
-
-      if (!res.ok) {
-        setOtpError(data.error ?? 'Code incorrect')
-        return
-      }
-
-      toast.success('Téléphone vérifié ✅')
-      setAuthModalOpen(false)
-      router.push('/vendeur#niveaux')
-    } catch {
-      setOtpError('Erreur de vérification. Réessayez.')
-    } finally {
-      setOtpLoading(false)
     }
   }
 
@@ -198,7 +143,7 @@ export function AuthModal() {
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
       <div
         className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-        onClick={() => { if (!loading && !otpLoading) setAuthModalOpen(false) }}
+        onClick={() => { if (!loading) setAuthModalOpen(false) }}
       />
 
       <div className="relative w-full max-w-md bg-white rounded-3xl shadow-2xl overflow-hidden">
@@ -206,7 +151,7 @@ export function AuthModal() {
         {/* Header */}
         <div className="bg-gradient-to-br from-dark to-gray-800 px-8 pt-8 pb-6 relative">
           <button
-            onClick={() => { if (!loading && !otpLoading) setAuthModalOpen(false) }}
+            onClick={() => { if (!loading) setAuthModalOpen(false) }}
             className="absolute top-4 right-4 p-2 rounded-xl text-white/60 hover:text-white hover:bg-white/10 transition-colors"
           >
             <X size={18} />
@@ -215,33 +160,31 @@ export function AuthModal() {
           <h2 className="text-white font-sans font-bold text-2xl">
             {tab === 'login'
               ? 'Bon retour !'
-              : regStep === 'verify-phone'
-              ? 'Vérification téléphone'
-              : 'Rejoignez-nous'}
+              : regStep === 'check-email'
+                ? 'Vérifiez votre email'
+                : 'Rejoignez-nous'}
           </h2>
           <p className="text-white/60 text-sm mt-1">
             {tab === 'login'
-              ? 'Connectez-vous à votre compte AbidjanDeals'
-              : regStep === 'verify-phone'
-              ? `Code envoyé au ${tel}`
-              : 'Créez votre compte gratuitement'}
+              ? 'Connectez-vous à votre compte KIVOO'
+              : regStep === 'check-email'
+                ? `Un lien de confirmation a été envoyé à ${regEmail}`
+                : 'Créez votre compte gratuitement'}
           </p>
 
           {regStep === 'form' && (
             <div className="flex gap-1 mt-5 bg-white/10 p-1 rounded-xl">
               <button
                 onClick={() => setTab('login')}
-                className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all ${
-                  tab === 'login' ? 'bg-orange-500 text-white shadow-sm' : 'text-white/70 hover:text-white'
-                }`}
+                className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all ${tab === 'login' ? 'bg-orange-500 text-white shadow-sm' : 'text-white/70 hover:text-white'
+                  }`}
               >
                 Connexion
               </button>
               <button
                 onClick={() => setTab('register')}
-                className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all ${
-                  tab === 'register' ? 'bg-orange-500 text-white shadow-sm' : 'text-white/70 hover:text-white'
-                }`}
+                className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all ${tab === 'register' ? 'bg-orange-500 text-white shadow-sm' : 'text-white/70 hover:text-white'
+                  }`}
               >
                 S&apos;inscrire
               </button>
@@ -289,14 +232,14 @@ export function AuthModal() {
               >
                 {loading
                   ? <span className="flex items-center justify-center gap-2">
-                      <Loader2 size={16} className="animate-spin" /> Connexion...
-                    </span>
+                    <Loader2 size={16} className="animate-spin" /> Connexion...
+                  </span>
                   : 'Se connecter'}
               </button>
             </form>
           )}
 
-          {/* ── Inscription étape 1 : formulaire ── */}
+          {/* ── Inscription formulaire ── */}
           {tab === 'register' && regStep === 'form' && (
             <form onSubmit={handleRegister} className="space-y-4">
               <div className="grid grid-cols-2 gap-3">
@@ -324,7 +267,6 @@ export function AuthModal() {
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1.5">
                   Téléphone <span className="text-orange-500">*</span>
-                  <span className="text-xs text-gray-400 font-normal ml-1">(sera vérifié par SMS)</span>
                 </label>
                 <div className="relative">
                   <Phone size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
@@ -376,8 +318,8 @@ export function AuthModal() {
               >
                 {loading
                   ? <span className="flex items-center justify-center gap-2">
-                      <Loader2 size={16} className="animate-spin" /> Création du compte...
-                    </span>
+                    <Loader2 size={16} className="animate-spin" /> Création du compte...
+                  </span>
                   : 'Créer mon compte gratuit'}
               </button>
               <p className="text-xs text-gray-400 text-center">
@@ -387,85 +329,51 @@ export function AuthModal() {
             </form>
           )}
 
-          {/* ── Inscription étape 2 : vérification OTP ── */}
-          {tab === 'register' && regStep === 'verify-phone' && (
-            <form onSubmit={handleVerifyOtp} className="space-y-5">
-
-              <div className="text-center">
-                <div className="w-16 h-16 bg-orange-50 rounded-full flex items-center justify-center mx-auto mb-3">
-                  <Phone size={28} className="text-orange-500" />
-                </div>
-                <p className="text-sm text-gray-500 leading-relaxed">
-                  Entrez le code à 6 chiffres reçu par SMS au
-                  <br />
-                  <strong className="text-gray-900">{tel}</strong>
-                </p>
+          {/* ── Vérification email ── */}
+          {tab === 'register' && regStep === 'check-email' && (
+            <div className="text-center py-4 space-y-5">
+              <div className="w-20 h-20 bg-orange-50 rounded-full flex items-center justify-center mx-auto">
+                <Mail size={36} className="text-orange-500" />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5 text-center">
-                  Code de vérification
-                </label>
-                <input
-                  type="text"
-                  inputMode="numeric"
-                  maxLength={6}
-                  value={otpCode}
-                  onChange={e => {
-                    setOtpCode(e.target.value.replace(/\D/g, ''))
-                    setOtpError('')
-                  }}
-                  placeholder="000000"
-                  className="input-field text-center text-2xl tracking-widest font-bold"
-                  autoFocus
-                />
-                {otpError && (
-                  <p className="text-xs text-red-500 mt-1 text-center">{otpError}</p>
-                )}
+                <h3 className="font-bold text-gray-900 text-lg mb-2">
+                  Confirmez votre email
+                </h3>
+                <p className="text-sm text-gray-500 leading-relaxed">
+                  Un lien de confirmation a été envoyé à
+                  <br />
+                  <strong className="text-gray-900">{regEmail}</strong>
+                </p>
               </div>
+
+              <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 text-left space-y-2">
+                <p className="text-xs font-semibold text-blue-700">Comment procéder :</p>
+                <ol className="text-xs text-blue-600 space-y-1 list-decimal list-inside">
+                  <li>Ouvrez votre boîte mail</li>
+                  <li>Cliquez sur le lien de confirmation</li>
+                  <li>Revenez ici et connectez-vous</li>
+                </ol>
+              </div>
+
+              <p className="text-xs text-gray-400">
+                Pas reçu ? Vérifiez vos spams ou{' '}
+                <button
+                  onClick={() => setRegStep('form')}
+                  className="text-orange-500 hover:text-orange-600 font-medium"
+                >
+                  modifiez votre email
+                </button>
+              </p>
 
               <button
-                type="submit"
-                disabled={otpLoading || otpCode.length < 4}
-                className="btn-primary w-full justify-center py-3 disabled:opacity-70"
+                onClick={() => { setTab('login'); setRegStep('form'); setEmail(regEmail) }}
+                className="btn-primary w-full justify-center py-3 flex items-center gap-2"
               >
-                {otpLoading
-                  ? <span className="flex items-center justify-center gap-2">
-                      <Loader2 size={16} className="animate-spin" /> Vérification...
-                    </span>
-                  : <span className="flex items-center justify-center gap-2">
-                      <CheckCircle size={16} /> Vérifier mon numéro
-                    </span>
-                }
+                <CheckCircle size={16} />
+                J&apos;ai confirmé mon email
               </button>
-
-              <div className="text-center">
-                {countdown > 0 ? (
-                  <p className="text-xs text-gray-400">
-                    Renvoyer dans <strong>{countdown}s</strong>
-                  </p>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={sendOtp}
-                    disabled={otpLoading}
-                    className="text-xs text-orange-500 hover:text-orange-600 font-medium transition-colors"
-                  >
-                    {otpLoading ? 'Envoi...' : 'Renvoyer le code'}
-                  </button>
-                )}
-              </div>
-
-              <div className="text-center">
-                <button
-                  type="button"
-                  onClick={() => { setRegStep('form'); setOtpCode(''); setOtpError('') }}
-                  className="text-xs text-gray-400 hover:text-gray-600 transition-colors"
-                >
-                  ← Changer de numéro
-                </button>
-              </div>
-            </form>
+            </div>
           )}
         </div>
       </div>
