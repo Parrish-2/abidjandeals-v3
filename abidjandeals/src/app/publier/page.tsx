@@ -1,30 +1,13 @@
 ﻿'use client'
 import { Footer } from '@/components/Footer'
 import { Navbar } from '@/components/Navbar'
-import { CATEGORIES, CITIES } from '@/lib/data'
+import { CATEGORIES } from '@/lib/data'
 import { useStore } from '@/lib/store'
 import { supabase } from '@/lib/supabase'
 import { CheckCircle, ChevronRight, Loader2, MapPin, Phone, Save, Upload, Video, X } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import toast, { Toaster } from 'react-hot-toast'
-
-const QUARTIERS: Record<string, string[]> = {
-  'Abidjan': [
-    'Abobo', 'Adjamé', 'Attécoubé', 'Cocody', 'Koumassi', 'Marcory',
-    'Plateau', 'Port-Bouët', 'Treichville', 'Yopougon', 'Bingerville',
-    'Riviera', 'Angré', 'Deux-Plateaux', 'Bassam', 'Songon',
-    'Zone 4', 'Zone industrielle', 'Vridi', 'Williamsville',
-    'Carrefour Bandji', "N'dotré", "M'Pouto", 'Anoumabo',
-  ],
-  'Bouaké': ['Centre', 'Air France', 'Belleville', 'Commerce', 'Koko', "N'Gattakro", 'Sokoura'],
-  'Yamoussoukro': ['Habitat', 'Centre', 'Dioulakro', "N'Zuessy", 'Morofé'],
-  'San-Pédro': ['Centre', 'Bardot', 'Cité', 'Zone industrielle'],
-  'Korhogo': ['Centre', 'Commerce', 'Résidentiel'],
-  'Daloa': ['Centre', 'Lobia', 'Tazibouo'],
-  'Man': ['Centre', 'Libreville', 'Domoraud'],
-  'Gagnoa': ['Centre', 'Dioulabougou', 'Résidentiel'],
-}
 
 type ExtraField = { name: string; label: string; type?: string; options?: string[]; placeholder?: string }
 type CatConfig = { etats: string[]; extraFields: ExtraField[] }
@@ -70,14 +53,6 @@ const CATEGORY_FIELDS: Record<string, CatConfig> = {
       { name: 'meuble', label: 'Meublé ?', type: 'select', options: ['Oui', 'Non', 'Partiellement'] },
     ],
   },
-  cat_location: {
-    etats: ['Disponible', 'Sous réserve'],
-    extraFields: [
-      { name: 'capacite', label: 'Capacité / Places', placeholder: '30 personnes, 300 invités...' },
-      { name: 'duree_min', label: 'Durée minimale', placeholder: '1 jour, 1 semaine...' },
-      { name: 'caution', label: 'Caution (FCFA)', type: 'number', placeholder: '50000' },
-    ],
-  },
   cat_serv: {
     etats: ['Disponible', 'Sur rendez-vous'],
     extraFields: [
@@ -111,24 +86,7 @@ const CATEGORY_FIELDS: Record<string, CatConfig> = {
   },
   cat_adulte: {
     etats: ['Neuf', 'Ouvert', 'Très bon état'],
-    extraFields: [
-      { name: 'marque', label: 'Marque (optionnel)', placeholder: 'Marque du produit' },
-    ],
-  },
-  cat_bebe: {
-    etats: ['Neuf', 'Très bon état', 'Bon état'],
-    extraFields: [
-      { name: 'marque', label: 'Marque', placeholder: 'Chicco, Graco...' },
-      { name: 'age_cible', label: 'Âge cible', type: 'select', options: ['0-3 mois', '3-6 mois', '6-12 mois', '1-2 ans', '2-3 ans', '3-5 ans', '5+ ans'] },
-    ],
-  },
-  cat_epicerie: {
-    etats: ['Disponible', 'Stock limité'],
-    extraFields: [
-      { name: 'poids', label: 'Poids / Quantité', placeholder: '1kg, 500g, 1L...' },
-      { name: 'origine', label: 'Origine', placeholder: "Côte d'Ivoire, Importé..." },
-      { name: 'date_expiration', label: "Date d'expiration", placeholder: 'MM/AAAA' },
-    ],
+    extraFields: [{ name: 'marque', label: 'Marque (optionnel)', placeholder: 'Marque du produit' }],
   },
   cat_sport: {
     etats: ['Neuf', 'Très bon état', 'Bon état'],
@@ -144,85 +102,58 @@ const DEFAULT_CONFIG: CatConfig = {
   extraFields: [{ name: 'marque', label: 'Marque (optionnel)', placeholder: "Marque de l'article" }],
 }
 
-const STORAGE_KEY = 'abidjandeals_draft'
+const STORAGE_KEY = 'KIVOO_draft'
 const EMPTY_FORM = {
   title: '', description: '', price: '',
   category: '', subcategory: '', etat: '',
   city: '', quartier: '', tel: '', whatsapp: '',
 }
 type MediaFile = { file: File; url: string; type: 'image' | 'video' }
-type Location = { id: string; name: string; parent_id: string | null }
 
 export default function PublierPage() {
   const router = useRouter()
   const { user: storeUser } = useStore()
   const fileInputRef = useRef<HTMLInputElement>(null)
   const videoInputRef = useRef<HTMLInputElement>(null)
+
   const [loading, setLoading] = useState(false)
-  const [villes, setVilles] = useState<Location[]>([])
-  const [communes, setCommunes] = useState<Location[]>([])
-  const [sousQuartiers, setSousQuartiers] = useState<Location[]>([])
-  const [selectedVilleId, setSelectedVilleId] = useState<string>('')
-  const [selectedCommuneId, setSelectedCommuneId] = useState<string>('')
   const [success, setSuccess] = useState(false)
   const [media, setMedia] = useState<MediaFile[]>([])
   const [hasDraft, setHasDraft] = useState(false)
   const [lastSaved, setLastSaved] = useState<string | null>(null)
   const [uploadProgress, setUploadProgress] = useState<{ current: number; total: number; label: string } | null>(null)
 
-  const [form, setForm] = useState<Record<string, string>>({
-    title: '', description: '', price: '',
-    category: '', subcategory: '', etat: '',
-    city: '', quartier: '', tel: '', whatsapp: '',
-  })
+  // ── Localisation depuis Supabase ────────────────────────────
+  const [regions, setRegions] = useState<string[]>([])
+  const [quartiersDB, setQuartiersDB] = useState<string[]>([])
+
+  const [form, setForm] = useState<Record<string, string>>(EMPTY_FORM)
 
   const selectedCat = CATEGORIES.find(c => c.id === form.category)
   const catConfig: CatConfig = form.category ? (CATEGORY_FIELDS[form.category] ?? DEFAULT_CONFIG) : DEFAULT_CONFIG
-  const quartiersForCity = form.city ? (QUARTIERS[form.city] ?? []) : []
 
+  // Charge toutes les régions (communes) au montage
   useEffect(() => {
-    async function loadVilles() {
-      const { data } = await supabase
-        .from('locations')
-        .select('id, name, parent_id')
-        .is('parent_id', null)
-        .eq('is_active', true)
-        .order('name')
-      if (data) setVilles(data)
-    }
-    loadVilles()
+    supabase.from('locations').select('region').eq('is_active', true)
+      .then(({ data }) => {
+        if (data) {
+          const unique = [...new Set(data.map((d: any) => d.region))].sort() as string[]
+          setRegions(unique)
+        }
+      })
   }, [])
 
+  // Charge les quartiers quand la commune change
   useEffect(() => {
-    if (!selectedVilleId) { setCommunes([]); setSousQuartiers([]); return }
-    async function loadCommunes() {
-      const { data } = await supabase
-        .from('locations')
-        .select('id, name, parent_id')
-        .eq('parent_id', selectedVilleId)
-        .eq('is_active', true)
-        .order('name')
-      if (data) setCommunes(data)
-      setSousQuartiers([])
-      setSelectedCommuneId('')
-    }
-    loadCommunes()
-  }, [selectedVilleId])
+    if (!form.city) { setQuartiersDB([]); return }
+    supabase.from('locations').select('name')
+      .eq('region', form.city).eq('is_active', true).order('name')
+      .then(({ data }) => {
+        if (data) setQuartiersDB(data.map((d: any) => d.name))
+      })
+  }, [form.city])
 
-  useEffect(() => {
-    if (!selectedCommuneId) { setSousQuartiers([]); return }
-    async function loadSousQuartiers() {
-      const { data } = await supabase
-        .from('locations')
-        .select('id, name, parent_id')
-        .eq('parent_id', selectedCommuneId)
-        .eq('is_active', true)
-        .order('name')
-      if (data) setSousQuartiers(data)
-    }
-    loadSousQuartiers()
-  }, [selectedCommuneId])
-
+  // Brouillon
   useEffect(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY)
@@ -253,7 +184,7 @@ export default function PublierPage() {
     localStorage.removeItem(STORAGE_KEY)
     setHasDraft(false)
     setLastSaved(null)
-    setForm({ title: '', description: '', price: '', category: '', subcategory: '', etat: '', city: '', quartier: '', tel: '', whatsapp: '' })
+    setForm(EMPTY_FORM)
     setMedia([])
     toast.success('Brouillon effacé')
   }
@@ -276,19 +207,11 @@ export default function PublierPage() {
     const limit = type === 'video' ? 1 : 5 - media.filter(m => m.type === 'image').length
     const fileArray = Array.from(files).slice(0, limit)
     if (type === 'image') {
-      const compressed = await Promise.all(fileArray.map(async (file) => {
-        try {
-          return { file, url: URL.createObjectURL(file), type: 'image' as const }
-        } catch {
-          return { file, url: URL.createObjectURL(file), type: 'image' as const }
-        }
-      }))
-      setMedia(prev => [...prev, ...compressed].slice(0, 6))
+      const items = fileArray.map(file => ({ file, url: URL.createObjectURL(file), type: 'image' as const }))
+      setMedia(prev => [...prev, ...items].slice(0, 6))
     } else {
-      const newItems: MediaFile[] = fileArray.map(file => ({
-        file, url: URL.createObjectURL(file), type,
-      }))
-      setMedia(prev => [...prev, ...newItems].slice(0, 6))
+      const items: MediaFile[] = fileArray.map(file => ({ file, url: URL.createObjectURL(file), type }))
+      setMedia(prev => [...prev, ...items].slice(0, 6))
     }
   }
 
@@ -306,10 +229,9 @@ export default function PublierPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!form.category) { toast.error('Choisissez une catégorie'); return }
-    if (!form.city) { toast.error('Choisissez une ville'); return }
+    if (!form.city) { toast.error('Choisissez une commune'); return }
     setLoading(true)
 
-    // ── Timeout global : 5 minutes pour tout le processus ─────────────────────
     const globalTimeout = setTimeout(() => {
       setLoading(false)
       toast.error('Délai dépassé. Vérifiez votre connexion et réessayez.')
@@ -318,16 +240,15 @@ export default function PublierPage() {
     try {
       let userId = storeUser?.id
       if (!userId) {
-        const sessionPromise = supabase.auth.getSession()
-        const timeoutPromise = new Promise<null>((resolve) => setTimeout(() => resolve(null), 5000))
-        const result = await Promise.race([sessionPromise, timeoutPromise])
+        const result = await Promise.race([
+          supabase.auth.getSession(),
+          new Promise<null>(r => setTimeout(() => r(null), 5000))
+        ])
         userId = (result as any)?.data?.session?.user?.id ?? null
       }
       if (!userId) {
         toast.error('Connectez-vous pour publier')
-        clearTimeout(globalTimeout)
-        setLoading(false)
-        return
+        clearTimeout(globalTimeout); setLoading(false); return
       }
 
       const uploadedImages: string[] = []
@@ -335,44 +256,25 @@ export default function PublierPage() {
       let uploadFailed = false
 
       if (media.length > 0) {
-        // ── Upload avec retry (3 tentatives) + timeouts adaptés ─────────────
-        // Images : 90s | Vidéos : 3 minutes
         const getTimeout = (type: string) => type === 'video' ? 3 * 60 * 1000 : 90 * 1000
 
         const uploadWithRetry = async (m: MediaFile, attempt = 1): Promise<string | null> => {
           const ext = m.file.name.split('.').pop()
           const bucket = m.type === 'image' ? 'ad-photos' : 'ad-videos'
           const path = `${userId}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
-
           try {
-            const uploadPromise = supabase.storage.from(bucket).upload(path, m.file, {
-              cacheControl: '3600',
-              upsert: false,
-            })
-            const timeoutPromise = new Promise<never>((_, reject) =>
-              setTimeout(() => reject(new Error('timeout')), getTimeout(m.type))
-            )
-            const result = await Promise.race([uploadPromise, timeoutPromise]) as any
-
+            const result = await Promise.race([
+              supabase.storage.from(bucket).upload(path, m.file, { cacheControl: '3600', upsert: false }),
+              new Promise<never>((_, reject) => setTimeout(() => reject(new Error('timeout')), getTimeout(m.type)))
+            ]) as any
             if (result.error) {
-              if (attempt < 3) {
-                console.warn(`Upload échoué (tentative ${attempt}/3):`, result.error.message)
-                await new Promise(r => setTimeout(r, 1500 * attempt))
-                return uploadWithRetry(m, attempt + 1)
-              }
-              console.warn('Upload abandonné après 3 tentatives')
+              if (attempt < 3) { await new Promise(r => setTimeout(r, 1500 * attempt)); return uploadWithRetry(m, attempt + 1) }
               return null
             }
-
             const { data } = supabase.storage.from(bucket).getPublicUrl(path)
             return data.publicUrl
-          } catch (err: any) {
-            if (attempt < 3) {
-              console.warn(`Upload timeout (tentative ${attempt}/3)`)
-              await new Promise(r => setTimeout(r, 1500 * attempt))
-              return uploadWithRetry(m, attempt + 1)
-            }
-            console.warn('Upload abandonné après timeout répété')
+          } catch {
+            if (attempt < 3) { await new Promise(r => setTimeout(r, 1500 * attempt)); return uploadWithRetry(m, attempt + 1) }
             return null
           }
         }
@@ -380,72 +282,55 @@ export default function PublierPage() {
         for (let i = 0; i < media.length; i++) {
           const m = media[i]
           const label = m.type === 'video' ? '🎬 Vidéo' : `📷 Photo ${i + 1}`
-          const sizeMb = (m.file.size / 1024 / 1024).toFixed(1)
-          setUploadProgress({ current: i + 1, total: media.length, label: `${label} · ${sizeMb} Mo` })
-
+          setUploadProgress({ current: i + 1, total: media.length, label: `${label} · ${(m.file.size / 1024 / 1024).toFixed(1)} Mo` })
           const url = await uploadWithRetry(m)
-          if (url) {
-            if (m.type === 'image') uploadedImages.push(url)
-            else videoUrl = url
-          } else {
-            uploadFailed = true
-          }
+          if (url) { if (m.type === 'image') uploadedImages.push(url); else videoUrl = url }
+          else uploadFailed = true
         }
-
         setUploadProgress(null)
         if (uploadFailed && uploadedImages.length === 0 && !videoUrl) {
           toast.error('Aucun média uploadé. Vérifiez votre connexion.', { duration: 5000 })
-        } else if (uploadFailed) {
-          toast.error("Certains médias n'ont pas pu être uploadés.", { duration: 3000 })
         }
       }
 
-      const insertPromise = supabase.from('ads').insert({
-        user_id: userId,
-        title: form.title,
-        description: form.description,
-        price: parseInt(form.price),
-        category_id: form.category,
-        subcategory: form.subcategory || null,
-        etat: form.etat || null,
-        marque: form.marque || null,
-        city: form.city,
-        quartier: form.quartier || null,
-        tel: form.tel,
-        whatsapp: form.whatsapp || form.tel,
-        images: uploadedImages,
-        video_url: videoUrl || null,
-        status: 'pending',
-        views: 0,
-      })
-      const insertTimeout = new Promise<{ error: { message: string } }>((resolve) =>
-        setTimeout(() => resolve({ error: { message: 'Délai dépassé pour la publication' } }), 30000)
-      )
-      const { error } = await Promise.race([insertPromise, insertTimeout])
+      const { error } = await Promise.race([
+        supabase.from('ads').insert({
+          user_id: userId,
+          title: form.title,
+          description: form.description,
+          price: parseInt(form.price),
+          category_id: form.category,
+          subcategory: form.subcategory || null,
+          etat: form.etat || null,
+          marque: form.marque || null,
+          city: form.city,
+          quartier: form.quartier || null,
+          tel: form.tel,
+          whatsapp: form.whatsapp || form.tel,
+          images: uploadedImages,
+          video_url: videoUrl || null,
+          status: 'pending',
+          views: 0,
+        }),
+        new Promise<{ error: { message: string } }>(r =>
+          setTimeout(() => r({ error: { message: 'Délai dépassé' } }), 30000)
+        )
+      ])
 
-      if (error) {
-        toast.error('Erreur: ' + error.message)
-        clearTimeout(globalTimeout)
-        return
-      }
+      if (error) { toast.error('Erreur: ' + error.message); clearTimeout(globalTimeout); return }
 
       clearTimeout(globalTimeout)
       localStorage.removeItem(STORAGE_KEY)
-      setHasDraft(false)
-      setLastSaved(null)
-      setForm(EMPTY_FORM)
-      setMedia([])
+      setHasDraft(false); setLastSaved(null)
+      setForm(EMPTY_FORM); setMedia([])
       setSuccess(true)
       setTimeout(() => router.push('/dashboard'), 2500)
-    } catch (err) {
-      console.error('Erreur soumission:', err)
+    } catch {
       toast.error('Une erreur est survenue. Réessayez.')
       clearTimeout(globalTimeout)
       localStorage.removeItem(STORAGE_KEY)
-      setHasDraft(false)
-      setLastSaved(null)
-      setForm(EMPTY_FORM)
-      setMedia([])
+      setHasDraft(false); setLastSaved(null)
+      setForm(EMPTY_FORM); setMedia([])
     } finally {
       setLoading(false)
     }
@@ -477,11 +362,7 @@ export default function PublierPage() {
             <p className="text-gray-400 mt-1">Le formulaire s'adapte automatiquement à votre article</p>
           </div>
           <div className="flex items-center gap-3">
-            {lastSaved && (
-              <span className="text-xs text-gray-400 flex items-center gap-1">
-                <Save size={11} /> Sauvegardé à {lastSaved}
-              </span>
-            )}
+            {lastSaved && <span className="text-xs text-gray-400 flex items-center gap-1"><Save size={11} /> Sauvegardé à {lastSaved}</span>}
             {hasDraft && (
               <button type="button" onClick={clearDraft}
                 className="text-xs text-red-400 hover:text-red-500 border border-red-100 rounded-lg px-3 py-1.5 transition">
@@ -554,14 +435,8 @@ export default function PublierPage() {
                           {m.type === 'image'
                             ? <img src={m.url} alt="" className="w-full h-full object-cover" />
                             : <video src={m.url} className="w-full h-full object-cover" muted />}
-                          {i === 0 && (
-                            <span className="absolute bottom-0 left-0 right-0 bg-orange-500 text-white text-[9px] font-bold text-center py-0.5">
-                              PRINCIPALE
-                            </span>
-                          )}
-                          {m.type === 'video' && (
-                            <span className="absolute top-1 left-1 bg-black/60 text-white text-[9px] px-1 rounded">🎬</span>
-                          )}
+                          {i === 0 && <span className="absolute bottom-0 left-0 right-0 bg-orange-500 text-white text-[9px] font-bold text-center py-0.5">PRINCIPALE</span>}
+                          {m.type === 'video' && <span className="absolute top-1 left-1 bg-black/60 text-white text-[9px] px-1 rounded">🎬</span>}
                           <button type="button" onClick={() => removeMedia(i)}
                             className="absolute top-1 right-1 w-5 h-5 rounded-full bg-black/60 text-white flex items-center justify-center hover:bg-red-500 transition">
                             <X size={10} />
@@ -570,7 +445,6 @@ export default function PublierPage() {
                       ))}
                     </div>
                   )}
-                  {/* ── Barre de progression upload inline ── */}
                   {uploadProgress && (
                     <div className="mb-3 bg-gray-50 border border-gray-100 rounded-xl px-4 py-3">
                       <div className="flex items-center justify-between mb-1.5">
@@ -578,14 +452,11 @@ export default function PublierPage() {
                         <span className="text-xs text-gray-400">{uploadProgress.current}/{uploadProgress.total}</span>
                       </div>
                       <div className="w-full bg-gray-200 rounded-full h-1.5 overflow-hidden">
-                        <div
-                          className="h-full bg-orange-500 rounded-full transition-all duration-300"
-                          style={{ width: `${(uploadProgress.current / uploadProgress.total) * 100}%` }}
-                        />
+                        <div className="h-full bg-orange-500 rounded-full transition-all duration-300"
+                          style={{ width: `${(uploadProgress.current / uploadProgress.total) * 100}%` }} />
                       </div>
                     </div>
                   )}
-
                   {!media.find(m => m.type === 'video') && (
                     <button type="button" onClick={() => videoInputRef.current?.click()}
                       className="flex items-center gap-2 text-sm text-gray-500 hover:text-orange-500 border border-dashed border-gray-200 hover:border-orange-300 rounded-xl px-4 py-2.5 w-full justify-center transition">
@@ -597,7 +468,7 @@ export default function PublierPage() {
                 </div>
               </div>
 
-              {/* Étape 3 — Détails dynamiques */}
+              {/* Étape 3 — Détails */}
               <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
                 <div className="flex items-center gap-2 mb-4">
                   <div className="w-7 h-7 rounded-full bg-orange-500 text-white text-xs font-bold flex items-center justify-center">3</div>
@@ -621,7 +492,7 @@ export default function PublierPage() {
                   <div className="grid grid-cols-2 gap-3">
                     <div className="relative">
                       <input name="price" value={form.price} onChange={handleChange} required type="number" min="0"
-                        placeholder={form.category === 'cat_location' ? 'Prix / jour *' : form.category === 'cat_serv' ? 'Tarif *' : 'Prix *'}
+                        placeholder={form.category === 'cat_serv' ? 'Tarif *' : 'Prix *'}
                         className="w-full border border-gray-100 bg-gray-50 rounded-xl pl-4 pr-16 py-3 text-sm focus:outline-none focus:border-orange-400 focus:bg-white transition font-bold" />
                       <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400 font-semibold">FCFA</span>
                     </div>
@@ -653,7 +524,7 @@ export default function PublierPage() {
                 </div>
               </div>
 
-              {/* Étape 4 — Localisation */}
+              {/* Étape 4 — Localisation (chargée depuis Supabase) */}
               <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
                 <div className="flex items-center gap-2 mb-4">
                   <div className="w-7 h-7 rounded-full bg-orange-500 text-white text-xs font-bold flex items-center justify-center">4</div>
@@ -661,32 +532,27 @@ export default function PublierPage() {
                   <h2 className="font-bold text-gray-800">Localisation</h2>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
+                  {/* Commune — chargée depuis la table locations */}
                   <select name="city" value={form.city} onChange={handleChange} required
                     className="border border-gray-100 bg-gray-50 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-orange-400 focus:bg-white transition">
-                    <option value="">Ville *</option>
-                    {CITIES.map(c => {
-                      const name = c.replace(/^[^\s]+\s/, '')
-                      return <option key={name} value={name}>{name}</option>
-                    })}
+                    <option value="">Commune *</option>
+                    {regions.map(r => <option key={r} value={r}>{r}</option>)}
                   </select>
-                  {quartiersForCity.length > 0 ? (
+
+                  {/* Quartier — filtré par commune */}
+                  {quartiersDB.length > 0 ? (
                     <select name="quartier" value={form.quartier} onChange={handleChange}
                       className="border border-gray-100 bg-gray-50 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-orange-400 focus:bg-white transition">
                       <option value="">Quartier (optionnel)</option>
-                      {quartiersForCity.map(q => <option key={q} value={q}>{q}</option>)}
-                      <option value="Autre">Autre quartier</option>
+                      {quartiersDB.map(q => <option key={q} value={q}>{q}</option>)}
                     </select>
                   ) : (
                     <input name="quartier" value={form.quartier} onChange={handleChange}
-                      placeholder="Quartier (optionnel)"
-                      className="border border-gray-100 bg-gray-50 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-orange-400 focus:bg-white transition" />
+                      placeholder={form.city ? "Précisez votre quartier" : "Choisissez d'abord une commune"}
+                      disabled={!form.city}
+                      className="border border-gray-100 bg-gray-50 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-orange-400 focus:bg-white transition disabled:opacity-50" />
                   )}
                 </div>
-                {form.quartier === 'Autre' && (
-                  <input onChange={e => setForm(f => ({ ...f, quartier: e.target.value }))}
-                    placeholder="Précisez votre quartier"
-                    className="mt-3 w-full border border-gray-100 bg-gray-50 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-orange-400 focus:bg-white transition" />
-                )}
               </div>
 
               {/* Étape 5 — Contact */}
@@ -718,7 +584,7 @@ export default function PublierPage() {
                       { label: 'Photos', value: `${media.filter(m => m.type === 'image').length}/5` },
                       { label: 'Vidéo', value: media.find(m => m.type === 'video') ? '✅' : '—' },
                       { label: 'Prix', value: form.price ? `${parseInt(form.price).toLocaleString('fr')} FCFA` : '—' },
-                      { label: 'Ville', value: form.city || '—' },
+                      { label: 'Commune', value: form.city || '—' },
                       { label: 'Quartier', value: form.quartier || '—' },
                     ].map(item => (
                       <div key={item.label} className="flex items-center justify-between text-sm">
@@ -755,14 +621,12 @@ export default function PublierPage() {
 
                 <div className="bg-blue-50 border border-blue-100 rounded-xl px-4 py-3 flex items-center gap-2">
                   <Save size={14} className="text-blue-500 flex-shrink-0" />
-                  <p className="text-xs text-blue-600">Sauvegarde automatique activée — vos données ne seront pas perdues</p>
+                  <p className="text-xs text-blue-600">Sauvegarde automatique activée</p>
                 </div>
 
                 <button type="submit" disabled={loading}
                   className="w-full py-4 bg-orange-500 hover:bg-orange-600 active:scale-[0.98] text-white font-bold rounded-2xl transition-all flex items-center justify-center gap-2 disabled:opacity-60 shadow-lg shadow-orange-200 text-base">
-                  {loading
-                    ? <><Loader2 size={18} className="animate-spin" /> Publication...</>
-                    : '🚀 Publier mon annonce'}
+                  {loading ? <><Loader2 size={18} className="animate-spin" /> Publication...</> : '🚀 Publier mon annonce'}
                 </button>
                 <p className="text-center text-xs text-gray-400">Gratuit · Validation sous 24h</p>
               </div>
@@ -775,7 +639,7 @@ export default function PublierPage() {
           <div className="flex items-center gap-3 max-w-lg mx-auto">
             <div className="flex-1 min-w-0">
               <p className="text-xs text-gray-400 truncate">
-                {selectedCat ? `${selectedCat.icon} ${selectedCat.name}` : 'Aucune catégorie sélectionnée'}
+                {selectedCat ? `${selectedCat.icon} ${selectedCat.name}` : 'Aucune catégorie'}
               </p>
               <p className="font-extrabold text-orange-500 text-base leading-tight">
                 {form.price ? `${parseInt(form.price).toLocaleString('fr')} FCFA` : 'Prix non défini'}
