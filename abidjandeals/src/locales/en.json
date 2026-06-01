@@ -386,7 +386,8 @@
     "video": "Video",
     "sound": "Sound",
     "mute": "Mute",
-    "fullscreen": "Fullscreen"
+    "fullscreen": "Fullscreen",
+    "whatsapp_available": "Is it still available?"
   },
   "ad_page": {
     "safety_4": "Beware of prices that are too low",

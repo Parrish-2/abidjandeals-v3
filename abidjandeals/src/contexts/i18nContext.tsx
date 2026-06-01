@@ -2,9 +2,9 @@
 // src/contexts/i18nContext.tsx
 // SSR-safe + Cookie persistance pour que la langue survive entre /dashboard et /admin
 
-import { createContext, useContext, useState, useCallback, useEffect } from "react"
-import fr from "../locales/fr.json"
+import { createContext, useCallback, useContext, useEffect, useState } from "react"
 import en from "../locales/en.json"
+import fr from "../locales/fr.json"
 
 const translations: Record<string, any> = { fr, en }
 const COOKIE_KEY = "abidjan_locale"
@@ -33,11 +33,9 @@ interface I18nContextType {
 const I18nContext = createContext<I18nContextType | null>(null)
 
 export function I18nProvider({ children }: { children: React.ReactNode }) {
-  // Démarrage en FR côté serveur, lecture cookie côté client
   const [locale, setLocale] = useState<string>(DEFAULT_LOCALE)
 
   useEffect(() => {
-    // Priorité : cookie > localStorage > défaut
     const saved = getCookie(COOKIE_KEY) || localStorage.getItem(COOKIE_KEY)
     if (saved && translations[saved]) {
       setLocale(saved)
@@ -47,11 +45,19 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
   const t = useCallback(
     (key: string): string => {
       const keys = key.split(".")
+
+      // 1. Essaie la locale active
       let value: any = translations[locale]
-      for (const k of keys) {
-        value = value?.[k]
-      }
-      return typeof value === "string" ? value : key
+      for (const k of keys) value = value?.[k]
+      if (typeof value === "string") return value
+
+      // 2. Fallback vers le français si la clé est absente
+      let fallback: any = translations["fr"]
+      for (const k of keys) fallback = fallback?.[k]
+      if (typeof fallback === "string") return fallback
+
+      // 3. Retourne la clé brute en dernier recours
+      return key
     },
     [locale]
   )
@@ -59,7 +65,6 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
   const changeLocale = useCallback((newLocale: string) => {
     if (!translations[newLocale]) return
     setLocale(newLocale)
-    // Persiste dans cookie ET localStorage pour double sécurité
     setCookie(COOKIE_KEY, newLocale)
     localStorage.setItem(COOKIE_KEY, newLocale)
   }, [])
