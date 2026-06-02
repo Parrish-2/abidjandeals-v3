@@ -64,7 +64,6 @@ async function getAds(page: number) {
     }
 }
 
-// ── Récupère la bannière active pour la homepage ──────────────────────────────
 async function getHomepageBanner() {
     try {
         const cookieStore = await cookies()
@@ -102,7 +101,6 @@ async function getHomepageBanner() {
     }
 }
 
-// ---------- page ----------
 export default async function HomePage({
     searchParams,
 }: {
@@ -127,7 +125,9 @@ export default async function HomePage({
 
                     {/* ── Bannière publicitaire homepage_top ── */}
                     {banner && (
-                        <SmartBanner banner={banner} className="rounded-2xl overflow-hidden" />
+                        <div className="max-w-3xl mx-auto">
+                            <SmartBanner banner={banner} className="rounded-2xl overflow-hidden shadow-sm" />
+                        </div>
                     )}
 
                     {/* ── Annonces + pagination ── */}
