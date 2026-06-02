@@ -2,6 +2,7 @@
 import { Footer } from '@/components/Footer'
 import { HybridGallery } from '@/components/HybridGallery'
 import { Navbar } from '@/components/Navbar'
+import { SmartBanner } from '@/components/SmartBanner'
 import { useI18n } from '@/contexts/i18nContext'
 import { supabase } from '@/lib/supabase'
 import { AlertTriangle, Calendar, Edit, Eye, Heart, Loader2, MapPin, MessageCircle, Phone, Share2, Shield, Trash2 } from 'lucide-react'
@@ -31,6 +32,9 @@ export default function AdDetailPage() {
     const [isFav, setIsFav] = useState(false)
     const [deleting, setDeleting] = useState(false)
 
+    // ── Bannière publicitaire ad_detail ───────────────────────────────────────
+    const [adBanner, setAdBanner] = useState<any>(null)
+
     // ── Traduction DeepL ──────────────────────────────────────────────────────
     const [translatedTitle, setTranslatedTitle] = useState<string | null>(null)
     const [translatedDesc, setTranslatedDesc] = useState<string | null>(null)
@@ -56,10 +60,41 @@ export default function AdDetailPage() {
         loadAd()
     }, [adId])
 
-    // Traduit titre + description quand locale passe à 'en'
+    // Charge la bannière ad_detail
+    useEffect(() => {
+        async function loadBanner() {
+            try {
+                const now = new Date().toISOString()
+                const { data } = await supabase
+                    .from('banners')
+                    .select('id, company_name, image_url, link_url, placement, active, contract_end, click_count')
+                    .eq('placement', 'ad_detail')
+                    .eq('active', true)
+                    .or(`contract_end.is.null,contract_end.gt.${now}`)
+                    .order('created_at', { ascending: false })
+                    .limit(1)
+                    .maybeSingle()
+                if (data) {
+                    setAdBanner({
+                        id: data.id,
+                        company_name: data.company_name ?? '',
+                        image_url: data.image_url,
+                        link_url: data.link_url ?? null,
+                        placement: data.placement,
+                        active: data.active,
+                        contract_end: data.contract_end ? new Date(data.contract_end).getTime() : null,
+                        click_count: data.click_count ?? 0,
+                        created_at: '',
+                    })
+                }
+            } catch { }
+        }
+        loadBanner()
+    }, [])
+
+    // Traduction DeepL
     useEffect(() => {
         if (!ad || locale === lastTranslatedLocale.current) return
-
         if (locale === 'en') {
             setTranslating(true)
             const texts = [ad.title, ad.description].filter(Boolean)
@@ -75,10 +110,9 @@ export default function AdDetailPage() {
                         setTranslatedDesc(data.translations[1] ?? ad.description)
                     }
                 })
-                .catch(() => {/* garde le texte original en cas d'erreur */ })
+                .catch(() => { })
                 .finally(() => setTranslating(false))
         } else {
-            // Retour en FR : réaffiche l'original
             setTranslatedTitle(null)
             setTranslatedDesc(null)
         }
@@ -178,8 +212,6 @@ export default function AdDetailPage() {
     const isOwner = !!(sessionUid && sessionUid === ad.user_id)
     const hasWhatsApp = !!(ad.whatsapp || ad.tel)
     const whatsappUrl = buildWhatsAppUrl()
-
-    // Titre et description : traduits si EN, originaux si FR
     const displayTitle = (locale === 'en' && translatedTitle) ? translatedTitle : ad.title
     const displayDesc = (locale === 'en' && translatedDesc) ? translatedDesc : ad.description
 
@@ -218,7 +250,6 @@ export default function AdDetailPage() {
                             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
                                 <div className="flex items-start justify-between gap-3 mb-4">
                                     <div>
-                                        {/* Titre avec indicateur de traduction */}
                                         <h1 className="text-xl font-extrabold text-gray-900 flex items-center gap-2">
                                             {displayTitle}
                                             {translating && <Loader2 size={14} className="animate-spin text-orange-400 flex-shrink-0" />}
@@ -257,7 +288,6 @@ export default function AdDetailPage() {
                                     )}
                                 </div>
 
-                                {/* Description traduite */}
                                 {displayDesc && (
                                     <p className="text-sm text-gray-600 leading-relaxed whitespace-pre-line">
                                         {displayDesc}
@@ -282,8 +312,16 @@ export default function AdDetailPage() {
                                     </div>
                                 </div>
                             )}
+
+                            {/* Bannière mobile — sous la description */}
+                            {adBanner && (
+                                <div className="lg:hidden">
+                                    <SmartBanner banner={adBanner} className="rounded-2xl overflow-hidden shadow-sm" />
+                                </div>
+                            )}
                         </div>
 
+                        {/* Colonne droite — sidebar desktop */}
                         <div className="space-y-4 hidden lg:block">
                             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
                                 <div className="flex items-center gap-3 mb-4 pb-4 border-b border-gray-100">
@@ -319,6 +357,11 @@ export default function AdDetailPage() {
                                     <li>{t('ad.safety_1')}</li>
                                 </ul>
                             </div>
+
+                            {/* ── Bannière publicitaire ad_detail — sidebar desktop ── */}
+                            {adBanner && (
+                                <SmartBanner banner={adBanner} className="rounded-2xl overflow-hidden shadow-sm" />
+                            )}
                         </div>
                     </div>
                 </main>
