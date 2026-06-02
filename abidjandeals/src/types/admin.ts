@@ -13,17 +13,15 @@ export type BoostLevel = 'STANDARD' | 'PREMIUM' | 'URGENT'
 export interface BoostOptions {
   level: BoostLevel
   durationDays: number
-  /** Timestamp UTC : Date.now() + durationDays * 86_400_000 */
   boost_until: number
   price: number
-  /** Facteur de remontée dans le flux (ex: ×3, ×7, ×15) */
   multiplier: number
 }
 
 export const BOOST_CONFIGS: Record<BoostLevel, Omit<BoostOptions, 'boost_until'>> = {
-  STANDARD: { level: 'STANDARD', durationDays: 7,  price: 3_000,  multiplier: 3  },
-  PREMIUM:  { level: 'PREMIUM',  durationDays: 14, price: 8_000,  multiplier: 7  },
-  URGENT:   { level: 'URGENT',   durationDays: 3,  price: 1_500,  multiplier: 15 },
+  STANDARD: { level: 'STANDARD', durationDays: 7, price: 3_000, multiplier: 3 },
+  PREMIUM: { level: 'PREMIUM', durationDays: 14, price: 8_000, multiplier: 7 },
+  URGENT: { level: 'URGENT', durationDays: 3, price: 1_500, multiplier: 15 },
 }
 
 // ─── BANNIÈRE ────────────────────────────────────────────────────────────────
@@ -33,32 +31,29 @@ export type BannerPlacement =
   | 'homepage_mid'
   | 'search_sidebar'
   | 'category_top'
+  | 'ad_detail'        // ✅ Ajouté — sidebar page annonce
 
 export interface BannerData {
   id: string
-  /** Nom de l'entreprise cliente */
   company_name: string
   image_url: string
-  /** URL de redirection au clic */
   link_url: string | null
   placement: BannerPlacement
   active: boolean
-  /** Timestamp UTC — SmartBanner n'affiche pas si Date.now() > contract_end */
   contract_end: number | null
-  /** Compteur de clics — incrémenté dans la table `banners` */
   click_count: number
   created_at: string
 }
 
 export const PLACEMENT_LABELS: Record<BannerPlacement, string> = {
-  homepage_top:   'Accueil — Haut de page',
-  homepage_mid:   'Accueil — Milieu',
+  homepage_top: 'Accueil — Haut de page',
+  homepage_mid: 'Accueil — Milieu',
   search_sidebar: 'Recherche — Sidebar',
-  category_top:   'Catégorie — Haut',
+  category_top: 'Catégorie — Haut',
+  ad_detail: 'Annonce — Détail',  // ✅ Ajouté
 }
 
-// ─── PROFIL UTILISATEUR — miroir exact de src/lib/supabase.ts ────────────────
-// Ne pas modifier indépendamment — garder synchronisé avec supabase.ts
+// ─── PROFIL UTILISATEUR ───────────────────────────────────────────────────────
 
 export interface Profile {
   id: string
@@ -100,7 +95,6 @@ export interface Listing {
   status: ListingStatus
   views: number
   is_featured: boolean
-  /** Champs boost (table `ads`) */
   is_boosted: boolean
   boost_level: BoostLevel | null
   boost_until: string | null
