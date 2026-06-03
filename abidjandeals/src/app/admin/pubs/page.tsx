@@ -7,18 +7,18 @@
 // Tables Supabase : `ads` (boosts) · `banners` (régie)
 // ─────────────────────────────────────────────────────────────────────────────
 
-import { useEffect, useRef, useState } from 'react'
-import { createBrowserClient } from '@supabase/ssr'
-import toast, { Toaster } from 'react-hot-toast'
-import { useStore } from '@/lib/store'
 import { SmartBanner } from '@/components/SmartBanner'
+import { useStore } from '@/lib/store'
 import {
   BOOST_CONFIGS,
   PLACEMENT_LABELS,
-  type BoostLevel,
   type BannerData,
   type BannerPlacement,
+  type BoostLevel,
 } from '@/types/admin'
+import { createBrowserClient } from '@supabase/ssr'
+import { useEffect, useRef, useState } from 'react'
+import toast, { Toaster } from 'react-hot-toast'
 
 // ─── Types locaux ─────────────────────────────────────────────────────────────
 
@@ -32,7 +32,7 @@ interface Ad {
   is_boosted: boolean
   boost_level: BoostLevel | null
   boost_until: string | null
-  photos: string[]
+  images: string[]
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -49,8 +49,8 @@ function daysLeft(boost_until: string | null): number {
 
 const LEVEL_UI: Record<BoostLevel, { label: string; color: string; bg: string; border: string }> = {
   STANDARD: { label: '⚡ Standard', color: '#1D4ED8', bg: '#EFF6FF', border: '#93C5FD' },
-  PREMIUM:  { label: '★ Premium',  color: '#7C3AED', bg: '#FDF4FF', border: '#D8B4FE' },
-  URGENT:   { label: '🔥 Urgent',  color: '#C2410C', bg: '#FFF7ED', border: '#FED7AA' },
+  PREMIUM: { label: '★ Premium', color: '#7C3AED', bg: '#FDF4FF', border: '#D8B4FE' },
+  URGENT: { label: '🔥 Urgent', color: '#C2410C', bg: '#FFF7ED', border: '#FED7AA' },
 }
 
 // ─── Styles inline réutilisables ──────────────────────────────────────────────
@@ -101,21 +101,21 @@ export default function PubsPage() {
   // Auparavant ils étaient après le guard if(!user) → crash garanti.
 
   // Boosts
-  const [tab,           setTab]           = useState<'boosts' | 'banners'>('boosts')
-  const [ads,           setAds]           = useState<Ad[]>([])
-  const [adsLoading,    setAdsLoading]    = useState(true)
-  const [selectedAd,    setSelectedAd]    = useState<Ad | null>(null)
+  const [tab, setTab] = useState<'boosts' | 'banners'>('boosts')
+  const [ads, setAds] = useState<Ad[]>([])
+  const [adsLoading, setAdsLoading] = useState(true)
+  const [selectedAd, setSelectedAd] = useState<Ad | null>(null)
   const [selectedLevel, setSelectedLevel] = useState<BoostLevel>('STANDARD')
-  const [boostLoading,  setBoostLoading]  = useState(false)
-  const [search,        setSearch]        = useState('')
+  const [boostLoading, setBoostLoading] = useState(false)
+  const [search, setSearch] = useState('')
 
   // Bannières
-  const [banners,        setBanners]        = useState<BannerData[]>([])
+  const [banners, setBanners] = useState<BannerData[]>([])
   const [bannersLoading, setBannersLoading] = useState(true)
-  const [bannerFile,     setBannerFile]     = useState<File | null>(null)
-  const [bannerPreview,  setBannerPreview]  = useState<string | null>(null)
-  const [uploadLoading,  setUploadLoading]  = useState(false)
-  const [newBanner,      setNewBanner]      = useState({
+  const [bannerFile, setBannerFile] = useState<File | null>(null)
+  const [bannerPreview, setBannerPreview] = useState<string | null>(null)
+  const [uploadLoading, setUploadLoading] = useState(false)
+  const [newBanner, setNewBanner] = useState({
     company_name: '',
     link_url: '',
     placement: 'homepage_top' as BannerPlacement,
@@ -129,7 +129,7 @@ export default function PubsPage() {
     if (!user || user.role !== 'admin') return
     fetchAds()
     fetchBanners()
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.role])
 
   // ── ✅ GUARD ADMIN — placé APRÈS tous les hooks ───────────────────────────
@@ -155,7 +155,7 @@ export default function PubsPage() {
     setAdsLoading(true)
     const { data } = await supabase
       .from('ads')
-      .select('id, title, city, category, price, status, is_boosted, boost_level, boost_until, photos')
+      .select('id, title, city, category, price, status, is_boosted, boost_level, boost_until, images')
       .order('created_at', { ascending: false })
     setAds((data as Ad[]) || [])
     setAdsLoading(false)
@@ -239,11 +239,11 @@ export default function PubsPage() {
 
     const { error: insertError } = await supabase.from('banners').insert({
       company_name: newBanner.company_name || 'Annonceur',
-      image_url:    urlData.publicUrl,
-      link_url:     newBanner.link_url || null,
-      placement:    newBanner.placement,
-      active:       true,
-      click_count:  0,
+      image_url: urlData.publicUrl,
+      link_url: newBanner.link_url || null,
+      placement: newBanner.placement,
+      active: true,
+      click_count: 0,
       contract_end: newBanner.contract_end_date
         ? new Date(newBanner.contract_end_date).toISOString()
         : null,
@@ -301,10 +301,10 @@ export default function PubsPage() {
       {/* Stats */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 24 }}>
         {[
-          { label: 'Annonces boostées', value: boostedAds.length,                                                        color: '#F97316' },
-          { label: 'Boost URGENT',      value: boostedAds.filter(a => a.boost_level === 'URGENT').length,                color: '#DC2626' },
-          { label: 'Boost PREMIUM',     value: boostedAds.filter(a => a.boost_level === 'PREMIUM').length,               color: '#7C3AED' },
-          { label: 'Bannières actives', value: banners.filter(b => b.active).length,                                     color: '#16a34a' },
+          { label: 'Annonces boostées', value: boostedAds.length, color: '#F97316' },
+          { label: 'Boost URGENT', value: boostedAds.filter(a => a.boost_level === 'URGENT').length, color: '#DC2626' },
+          { label: 'Boost PREMIUM', value: boostedAds.filter(a => a.boost_level === 'PREMIUM').length, color: '#7C3AED' },
+          { label: 'Bannières actives', value: banners.filter(b => b.active).length, color: '#16a34a' },
         ].map((s) => (
           <div key={s.label} style={{ background: 'white', border: '0.5px solid #e5e7eb', borderRadius: 10, padding: '14px 16px' }}>
             <p style={{ fontSize: 11, color: '#9ca3af', marginBottom: 6, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.07em' }}>
@@ -347,8 +347,8 @@ export default function PubsPage() {
                     style={{ ...card, display: 'flex', alignItems: 'center', gap: 14, borderLeft: `3px solid ${lvl?.color ?? '#F97316'}` }}
                   >
                     <div style={{ width: 44, height: 44, borderRadius: 8, background: '#f3f4f6', overflow: 'hidden', flexShrink: 0 }}>
-                      {ad.photos?.[0]
-                        ? <img src={ad.photos[0]} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="" />
+                      {ad.images?.[0]
+                        ? <img src={ad.images[0]} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="" />
                         : <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>📦</div>
                       }
                     </div>
@@ -404,8 +404,8 @@ export default function PubsPage() {
                   }}
                 >
                   <div style={{ width: 36, height: 36, borderRadius: 6, background: '#f3f4f6', overflow: 'hidden', flexShrink: 0 }}>
-                    {ad.photos?.[0]
-                      ? <img src={ad.photos[0]} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="" />
+                    {ad.images?.[0]
+                      ? <img src={ad.images[0]} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="" />
                       : <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14 }}>📦</div>
                     }
                   </div>
@@ -476,10 +476,10 @@ export default function PubsPage() {
               {bannerPreview
                 ? <img src={bannerPreview} style={{ maxHeight: 120, maxWidth: '100%', borderRadius: 8 }} alt="Aperçu" />
                 : <>
-                    <p style={{ fontSize: 28, marginBottom: 8 }}>🖼️</p>
-                    <p style={{ fontSize: 13, color: '#6b7280' }}>Cliquez pour uploader une image</p>
-                    <p style={{ fontSize: 11, color: '#9ca3af', marginTop: 4 }}>PNG, JPG, WebP</p>
-                  </>
+                  <p style={{ fontSize: 28, marginBottom: 8 }}>🖼️</p>
+                  <p style={{ fontSize: 13, color: '#6b7280' }}>Cliquez pour uploader une image</p>
+                  <p style={{ fontSize: 11, color: '#9ca3af', marginTop: 4 }}>PNG, JPG, WebP</p>
+                </>
               }
               <input
                 ref={fileRef}

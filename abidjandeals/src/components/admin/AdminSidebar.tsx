@@ -36,10 +36,10 @@ export function AdminSidebar({ admin }: { admin: AdminProfile }) {
   return (
     <aside className="fixed top-0 left-0 z-40 w-64 h-screen bg-[#0d0d0d] border-r border-white/[0.06] flex flex-col">
 
-      {/* Logo */}
+      {/* ── Logo Kivoo ── */}
       <div className="h-14 flex items-center px-6 border-b border-white/[0.06] shrink-0">
         <span className="font-bold text-orange-400 text-lg tracking-tight">
-          Abidjan<span className="text-white">Deals</span>
+          ki<span className="text-white">voo</span>
         </span>
         <span className="ml-2 text-[10px] text-gray-500 font-semibold uppercase tracking-widest">
           Admin
@@ -53,7 +53,6 @@ export function AdminSidebar({ admin }: { admin: AdminProfile }) {
         </p>
 
         {NAV_LINKS.map(({ href, label, icon: Icon, exact }) => {
-          // ✅ FIX : exact=true pour /admin afin d'éviter qu'il soit actif sur toutes les sous-pages
           const active = exact
             ? pathname === href
             : pathname === href || pathname.startsWith(href + '/')
@@ -75,10 +74,8 @@ export function AdminSidebar({ admin }: { admin: AdminProfile }) {
           )
         })}
 
-        {/* Séparateur */}
         <div className="my-3 border-t border-white/[0.06]" />
 
-        {/* Lien retour accueil */}
         <Link
           href="/"
           className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-gray-500 hover:text-gray-100 hover:bg-white/[0.05] border border-transparent transition-all duration-150"
@@ -92,11 +89,8 @@ export function AdminSidebar({ admin }: { admin: AdminProfile }) {
       <div className="p-4 border-t border-white/[0.06] shrink-0 space-y-3">
         <div className="flex items-center gap-3 px-2">
           {admin.avatar_url ? (
-            <img
-              src={admin.avatar_url}
-              alt={displayName}
-              className="w-8 h-8 rounded-full object-cover flex-shrink-0"
-            />
+            <img src={admin.avatar_url} alt={displayName}
+              className="w-8 h-8 rounded-full object-cover flex-shrink-0" />
           ) : (
             <div className="w-8 h-8 rounded-full bg-orange-500/20 flex items-center justify-center flex-shrink-0">
               <span className="text-orange-400 text-xs font-bold">{initial}</span>
@@ -108,10 +102,8 @@ export function AdminSidebar({ admin }: { admin: AdminProfile }) {
           </div>
         </div>
 
-        <button
-          onClick={handleLogout}
-          className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-red-400 hover:bg-red-500/10 hover:text-red-300 transition-all duration-150 border border-transparent hover:border-red-500/20"
-        >
+        <button onClick={handleLogout}
+          className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-red-400 hover:bg-red-500/10 hover:text-red-300 transition-all duration-150 border border-transparent hover:border-red-500/20">
           <LogOut className="w-3.5 h-3.5" />
           Déconnexion
         </button>
