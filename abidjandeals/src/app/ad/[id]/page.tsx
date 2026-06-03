@@ -42,22 +42,59 @@ export default function AdDetailPage() {
     const lastTranslatedLocale = useRef<string | null>(null)
 
     useEffect(() => {
+        if (!adId) return
+
+        // ── Timeout global 8 secondes ─────────────────────────────────────────
+        const timeout = setTimeout(() => {
+            if (found === null) {
+                setFound(false)
+            }
+        }, 8000)
+
         async function loadAd() {
-            if (!adId) return
             try {
-                const { data: { session } } = await supabase.auth.getSession()
-                setSessionUid(session?.user?.id ?? null)
+                // ✅ Charge l'annonce SANS attendre l'auth
                 const { data, error } = await supabase
                     .from('ads').select('*').eq('id', adId).maybeSingle()
-                if (error || !data) { setFound(false); return }
+
+                if (error || !data) {
+                    setFound(false)
+                    clearTimeout(timeout)
+                    return
+                }
+
                 setAd(data)
                 setFound(true)
+                clearTimeout(timeout)
+
+                // Incrémente les vues
                 if (data.status === 'active') {
-                    await supabase.from('ads').update({ views: (data.views || 0) + 1 }).eq('id', adId)
+                    supabase.from('ads').update({ views: (data.views || 0) + 1 }).eq('id', adId)
                 }
-            } catch { setFound(false) }
+            } catch {
+                setFound(false)
+                clearTimeout(timeout)
+            }
         }
-        loadAd()
+
+        // ✅ Auth en parallèle — ne bloque pas le chargement de l'annonce
+        async function loadAuth() {
+            try {
+                const controller = new AbortController()
+                const authTimeout = setTimeout(() => controller.abort(), 5000)
+                const { data: { session } } = await supabase.auth.getSession()
+                clearTimeout(authTimeout)
+                setSessionUid(session?.user?.id ?? null)
+            } catch {
+                // Auth échouée → pas grave, l'annonce s'affiche quand même
+                setSessionUid(null)
+            }
+        }
+
+        // Lance les deux en parallèle
+        Promise.all([loadAd(), loadAuth()])
+
+        return () => clearTimeout(timeout)
     }, [adId])
 
     // Charge la bannière ad_detail
@@ -183,11 +220,13 @@ export default function AdDetailPage() {
         return `https://wa.me/${number}?text=${message}`
     }
 
+    // ── Loading ───────────────────────────────────────────────────────────────
     if (found === null) return (
         <div className="min-h-screen flex flex-col bg-gray-50">
             <Navbar />
-            <div className="flex-1 flex items-center justify-center">
+            <div className="flex-1 flex flex-col items-center justify-center gap-3">
                 <Loader2 size={36} className="animate-spin text-orange-500" />
+                <p className="text-sm text-gray-400">Chargement de l'annonce...</p>
             </div>
             <Footer />
         </div>
@@ -199,9 +238,16 @@ export default function AdDetailPage() {
             <div className="flex-1 flex flex-col items-center justify-center gap-4">
                 <AlertTriangle size={48} className="text-orange-400" />
                 <h1 className="text-xl font-bold">{t('ads.no_results')}</h1>
-                <Link href="/" className="px-5 py-2.5 bg-orange-500 text-white rounded-2xl font-semibold text-sm">
-                    {t('ad.home')}
-                </Link>
+                <p className="text-sm text-gray-400">Annonce introuvable ou connexion trop lente.</p>
+                <div className="flex gap-3">
+                    <button onClick={() => window.location.reload()}
+                        className="px-5 py-2.5 bg-gray-100 text-gray-700 rounded-2xl font-semibold text-sm hover:bg-gray-200 transition">
+                        Réessayer
+                    </button>
+                    <Link href="/" className="px-5 py-2.5 bg-orange-500 text-white rounded-2xl font-semibold text-sm">
+                        {t('ad.home')}
+                    </Link>
+                </div>
             </div>
             <Footer />
         </div>
@@ -313,7 +359,7 @@ export default function AdDetailPage() {
                                 </div>
                             )}
 
-                            {/* Bannière mobile — sous la description */}
+                            {/* Bannière mobile */}
                             {adBanner && (
                                 <div className="lg:hidden">
                                     <SmartBanner banner={adBanner} className="rounded-2xl overflow-hidden shadow-sm" />
@@ -321,7 +367,7 @@ export default function AdDetailPage() {
                             )}
                         </div>
 
-                        {/* Colonne droite — sidebar desktop */}
+                        {/* Sidebar desktop */}
                         <div className="space-y-4 hidden lg:block">
                             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
                                 <div className="flex items-center gap-3 mb-4 pb-4 border-b border-gray-100">
@@ -358,7 +404,7 @@ export default function AdDetailPage() {
                                 </ul>
                             </div>
 
-                            {/* ── Bannière publicitaire ad_detail — sidebar desktop ── */}
+                            {/* Bannière desktop */}
                             {adBanner && (
                                 <SmartBanner banner={adBanner} className="rounded-2xl overflow-hidden shadow-sm" />
                             )}
