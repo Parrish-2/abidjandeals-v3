@@ -41,15 +41,19 @@ export default function AdDetailPage() {
     const [translating, setTranslating] = useState(false)
     const lastTranslatedLocale = useRef<string | null>(null)
 
+    // ✅ Ref pour éviter le bug de closure dans le timeout
+    const loadedRef = useRef(false)
+
     useEffect(() => {
         if (!adId) return
+        loadedRef.current = false
 
-        // ── Timeout global 8 secondes ─────────────────────────────────────────
+        // ── Timeout global 10 secondes ────────────────────────────────────────
         const timeout = setTimeout(() => {
-            if (found === null) {
+            if (!loadedRef.current) {
                 setFound(false)
             }
-        }, 8000)
+        }, 10000)
 
         async function loadAd() {
             try {
@@ -63,6 +67,7 @@ export default function AdDetailPage() {
                     return
                 }
 
+                loadedRef.current = true
                 setAd(data)
                 setFound(true)
                 clearTimeout(timeout)
