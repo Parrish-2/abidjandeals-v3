@@ -40,7 +40,7 @@ export function AuthModal() {
     const timer = setTimeout(() => {
       setLoading(false)
       toast.error('Connexion trop lente. Réessayez.')
-    }, 5000)
+    }, 20000)
     return () => clearTimeout(timer)
   }, [loading])
 
