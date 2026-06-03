@@ -38,48 +38,24 @@ export default function AdDetailPage() {
     const [translating, setTranslating] = useState(false)
     const lastTranslatedLocale = useRef<string | null>(null)
 
+    // ── Chargement original — séquentiel et stable ────────────────────────────
     useEffect(() => {
-        if (!adId) return
-
         async function loadAd() {
-            try {
-                // Charge l'annonce directement — sans bloquer sur l'auth
-                const { data, error } = await supabase
-                    .from('ads')
-                    .select('*')
-                    .eq('id', adId)
-                    .maybeSingle()
-
-                if (error || !data) {
-                    setFound(false)
-                    return
-                }
-
-                setAd(data)
-                setFound(true)
-
-                if (data.status === 'active') {
-                    supabase.from('ads')
-                        .update({ views: (data.views || 0) + 1 })
-                        .eq('id', adId)
-                }
-            } catch {
-                setFound(false)
-            }
-        }
-
-        // Auth en parallèle — ne bloque pas l'affichage
-        async function loadAuth() {
+            if (!adId) return
             try {
                 const { data: { session } } = await supabase.auth.getSession()
                 setSessionUid(session?.user?.id ?? null)
-            } catch {
-                setSessionUid(null)
-            }
+                const { data, error } = await supabase
+                    .from('ads').select('*').eq('id', adId).maybeSingle()
+                if (error || !data) { setFound(false); return }
+                setAd(data)
+                setFound(true)
+                if (data.status === 'active') {
+                    supabase.from('ads').update({ views: (data.views || 0) + 1 }).eq('id', adId)
+                }
+            } catch { setFound(false) }
         }
-
         loadAd()
-        loadAuth()
     }, [adId])
 
     // Bannière ad_detail
@@ -208,9 +184,8 @@ export default function AdDetailPage() {
     if (found === null) return (
         <div className="min-h-screen flex flex-col bg-gray-50">
             <Navbar />
-            <div className="flex-1 flex flex-col items-center justify-center gap-3">
+            <div className="flex-1 flex items-center justify-center">
                 <Loader2 size={36} className="animate-spin text-orange-500" />
-                <p className="text-sm text-gray-400">Chargement...</p>
             </div>
             <Footer />
         </div>
