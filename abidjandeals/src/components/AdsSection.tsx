@@ -5,7 +5,6 @@ import { ChevronLeft, ChevronRight } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 
-// Types alignés sur AdCard
 type BoostLevel = 'STANDARD' | 'PREMIUM' | 'URGENT'
 
 interface MediaItem {
@@ -38,7 +37,7 @@ interface AdsSectionProps {
   title: string
   ads: Ad[]
   seeAllHref: string
-  currentPage: number      // ← présentes
+  currentPage: number
   totalPages: number
   total: number
 }
@@ -69,16 +68,10 @@ export function AdsSection({
   }
 
   const getPageNumbers = (): (number | '...')[] => {
-    if (totalPages <= 7) {
-      return Array.from({ length: totalPages }, (_, i) => i + 1)
-    }
+    if (totalPages <= 7) return Array.from({ length: totalPages }, (_, i) => i + 1)
     const pages: (number | '...')[] = [1]
     if (currentPage > 3) pages.push('...')
-    for (
-      let i = Math.max(2, currentPage - 1);
-      i <= Math.min(totalPages - 1, currentPage + 1);
-      i++
-    ) {
+    for (let i = Math.max(2, currentPage - 1); i <= Math.min(totalPages - 1, currentPage + 1); i++) {
       pages.push(i)
     }
     if (currentPage < totalPages - 2) pages.push('...')
@@ -88,10 +81,11 @@ export function AdsSection({
 
   return (
     <section>
-      <div className="flex items-center justify-between mb-6">
+      {/* En-tête section */}
+      <div className="flex items-center justify-between mb-4">
         <div>
-          <h2 className="font-sans font-bold text-2xl text-dark">{title}</h2>
-          <p className="text-sm text-gray-400 mt-0.5">
+          <h2 className="font-sans font-bold text-xl text-dark">{title}</h2>
+          <p className="text-xs text-gray-400 mt-0.5">
             {total} annonce{total > 1 ? 's' : ''} · Page {currentPage} sur {totalPages}
           </p>
         </div>
@@ -103,14 +97,17 @@ export function AdsSection({
         </Link>
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+      {/* ── Grille 5 colonnes ──────────────────────────────────────────────── */}
+      {/* 2 mobile → 3 sm → 4 md → 5 lg/xl */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
         {sorted.map(ad => (
           <AdCard key={ad.id} ad={ad} />
         ))}
       </div>
 
+      {/* Pagination */}
       {totalPages > 1 && (
-        <div className="flex items-center justify-center gap-2 mt-10">
+        <div className="flex items-center justify-center gap-2 mt-8">
           <button
             onClick={() => goTo(currentPage - 1)}
             disabled={currentPage === 1}
@@ -129,8 +126,8 @@ export function AdsSection({
                   key={p}
                   onClick={() => goTo(p as number)}
                   className={`w-9 h-9 rounded-xl text-sm font-semibold transition ${currentPage === p
-                    ? 'bg-orange-500 text-white shadow-sm shadow-orange-200'
-                    : 'bg-white border border-gray-200 text-gray-600 hover:border-orange-300 hover:text-orange-500'
+                      ? 'bg-orange-500 text-white shadow-sm shadow-orange-200'
+                      : 'bg-white border border-gray-200 text-gray-600 hover:border-orange-300 hover:text-orange-500'
                     }`}
                 >
                   {p}

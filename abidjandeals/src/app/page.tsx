@@ -4,13 +4,11 @@ import { AdsSection } from '@/components/AdsSection';
 import { Footer } from '@/components/Footer';
 import { HeroSection } from '@/components/HeroSection';
 import { Navbar } from '@/components/Navbar';
-import { SmartBanner } from '@/components/SmartBanner';
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 
 const PAGE_SIZE = 24
 
-// ---------- helpers ----------
 async function getStats() {
     try {
         const cookieStore = await cookies()
@@ -84,7 +82,6 @@ async function getHomepageBanner() {
             .maybeSingle()
 
         if (!data) return null
-
         return {
             id: data.id,
             company_name: data.company_name ?? '',
@@ -121,12 +118,31 @@ export default async function HomePage({
             <main className="flex-1">
                 <HeroSection stats={stats} />
 
-                <div className="max-w-7xl mx-auto px-4 py-10 space-y-8">
+                <div className="max-w-7xl mx-auto px-4 pt-6 pb-10 space-y-4">
 
-                    {/* ── Bannière publicitaire homepage_top ── */}
+                    {/* ── Bannière leaderboard compact (hauteur max ~90px) ── */}
                     {banner && (
-                        <div className="max-w-3xl mx-auto">
-                            <SmartBanner banner={banner} className="rounded-2xl overflow-hidden shadow-sm" />
+                        <div className="max-w-4xl mx-auto">
+                            {/* Label pub discret */}
+                            <p className="text-[10px] text-gray-400 uppercase tracking-widest mb-1 pl-0.5">
+                                Publicité
+                            </p>
+                            {/* Hauteur contrainte ~30% de moins qu'avant */}
+                            <a
+                                href={banner.link_url ?? '#'}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="block rounded-xl overflow-hidden border border-gray-100 hover:opacity-95 transition-opacity shadow-sm"
+                                style={{ maxHeight: '90px' }}
+                            >
+                                <img
+                                    src={banner.image_url}
+                                    alt={banner.company_name}
+                                    className="w-full h-full object-cover object-center"
+                                    style={{ maxHeight: '90px' }}
+                                    loading="lazy"
+                                />
+                            </a>
                         </div>
                     )}
 
