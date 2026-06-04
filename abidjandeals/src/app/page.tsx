@@ -7,7 +7,7 @@ import { Navbar } from '@/components/Navbar';
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 
-const PAGE_SIZE = 24
+const PAGE_SIZE = 25
 
 async function getStats() {
     try {

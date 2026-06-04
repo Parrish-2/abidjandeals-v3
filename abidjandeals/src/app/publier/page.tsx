@@ -204,14 +204,14 @@ export default function PublierPage() {
 
   async function addMedia(files: FileList | null, type: 'image' | 'video') {
     if (!files) return
-    const limit = type === 'video' ? 1 : 5 - media.filter(m => m.type === 'image').length
+    const limit = type === 'video' ? 1 : 8 - media.filter(m => m.type === 'image').length
     const fileArray = Array.from(files).slice(0, limit)
     if (type === 'image') {
       const items = fileArray.map(file => ({ file, url: URL.createObjectURL(file), type: 'image' as const }))
-      setMedia(prev => [...prev, ...items].slice(0, 6))
+      setMedia(prev => [...prev, ...items].slice(0, 9))
     } else {
       const items: MediaFile[] = fileArray.map(file => ({ file, url: URL.createObjectURL(file), type }))
-      setMedia(prev => [...prev, ...items].slice(0, 6))
+      setMedia(prev => [...prev, ...items].slice(0, 9))
     }
   }
 
@@ -279,15 +279,26 @@ export default function PublierPage() {
           }
         }
 
-        for (let i = 0; i < media.length; i++) {
-          const m = media[i]
-          const label = m.type === 'video' ? '🎬 Vidéo' : `📷 Photo ${i + 1}`
-          setUploadProgress({ current: i + 1, total: media.length, label: `${label} · ${(m.file.size / 1024 / 1024).toFixed(1)} Mo` })
-          const url = await uploadWithRetry(m)
-          if (url) { if (m.type === 'image') uploadedImages.push(url); else videoUrl = url }
+        // ✅ Upload parallèle — toutes les photos en même temps
+        setUploadProgress({ current: 0, total: media.length, label: '⚡ Upload en cours...' })
+        let completed = 0
+        const results = await Promise.all(
+          media.map(async (m) => {
+            const url = await uploadWithRetry(m)
+            completed++
+            setUploadProgress({
+              current: completed,
+              total: media.length,
+              label: `⚡ ${completed}/${media.length} fichier${completed > 1 ? 's' : ''} uploadé${completed > 1 ? 's' : ''}`,
+            })
+            return { url, type: m.type }
+          })
+        )
+        setUploadProgress(null)
+        for (const r of results) {
+          if (r.url) { if (r.type === 'image') uploadedImages.push(r.url); else videoUrl = r.url }
           else uploadFailed = true
         }
-        setUploadProgress(null)
         if (uploadFailed && uploadedImages.length === 0 && !videoUrl) {
           toast.error('Aucun média uploadé. Vérifiez votre connexion.', { duration: 5000 })
         }
@@ -416,7 +427,7 @@ export default function PublierPage() {
                 <div className="px-5 pt-5 pb-3 border-b border-gray-50 flex items-center gap-2">
                   <div className="w-7 h-7 rounded-full bg-orange-500 text-white text-xs font-bold flex items-center justify-center">2</div>
                   <h2 className="font-bold text-gray-800">Photos & Vidéo</h2>
-                  <span className="ml-auto text-xs text-gray-400">{media.length}/6</span>
+                  <span className="ml-auto text-xs text-gray-400">{media.length}/9</span>
                 </div>
                 <div className="p-5">
                   <div onDrop={onDrop} onDragOver={e => e.preventDefault()}
@@ -424,7 +435,7 @@ export default function PublierPage() {
                     onClick={() => fileInputRef.current?.click()}>
                     <Upload size={28} className="mx-auto text-gray-300 group-hover:text-orange-400 transition mb-2" />
                     <p className="font-semibold text-gray-600 text-sm">Glissez vos photos ou cliquez</p>
-                    <p className="text-xs text-gray-400 mt-1">JPG, PNG, WEBP · Max 5 photos + 1 vidéo</p>
+                    <p className="text-xs text-gray-400 mt-1">JPG, PNG, WEBP · Max 8 photos + 1 vidéo</p>
                     <input ref={fileInputRef} type="file" accept="image/*" multiple className="hidden"
                       onChange={e => addMedia(e.target.files, 'image')} />
                   </div>
