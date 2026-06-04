@@ -1,21 +1,13 @@
 'use client'
 
 import { BoostModal } from '@/components/BoostModal'
+import { ChangePasswordModal } from '@/components/ChangePasswordModal'
 import { formatFCFA } from '@/lib/format'
 import { useStore } from '@/lib/store'
 import { supabase } from '@/lib/supabase'
 import {
-  CheckCircle,
-  Clock,
-  Eye,
-  Package,
-  PencilLine,
-  PlusCircle,
-  Star,
-  Trash2,
-  TrendingUp,
-  XCircle,
-  Zap,
+  CheckCircle, Clock, Eye, KeyRound, Package,
+  PencilLine, PlusCircle, Star, Trash2, TrendingUp, XCircle, Zap,
 } from 'lucide-react'
 import Link from 'next/link'
 import { useEffect, useRef, useState } from 'react'
@@ -37,8 +29,6 @@ interface Profile {
   nom: string
   prenom?: string
 }
-
-// ─── Sub-components ───────────────────────────────────────────────────────────
 
 function StatCard({ value, label, color, icon }: { value: number; label: string; color: string; icon: React.ReactNode }) {
   return (
@@ -70,10 +60,8 @@ function BoostBanner({ onBoostClick }: { onBoostClick: () => void }) {
           </p>
         </div>
       </div>
-      <button
-        onClick={onBoostClick}
-        style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 20px', borderRadius: 10, background: 'linear-gradient(135deg, #F97316, #ef4444)', color: '#fff', border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 700, boxShadow: '0 4px 16px rgba(249,115,22,0.4)', flexShrink: 0 }}
-      >
+      <button onClick={onBoostClick}
+        style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 20px', borderRadius: 10, background: 'linear-gradient(135deg, #F97316, #ef4444)', color: '#fff', border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 700, boxShadow: '0 4px 16px rgba(249,115,22,0.4)', flexShrink: 0 }}>
         <Zap size={15} style={{ fill: 'white' }} />
         Booster une annonce
       </button>
@@ -96,8 +84,7 @@ function StatusBadge({ status }: { status: Ad['status'] }) {
 }
 
 function AdRow({ ad, deleting, onDelete, onBoost }: {
-  ad: Ad
-  deleting: boolean
+  ad: Ad; deleting: boolean
   onDelete: (id: string, title: string) => void
   onBoost: (ad: Ad) => void
 }) {
@@ -131,28 +118,21 @@ function AdRow({ ad, deleting, onDelete, onBoost }: {
       <StatusBadge status={ad.status} />
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 2, flexShrink: 0 }}>
-        <Link href={`/ad/${ad.id}`} target="_blank" title="Voir" style={{ padding: '6px 8px', borderRadius: 8, color: '#9ca3af', display: 'flex', textDecoration: 'none' }}>
+        <Link href={`/ad/${ad.id}`} target="_blank" title="Voir"
+          style={{ padding: '6px 8px', borderRadius: 8, color: '#9ca3af', display: 'flex', textDecoration: 'none' }}>
           <Eye size={17} />
         </Link>
-        <Link href={`/ad/${ad.id}/edit`} title="Modifier" style={{ padding: '6px 8px', borderRadius: 8, color: '#9ca3af', display: 'flex', textDecoration: 'none' }}>
+        <Link href={`/ad/${ad.id}/edit`} title="Modifier"
+          style={{ padding: '6px 8px', borderRadius: 8, color: '#9ca3af', display: 'flex', textDecoration: 'none' }}>
           <PencilLine size={17} />
         </Link>
-
-        <button
-          onClick={() => onBoost(ad)}
-          disabled={boosted}
-          style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '6px 10px', borderRadius: 8, border: 'none', background: boosted ? '#f3f4f6' : 'linear-gradient(135deg, #F97316, #ef4444)', color: boosted ? '#9ca3af' : '#fff', fontSize: 11, fontWeight: 700, cursor: boosted ? 'default' : 'pointer' }}
-        >
+        <button onClick={() => onBoost(ad)} disabled={boosted}
+          style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '6px 10px', borderRadius: 8, border: 'none', background: boosted ? '#f3f4f6' : 'linear-gradient(135deg, #F97316, #ef4444)', color: boosted ? '#9ca3af' : '#fff', fontSize: 11, fontWeight: 700, cursor: boosted ? 'default' : 'pointer' }}>
           <Zap size={12} style={{ fill: boosted ? 'none' : 'white' }} />
           {boosted ? 'Boosté' : '2 500 F'}
         </button>
-
-        <button
-          onClick={() => onDelete(ad.id, ad.title ?? 'cette annonce')}
-          disabled={deleting}
-          title="Supprimer"
-          style={{ padding: '6px 8px', borderRadius: 8, color: deleting ? '#fca5a5' : '#9ca3af', background: 'none', border: 'none', cursor: 'pointer', display: 'flex' }}
-        >
+        <button onClick={() => onDelete(ad.id, ad.title ?? 'cette annonce')} disabled={deleting} title="Supprimer"
+          style={{ padding: '6px 8px', borderRadius: 8, color: deleting ? '#fca5a5' : '#9ca3af', background: 'none', border: 'none', cursor: 'pointer', display: 'flex' }}>
           {deleting
             ? <div style={{ width: 17, height: 17, border: '2px solid #fca5a5', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
             : <Trash2 size={17} />
@@ -175,14 +155,12 @@ export default function DashboardPage() {
   const [dataLoading, setDataLoading] = useState(false)
   const [deleting, setDeleting] = useState<string | null>(null)
   const [boostTarget, setBoostTarget] = useState<Ad | null>(null)
+  const [showChangePwd, setShowChangePwd] = useState(false)  // ✅ Nouveau
 
   const fetchedRef = useRef(false)
 
-  // ── Étape 1 : vérifier la session UNE SEULE FOIS, avec timeout de sécurité ──
   useEffect(() => {
     let cancelled = false
-
-    // Timeout de sécurité : si Supabase ne répond pas en 5s → rediriger
     const timeout = setTimeout(() => {
       if (!cancelled && !authChecked) {
         setAuthChecked(true)
@@ -192,43 +170,26 @@ export default function DashboardPage() {
 
     async function checkSession() {
       try {
-        // getSession() lit le JWT en cache local → quasi instantané
         const { data: { session } } = await supabase.auth.getSession()
-
         if (cancelled) return
-
-        if (!session?.user) {
-          setAuthChecked(true)
-          setAuthed(false)
-          return
-        }
-
-        // Mettre à jour le store si nécessaire (sans appel réseau supplémentaire)
+        if (!session?.user) { setAuthChecked(true); setAuthed(false); return }
         if (!user && session.user) {
           setUser({ id: session.user.id, email: session.user.email ?? '' } as Parameters<typeof setUser>[0])
         }
-
         setAuthed(true)
         setAuthChecked(true)
       } catch {
-        if (!cancelled) {
-          setAuthChecked(true)
-          setAuthed(false)
-        }
+        if (!cancelled) { setAuthChecked(true); setAuthed(false) }
       } finally {
         clearTimeout(timeout)
       }
     }
 
     checkSession()
-    return () => {
-      cancelled = true
-      clearTimeout(timeout)
-    }
+    return () => { cancelled = true; clearTimeout(timeout) }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // ── Étape 2 : charger profil + annonces en parallèle une fois auth confirmée ──
   useEffect(() => {
     if (!authChecked || !authed) return
     if (fetchedRef.current) return
@@ -241,11 +202,9 @@ export default function DashboardPage() {
         const uid = user?.id ?? session?.user?.id
         if (!uid) return
 
-        // Profil + annonces en parallèle → deux fois plus rapide
         const [profileRes, adsRes] = await Promise.allSettled([
           supabase.from('profiles').select('prenom, nom').eq('id', uid).single(),
-          supabase
-            .from('ads')
+          supabase.from('ads')
             .select('id, title, price, status, category_id, city, images, created_at, boost_level')
             .eq('user_id', uid)
             .order('created_at', { ascending: false }),
@@ -254,28 +213,21 @@ export default function DashboardPage() {
         if (profileRes.status === 'fulfilled' && profileRes.value.data) {
           setProfile(profileRes.value.data as Profile)
         }
-
         if (adsRes.status === 'fulfilled') {
           const { data: userAds, error } = adsRes.value
-          if (error) {
-            console.error('Erreur fetch annonces:', error.message)
-            toast.error('Impossible de charger vos annonces')
-          }
+          if (error) toast.error('Impossible de charger vos annonces')
           setAds(Array.isArray(userAds) ? (userAds as Ad[]) : [])
         }
-      } catch (err) {
-        console.error('fetchData error:', err)
+      } catch {
         toast.error('Erreur de chargement')
       } finally {
         setDataLoading(false)
       }
     }
-
     fetchData()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authChecked, authed])
 
-  // ── Redirection si non connecté ───────────────────────────────────────────
   if (authChecked && !authed) {
     if (typeof window !== 'undefined') {
       window.location.href = '/?auth=login&redirect=/dashboard'
@@ -283,7 +235,6 @@ export default function DashboardPage() {
     return null
   }
 
-  // ── Écran de chargement ───────────────────────────────────────────────────
   if (!authChecked || dataLoading) {
     return (
       <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: '#f9fafb', gap: 12 }}>
@@ -296,13 +247,11 @@ export default function DashboardPage() {
     )
   }
 
-  // ── Données calculées ─────────────────────────────────────────────────────
   const activeCount = ads.filter(a => a.status === 'active').length
   const pendingCount = ads.filter(a => a.status === 'pending').length
   const boostedCount = ads.filter(a => !!a.boost_level).length
   const prenom = profile?.prenom || profile?.nom?.split(' ')[0] || ''
 
-  // ── Handlers ──────────────────────────────────────────────────────────────
   const handleDelete = async (id: string, title: string) => {
     if (!confirm(`Supprimer "${title}" définitivement ?`)) return
     setDeleting(id)
@@ -337,16 +286,27 @@ export default function DashboardPage() {
       <Toaster position="top-center" />
       <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
 
-      {/* Retour accueil */}
-      <div style={{ marginBottom: 20 }}>
+      {/* ✅ Modal changement mot de passe */}
+      {showChangePwd && <ChangePasswordModal onClose={() => setShowChangePwd(false)} />}
+
+      {/* ✅ Header avec logo Kivoo + bouton mot de passe */}
+      <div style={{ marginBottom: 20, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <Link href="/" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, textDecoration: 'none' }}>
           <span style={{ fontSize: 18, fontWeight: 900, color: '#111827', letterSpacing: '-0.5px' }}>
-            Abidjan<span style={{ color: '#F97316' }}>Deals</span>
+            ki<span style={{ color: '#F97316' }}>voo</span>
           </span>
           <span style={{ fontSize: 10, fontWeight: 700, background: '#fff7ed', color: '#F97316', border: '1px solid #fed7aa', borderRadius: 6, padding: '2px 7px' }}>
             ← Accueil
           </span>
         </Link>
+
+        {/* Bouton changer mot de passe */}
+        <button
+          onClick={() => setShowChangePwd(true)}
+          style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 10, border: '1px solid #e5e7eb', background: 'white', color: '#374151', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
+          <KeyRound size={14} color="#F97316" />
+          Changer mon mot de passe
+        </button>
       </div>
 
       {boostTarget && (
@@ -359,13 +319,13 @@ export default function DashboardPage() {
         />
       )}
 
-      {/* Header */}
+      {/* Header utilisateur */}
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 24, flexWrap: 'wrap', gap: 12 }}>
         <div>
           <h1 style={{ fontSize: 22, fontWeight: 800, color: '#111827', marginBottom: 4 }}>
             Bonjour{prenom ? `, ${prenom}` : ''} 👋
           </h1>
-          <p style={{ fontSize: 13, color: '#6b7280' }}>Gérez vos annonces AbidjanDeals</p>
+          <p style={{ fontSize: 13, color: '#6b7280' }}>Gérez vos annonces KIVOO</p>
         </div>
         <Link href="/publier" style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#F97316', color: 'white', borderRadius: 12, padding: '8px 16px', fontSize: 13, fontWeight: 700, textDecoration: 'none' }}>
           <PlusCircle size={16} /> Nouvelle annonce
@@ -410,13 +370,8 @@ export default function DashboardPage() {
           </div>
         ) : (
           ads.map(ad => (
-            <AdRow
-              key={ad.id}
-              ad={ad}
-              deleting={deleting === ad.id}
-              onDelete={handleDelete}
-              onBoost={setBoostTarget}
-            />
+            <AdRow key={ad.id} ad={ad} deleting={deleting === ad.id}
+              onDelete={handleDelete} onBoost={setBoostTarget} />
           ))
         )}
       </div>
