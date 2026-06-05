@@ -1,10 +1,10 @@
-import { Navbar } from '@/components/Navbar'
 import { Footer } from '@/components/Footer'
-import { Shield, MapPin, Phone, CreditCard, AlertTriangle, CheckCircle } from 'lucide-react'
+import { Navbar } from '@/components/Navbar'
+import { AlertTriangle, CheckCircle, CreditCard, MapPin, Phone, Shield } from 'lucide-react'
 
 export const metadata = {
-  title: 'Sécurité & Conseils — AbidjanDeals',
-  description: 'Conseils de sécurité pour acheter et vendre en toute confiance sur AbidjanDeals en Côte d\'Ivoire.',
+  title: 'Sécurité & Conseils — Kivoo',
+  description: "Conseils de sécurité pour acheter et vendre en toute confiance sur Kivoo en Côte d'Ivoire.",
 }
 
 const TIPS = [
@@ -12,7 +12,7 @@ const TIPS = [
     icon: MapPin,
     color: 'bg-emerald-50 text-emerald-600',
     title: 'Rencontrez-vous en lieu public',
-    desc: "Privilegiez toujours une rencontre dans un endroit fréquenté : centre commercial, commissariat, marché. Évitez les domiciles inconnus, surtout pour les premières transactions.",
+    desc: "Privilégiez toujours une rencontre dans un endroit fréquenté : centre commercial, commissariat, marché. Évitez les domiciles inconnus, surtout pour les premières transactions.",
   },
   {
     icon: CreditCard,
@@ -29,7 +29,7 @@ const TIPS = [
   {
     icon: Shield,
     color: 'bg-violet-50 text-violet-600',
-    title: 'Inspectez avant d\'acheter',
+    title: "Inspectez avant d'acheter",
     desc: "Testez le produit sur place avant tout paiement. Pour les appareils électroniques, vérifiez l'IMEI. Pour les véhicules, demandez un essai et les papiers originaux.",
   },
   {
@@ -42,7 +42,7 @@ const TIPS = [
     icon: CheckCircle,
     color: 'bg-amber-50 text-amber-600',
     title: 'Utilisez la messagerie interne',
-    desc: "Communiquez via la messagerie AbidjanDeals plutôt que par SMS. Cela nous permet de détecter et bloquer les tentatives d'arnaque et conserve un historique de vos échanges.",
+    desc: "Communiquez via la messagerie Kivoo plutôt que par SMS. Cela nous permet de détecter et bloquer les tentatives d'arnaque et conserve un historique de vos échanges.",
   },
 ]
 
@@ -62,7 +62,6 @@ export default function SecuritePage() {
       <Navbar />
       <main className="flex-1 max-w-3xl mx-auto px-4 py-12 w-full">
 
-        {/* Hero */}
         <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-3xl p-8 text-white mb-10">
           <div className="flex items-center gap-3 mb-4">
             <div className="w-12 h-12 bg-orange-500/20 rounded-2xl flex items-center justify-center">
@@ -74,13 +73,12 @@ export default function SecuritePage() {
             </div>
           </div>
           <p className="text-white/70 text-sm leading-relaxed">
-            AbidjanDeals met tout en œuvre pour sécuriser votre expérience. Suivez ces conseils
-            pour éviter les arnaques et transacter sereinement partout en Côte d'Ivoire.
+            Kivoo met tout en œuvre pour sécuriser votre expérience. Suivez ces conseils
+            pour éviter les arnaques et transacter sereinement partout en Côte d&apos;Ivoire.
           </p>
         </div>
 
-        {/* Conseils */}
-        <h2 className="font-bold text-xl text-gray-900 mb-5">6 règles d'or</h2>
+        <h2 className="font-bold text-xl text-gray-900 mb-5">6 règles d&apos;or</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-12">
           {TIPS.map((tip, i) => (
             <div key={i} className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
@@ -93,11 +91,10 @@ export default function SecuritePage() {
           ))}
         </div>
 
-        {/* Red flags */}
         <div className="bg-red-50 border border-red-100 rounded-2xl p-6 mb-10">
           <div className="flex items-center gap-2 mb-4">
             <AlertTriangle size={18} className="text-red-500" />
-            <h2 className="font-bold text-red-700">Signes d'une arnaque potentielle</h2>
+            <h2 className="font-bold text-red-700">Signes d&apos;une arnaque potentielle</h2>
           </div>
           <ul className="space-y-2">
             {RED_FLAGS.map((flag, i) => (
@@ -109,17 +106,13 @@ export default function SecuritePage() {
           </ul>
         </div>
 
-        {/* Contact urgence */}
         <div className="bg-orange-50 border border-orange-100 rounded-2xl p-6">
-          <p className="font-semibold text-orange-700 mb-1">Vous avez été victime d'une arnaque ?</p>
+          <p className="font-semibold text-orange-700 mb-1">Vous avez été victime d&apos;une arnaque ?</p>
           <p className="text-orange-600 text-sm mb-3">
-            Signalez l'annonce directement depuis la plateforme ou contactez-nous immédiatement.
+            Signalez l&apos;annonce directement depuis la plateforme ou contactez-nous immédiatement.
             Nous bloquerons le compte et coopérerons avec les autorités si nécessaire.
           </p>
-          <a
-            href="/contact"
-            className="inline-flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white font-bold px-5 py-2.5 rounded-xl text-sm transition-colors"
-          >
+          <a href="/contact" className="inline-flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white font-bold px-5 py-2.5 rounded-xl text-sm transition-colors">
             Signaler un problème →
           </a>
         </div>
