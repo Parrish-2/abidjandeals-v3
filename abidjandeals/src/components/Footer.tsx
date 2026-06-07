@@ -26,7 +26,7 @@ export function Footer() {
             </div>
           </div>
 
-          {/* Catégories — noms traduits via cat_names */}
+          {/* Catégories */}
           <div>
             <h4 className="font-semibold text-sm uppercase tracking-wider text-white/40 mb-4">
               {t('footer.categories')}
@@ -34,10 +34,7 @@ export function Footer() {
             <ul className="space-y-2">
               {CATEGORIES.slice(0, 6).map(c => (
                 <li key={c.id}>
-                  <Link
-                    href={`/search?category=${c.id}`}
-                    className="text-white/60 hover:text-orange-400 text-sm transition-colors"
-                  >
+                  <Link href={`/search?category=${c.id}`} className="text-white/60 hover:text-orange-400 text-sm transition-colors">
                     {c.icon} {t(`cat_names.${c.id}` as any) || c.name}
                   </Link>
                 </li>
@@ -70,8 +67,9 @@ export function Footer() {
               <li><Link href="/cgu" className="hover:text-orange-400 transition-colors">{t('footer.terms')}</Link></li>
               <li><Link href="/vendeur" className="hover:text-orange-400 transition-colors">{t('footer.pricing')}</Link></li>
               <li><Link href="/contact" className="hover:text-orange-400 transition-colors">{t('footer.contact')}</Link></li>
-              <li><Link href="/contact" className="hover:text-orange-400 transition-colors">{t('footer.press')}</Link></li>
-              <li><Link href="/contact" className="hover:text-orange-400 transition-colors">{t('footer.jobs')}</Link></li>
+              {/* ✅ Fix : liens corrects pour Presse et Recrutement */}
+              <li><Link href="/presse" className="hover:text-orange-400 transition-colors">{t('footer.press')}</Link></li>
+              <li><Link href="/recrutement" className="hover:text-orange-400 transition-colors">{t('footer.jobs')}</Link></li>
             </ul>
           </div>
 
@@ -99,10 +97,7 @@ export function Footer() {
                 { name: 'San-Pédro', slug: 'San-Pédro' },
               ].map(v => (
                 <li key={v.name}>
-                  <Link
-                    href={`/search?city=${encodeURIComponent(v.slug)}`}
-                    className="hover:text-orange-400 transition-colors"
-                  >
+                  <Link href={`/search?city=${encodeURIComponent(v.slug)}`} className="hover:text-orange-400 transition-colors">
                     {v.name}
                   </Link>
                 </li>
