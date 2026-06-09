@@ -2,9 +2,9 @@
 
 // src/components/SmartBanner.tsx
 
-import { useEffect, useRef, useCallback } from 'react'
-import { createBrowserClient } from '@supabase/ssr'
 import type { BannerData } from '@/types/admin'
+import { createBrowserClient } from '@supabase/ssr'
+import { useCallback, useEffect, useRef } from 'react'
 
 interface SmartBannerProps {
   banner: BannerData
@@ -26,10 +26,15 @@ export function SmartBanner({ banner, className = '' }: SmartBannerProps) {
 
   // ── IMPRESSION ──────────────────────────────────────────────────────────────
   // eslint-disable-next-line react-hooks/rules-of-hooks
-  const trackImpression = useCallback(() => {
+  const trackImpression = useCallback(async () => {
     if (impressionFired.current) return
     impressionFired.current = true
-  }, [])
+
+    await supabase
+      .from('banners')
+      .update({ impression_count: (banner.impression_count ?? 0) + 1 })
+      .eq('id', banner.id)
+  }, [banner.id, banner.impression_count])
 
   // eslint-disable-next-line react-hooks/rules-of-hooks
   useEffect(() => {
@@ -49,8 +54,6 @@ export function SmartBanner({ banner, className = '' }: SmartBannerProps) {
   }, [trackImpression])
 
   // ── TRACKING CLIC ───────────────────────────────────────────────────────────
-  // Correction TS2551 : Supabase retourne { data, error } — pas de .catch()
-  // On destructure l'erreur et on fait un fallback update si le RPC n'existe pas
   async function handleClick(e: React.MouseEvent<HTMLAnchorElement>) {
     e.preventDefault()
 
@@ -59,7 +62,6 @@ export function SmartBanner({ banner, className = '' }: SmartBannerProps) {
     })
 
     if (error) {
-      // Fallback direct si la fonction RPC n'est pas encore créée
       await supabase
         .from('banners')
         .update({ click_count: banner.click_count + 1 })

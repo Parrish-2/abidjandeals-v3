@@ -31,7 +31,7 @@ export type BannerPlacement =
   | 'homepage_mid'
   | 'search_sidebar'
   | 'category_top'
-  | 'ad_detail'        // ✅ Ajouté — sidebar page annonce
+  | 'ad_detail'
 
 export interface BannerData {
   id: string
@@ -42,6 +42,7 @@ export interface BannerData {
   active: boolean
   contract_end: number | null
   click_count: number
+  impression_count: number
   created_at: string
 }
 
@@ -50,7 +51,7 @@ export const PLACEMENT_LABELS: Record<BannerPlacement, string> = {
   homepage_mid: 'Accueil — Milieu',
   search_sidebar: 'Recherche — Sidebar',
   category_top: 'Catégorie — Haut',
-  ad_detail: 'Annonce — Détail',  // ✅ Ajouté
+  ad_detail: 'Annonce — Détail',
 }
 
 // ─── PROFIL UTILISATEUR ───────────────────────────────────────────────────────
