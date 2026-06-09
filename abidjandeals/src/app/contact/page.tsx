@@ -14,7 +14,6 @@ export default function ContactPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setLoading(true)
-    // Simulation envoi — remplace par ton endpoint ou Resend/EmailJS
     await new Promise(r => setTimeout(r, 1200))
     setSent(true)
     setLoading(false)
@@ -32,15 +31,15 @@ export default function ContactPage() {
       icon: MessageCircle,
       color: 'bg-emerald-50 text-emerald-600',
       label: 'WhatsApp',
-      value: '+225 07 00 00 00 00',
-      href: 'https://wa.me/2250700000000',
+      value: '+225 07 07 60 77 24',
+      href: 'https://wa.me/2250707607724',
     },
     {
       icon: Phone,
       color: 'bg-orange-50 text-orange-600',
       label: t('contact_page.fullname').includes('Full') ? 'Phone' : 'Téléphone',
-      value: '+225 07 00 00 00 00',
-      href: 'tel:+2250700000000',
+      value: '+225 07 07 60 77 24',
+      href: 'tel:+2250707607724',
     },
   ]
 
@@ -78,7 +77,6 @@ export default function ContactPage() {
           ))}
         </div>
 
-        {/* Formulaire */}
         <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-8">
           {sent ? (
             <div className="text-center py-8">
@@ -86,9 +84,7 @@ export default function ContactPage() {
                 <CheckCircle size={32} className="text-emerald-500" />
               </div>
               <h2 className="font-bold text-xl text-gray-900 mb-2">{t('contact_page.sent_title')}</h2>
-              <p className="text-gray-500 text-sm">
-                {t('contact_page.sent_desc')}
-              </p>
+              <p className="text-gray-500 text-sm">{t('contact_page.sent_desc')}</p>
             </div>
           ) : (
             <>

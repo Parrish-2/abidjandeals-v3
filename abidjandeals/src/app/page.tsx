@@ -1,9 +1,9 @@
 ﻿export const dynamic = 'force-dynamic';
 
 import { AdsSection } from '@/components/AdsSection';
-import BannerSlot from '@/components/BannerSlot';
 import { Footer } from '@/components/Footer';
 import { HeroSection } from '@/components/HeroSection';
+import HomepageBanner from '@/components/HomepageBanner';
 import { Navbar } from '@/components/Navbar';
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
@@ -85,9 +85,7 @@ export default async function HomePage({
                 <div className="max-w-7xl mx-auto px-4 pt-6 pb-10 space-y-4">
 
                     {/* ── Bannière homepage_top — rotation automatique toutes les 6s ── */}
-                    <div className="max-w-4xl mx-auto">
-                        <BannerSlot position="homepage_top" />
-                    </div>
+                    <HomepageBanner />
 
                     {/* ── Annonces + pagination ── */}
                     <AdsSection
