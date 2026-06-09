@@ -77,20 +77,21 @@ async function getHomepageBanner() {
             .eq('placement', 'homepage_top')
             .eq('active', true)
             .or(`contract_end.is.null,contract_end.gt.${now}`)
-            .order('created_at', { ascending: false })
-            .limit(1)
-            .maybeSingle()
 
-        if (!data) return null
+        if (!data || data.length === 0) return null
+
+        // ✅ Rotation aléatoire — chaque chargement affiche un annonceur différent
+        const randomBanner = data[Math.floor(Math.random() * data.length)]
+        const data2 = randomBanner
         return {
-            id: data.id,
-            company_name: data.company_name ?? '',
-            image_url: data.image_url,
-            link_url: data.link_url ?? null,
-            placement: data.placement,
-            active: data.active,
-            contract_end: data.contract_end ? new Date(data.contract_end).getTime() : null,
-            click_count: data.click_count ?? 0,
+            id: data2.id,
+            company_name: data2.company_name ?? '',
+            image_url: data2.image_url,
+            link_url: data2.link_url ?? null,
+            placement: data2.placement,
+            active: data2.active,
+            contract_end: data2.contract_end ? new Date(data2.contract_end).getTime() : null,
+            click_count: data2.click_count ?? 0,
             created_at: '',
         }
     } catch {
@@ -120,26 +121,22 @@ export default async function HomePage({
 
                 <div className="max-w-7xl mx-auto px-4 pt-6 pb-10 space-y-4">
 
-                    {/* ── Bannière leaderboard compact (hauteur max ~90px) ── */}
+                    {/* ── Bannière leaderboard ── */}
                     {banner && (
                         <div className="max-w-4xl mx-auto">
-                            {/* Label pub discret */}
                             <p className="text-[10px] text-gray-400 uppercase tracking-widest mb-1 pl-0.5">
                                 Publicité
                             </p>
-                            {/* Hauteur contrainte ~30% de moins qu'avant */}
                             <a
                                 href={banner.link_url ?? '#'}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="block rounded-xl overflow-hidden border border-gray-100 hover:opacity-95 transition-opacity shadow-sm"
-                                style={{ maxHeight: '90px' }}
                             >
                                 <img
                                     src={banner.image_url}
                                     alt={banner.company_name}
-                                    className="w-full h-full object-cover object-center"
-                                    style={{ maxHeight: '90px' }}
+                                    className="w-full h-auto block"
                                     loading="lazy"
                                 />
                             </a>
