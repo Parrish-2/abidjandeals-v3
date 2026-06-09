@@ -1,127 +1,98 @@
-import type { Metadata } from 'next'
+'use client'
+import { useI18n } from '@/contexts/i18nContext'
 import Link from 'next/link'
 
-export const metadata: Metadata = {
-  title: "Conditions Générales d'Utilisation — Kivoo",
-  description: "CGU de Kivoo : nature de la plateforme, responsabilités, protection des données (loi ivoirienne n°2013-450) et contenus interdits.",
-}
-
-const sections = [
-  {
-    id: 'nature',
-    num: '01',
-    title: 'Nature de la plateforme',
-    icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className="w-5 h-5">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 16.875h3.375m0 0h3.375m-3.375 0V13.5m0 3.375v3.375M6 10.5h2.25a2.25 2.25 0 0 0 2.25-2.25V6a2.25 2.25 0 0 0-2.25-2.25H6A2.25 2.25 0 0 0 3.75 6v2.25A2.25 2.25 0 0 0 6 10.5Zm0 9.75h2.25A2.25 2.25 0 0 0 10.5 18v-2.25a2.25 2.25 0 0 0-2.25-2.25H6a2.25 2.25 0 0 0-2.25 2.25V18A2.25 2.25 0 0 0 6 20.25Zm9.75-9.75H18a2.25 2.25 0 0 0 2.25-2.25V6A2.25 2.25 0 0 0 18 3.75h-2.25A2.25 2.25 0 0 0 13.5 6v2.25a2.25 2.25 0 0 0 2.25 2.25Z" />
-      </svg>
-    ),
-    blocks: [
-      {
-        subtitle: "Statut d'hébergeur technique",
-        text: "Kivoo est un simple hébergeur technique et intermédiaire de mise en relation entre acheteurs et vendeurs particuliers ou professionnels. La plateforme ne participe à aucune transaction commerciale et n'est pas partie aux contrats conclus entre utilisateurs.",
-      },
-      {
-        subtitle: 'Absence de garantie sur les annonces',
-        text: "Les annonces publiées sont sous la seule responsabilité de leurs auteurs. Kivoo ne vérifie pas systématiquement l'exactitude, la légalité ou la disponibilité des biens et services proposés, sauf dans le cadre de sa politique de modération.",
-      },
-    ],
-  },
-  {
-    id: 'responsabilite',
-    num: '02',
-    title: 'Limitation de responsabilité',
-    icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className="w-5 h-5">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
-      </svg>
-    ),
-    blocks: [
-      {
-        subtitle: 'Litiges entre utilisateurs',
-        text: "L'éditeur de la plateforme n'est en aucun cas responsable des litiges physiques, financiers ou juridiques pouvant survenir entre acheteurs et vendeurs. Toute transaction est effectuée sous la seule responsabilité des parties concernées.",
-      },
-      {
-        subtitle: 'Force majeure et indisponibilité',
-        text: "La responsabilité de Kivoo ne saurait être engagée en cas d'interruption de service, de perte de données ou de dommages indirects résultant de l'utilisation de la plateforme, dans la limite permise par la loi ivoirienne applicable.",
-      },
-    ],
-  },
-  {
-    id: 'donnees',
-    num: '03',
-    title: 'Protection des données personnelles',
-    icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className="w-5 h-5">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" />
-      </svg>
-    ),
-    blocks: [
-      {
-        subtitle: 'Conformité légale — Loi n°2013-450',
-        text: "Le traitement de vos données personnelles est effectué conformément à la loi ivoirienne n°2013-450 du 19 juin 2013 relative à la protection des données à caractère personnel, sous l'autorité de l'Autorité de Régulation des Télécommunications/TIC de Côte d'Ivoire (ARTCI).",
-      },
-      {
-        subtitle: 'Données collectées et preuve de consentement',
-        text: "Lors de votre inscription, nous collectons votre adresse e-mail et numéro de téléphone. À des fins de preuve légale, votre consentement aux CGU est horodaté avec votre adresse IP et votre User-Agent conformément à la loi n°2013-450. Ces données ne sont jamais revendues à des tiers.",
-      },
-      {
-        subtitle: 'Vos droits',
-        text: "Vous disposez d'un droit d'accès, de rectification et de suppression de vos données personnelles. Pour exercer ces droits : dpo@kivoo.ci",
-      },
-    ],
-  },
-  {
-    id: 'interdictions',
-    num: '04',
-    title: 'Contenus & annonces interdits',
-    icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className="w-5 h-5">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M18.364 18.364A9 9 0 0 0 5.636 5.636m12.728 12.728A9 9 0 0 1 5.636 5.636m12.728 12.728L5.636 5.636" />
-      </svg>
-    ),
-    blocks: [
-      {
-        subtitle: 'Liste exhaustive des interdictions',
-        text: "Sont strictement proscrits sur Kivoo : les armes à feu, munitions et armes blanches ; les stupéfiants et substances psychotropes ; les contrefaçons portant atteinte aux droits de propriété intellectuelle ; les terrains sans titres fonciers clairs (ACD, titre foncier enregistré) ; les contenus à caractère pornographique ou impliquant des mineurs ; tout contenu incitant à la haine ou à la discrimination.",
-      },
-      {
-        subtitle: 'Sanctions applicables',
-        text: "Toute violation entraîne la suppression immédiate de l'annonce, le bannissement permanent du compte, et peut faire l'objet d'un signalement aux autorités compétentes ivoiriennes (Police judiciaire, PLCC).",
-      },
-    ],
-  },
-]
-
 export default function CGUPage() {
+  const { t } = useI18n()
+
+  const sections = [
+    {
+      id: 'nature',
+      num: '01',
+      title: t('cgu.s1_title'),
+      icon: (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className="w-5 h-5">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 16.875h3.375m0 0h3.375m-3.375 0V13.5m0 3.375v3.375M6 10.5h2.25a2.25 2.25 0 0 0 2.25-2.25V6a2.25 2.25 0 0 0-2.25-2.25H6A2.25 2.25 0 0 0 3.75 6v2.25A2.25 2.25 0 0 0 6 10.5Zm0 9.75h2.25A2.25 2.25 0 0 0 10.5 18v-2.25a2.25 2.25 0 0 0-2.25-2.25H6a2.25 2.25 0 0 0-2.25 2.25V18A2.25 2.25 0 0 0 6 20.25Zm9.75-9.75H18a2.25 2.25 0 0 0 2.25-2.25V6A2.25 2.25 0 0 0 18 3.75h-2.25A2.25 2.25 0 0 0 13.5 6v2.25a2.25 2.25 0 0 0 2.25 2.25Z" />
+        </svg>
+      ),
+      blocks: [
+        { subtitle: t('cgu.s1_b1_title'), text: t('cgu.s1_b1_text') },
+        { subtitle: t('cgu.s1_b2_title'), text: t('cgu.s1_b2_text') },
+      ],
+    },
+    {
+      id: 'responsabilite',
+      num: '02',
+      title: t('cgu.s2_title'),
+      icon: (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className="w-5 h-5">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
+        </svg>
+      ),
+      blocks: [
+        { subtitle: t('cgu.s2_b1_title'), text: t('cgu.s2_b1_text') },
+        { subtitle: t('cgu.s2_b2_title'), text: t('cgu.s2_b2_text') },
+      ],
+    },
+    {
+      id: 'donnees',
+      num: '03',
+      title: t('cgu.s3_title'),
+      icon: (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className="w-5 h-5">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" />
+        </svg>
+      ),
+      blocks: [
+        { subtitle: t('cgu.s3_b1_title'), text: t('cgu.s3_b1_text') },
+        { subtitle: t('cgu.s3_b2_title'), text: t('cgu.s3_b2_text') },
+        { subtitle: t('cgu.s3_b3_title'), text: t('cgu.s3_b3_text') },
+      ],
+    },
+    {
+      id: 'interdictions',
+      num: '04',
+      title: t('cgu.s4_title'),
+      icon: (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className="w-5 h-5">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M18.364 18.364A9 9 0 0 0 5.636 5.636m12.728 12.728A9 9 0 0 1 5.636 5.636m12.728 12.728L5.636 5.636" />
+        </svg>
+      ),
+      blocks: [
+        { subtitle: t('cgu.s4_b1_title'), text: t('cgu.s4_b1_text') },
+        { subtitle: t('cgu.s4_b2_title'), text: t('cgu.s4_b2_text') },
+      ],
+    },
+  ]
+
   return (
     <main className="min-h-screen bg-[#0A0A0A] text-white" style={{ fontFamily: 'var(--font-dm-sans, "DM Sans", sans-serif)' }}>
       <section className="relative overflow-hidden border-b border-white/5">
         <div aria-hidden style={{ position: 'absolute', top: '-8rem', left: '50%', transform: 'translateX(-50%)', width: '500px', height: '260px', borderRadius: '50%', background: 'radial-gradient(ellipse, rgba(249,115,22,0.18) 0%, transparent 70%)', pointerEvents: 'none' }} />
         <div className="relative max-w-3xl mx-auto px-6 pt-20 pb-14 text-center">
           <span className="inline-flex items-center gap-2 text-xs font-medium tracking-widest uppercase text-orange-400 border border-orange-500/30 rounded-full px-4 py-1.5 mb-8">
-            Mise à jour — 2026
+            {t('cgu.updated')}
           </span>
           <h1 className="text-4xl sm:text-5xl font-bold text-white leading-tight mb-5">
-            Conditions Générales{' '}
-            <span className="text-orange-500">d&apos;Utilisation</span>
+            {t('cgu.title_1')}{' '}
+            <span className="text-orange-500">{t('cgu.title_2')}</span>
           </h1>
           <p className="text-base text-white/50 max-w-xl mx-auto leading-relaxed">
-            En utilisant Kivoo, vous acceptez l&apos;intégralité des présentes conditions. Veuillez les lire attentivement.
+            {t('cgu.intro')}
           </p>
           <div className="flex flex-wrap justify-center gap-x-6 gap-y-2 mt-8 text-xs text-white/25">
-            <span>Éditeur : Kivoo</span>
+            <span>{t('cgu.editor')}</span>
             <span>·</span>
-            <span>Juridiction : Côte d&apos;Ivoire</span>
+            <span>{t('cgu.jurisdiction')}</span>
             <span>·</span>
-            <span>Loi n°2013-450</span>
+            <span>{t('cgu.law')}</span>
           </div>
         </div>
       </section>
 
       <nav className="max-w-3xl mx-auto px-6 py-8">
         <div className="rounded-xl border border-white/8 bg-white/[0.025] p-5">
-          <p className="text-xs font-medium text-white/30 uppercase tracking-widest mb-4">Sommaire</p>
+          <p className="text-xs font-medium text-white/30 uppercase tracking-widest mb-4">{t('cgu.toc')}</p>
           <div className="grid sm:grid-cols-2 gap-2">
             {sections.map((s) => (
               <a key={s.id} href={`#${s.id}`} className="flex items-center gap-3 text-sm text-white/50 hover:text-orange-400 transition-colors py-1">
@@ -162,16 +133,16 @@ export default function CGUPage() {
               <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
             </svg>
           </div>
-          <h3 className="text-base font-bold text-white mb-2">Acceptation enregistrée à l&apos;inscription</h3>
+          <h3 className="text-base font-bold text-white mb-2">{t('cgu.consent_title')}</h3>
           <p className="text-sm text-white/50 mb-6 max-w-md mx-auto">
-            En créant votre compte, vous confirmez avoir lu et accepté ces CGU. Votre consentement est enregistré avec horodatage et adresse IP, conformément à la loi n°2013-450.
+            {t('cgu.consent_text')}
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Link href="/securite" className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-sm font-medium border border-white/10 text-white/70 hover:bg-white/5 transition-colors">
-              Conseils de sécurité →
+              {t('cgu.link_security')}
             </Link>
             <Link href="/" className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-sm font-medium bg-orange-500 hover:bg-orange-400 text-white transition-colors">
-              Retour à l&apos;accueil
+              {t('cgu.link_home')}
             </Link>
           </div>
         </div>
