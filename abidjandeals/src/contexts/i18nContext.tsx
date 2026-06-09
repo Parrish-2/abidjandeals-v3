@@ -23,6 +23,14 @@ function setCookie(name: string, value: string, days = 365) {
   document.cookie = `${name}=${encodeURIComponent(value)};expires=${expires};path=/;SameSite=Lax`
 }
 
+// ── Lire la locale sauvegardée AVANT le premier rendu pour éviter le flash ────
+function getInitialLocale(): string {
+  if (typeof document === "undefined") return DEFAULT_LOCALE
+  const saved = getCookie(COOKIE_KEY) || localStorage.getItem(COOKIE_KEY)
+  if (saved && translations[saved]) return saved
+  return DEFAULT_LOCALE
+}
+
 // ── Context ───────────────────────────────────────────────────────────────────
 interface I18nContextType {
   locale: string
@@ -33,13 +41,17 @@ interface I18nContextType {
 const I18nContext = createContext<I18nContextType | null>(null)
 
 export function I18nProvider({ children }: { children: React.ReactNode }) {
-  const [locale, setLocale] = useState<string>(DEFAULT_LOCALE)
+  // Initialisation directe — pas de useState("fr") puis useEffect
+  // getInitialLocale() s'exécute côté client uniquement (le composant est 'use client')
+  const [locale, setLocale] = useState<string>(getInitialLocale)
 
+  // Sync si le cookie change dans un autre onglet
   useEffect(() => {
     const saved = getCookie(COOKIE_KEY) || localStorage.getItem(COOKIE_KEY)
-    if (saved && translations[saved]) {
+    if (saved && translations[saved] && saved !== locale) {
       setLocale(saved)
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const t = useCallback(

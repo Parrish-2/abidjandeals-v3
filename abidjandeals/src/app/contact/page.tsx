@@ -1,13 +1,15 @@
 'use client'
-import { useState } from 'react'
-import { Navbar } from '@/components/Navbar'
 import { Footer } from '@/components/Footer'
-import { Mail, MessageCircle, Phone, Send, CheckCircle } from 'lucide-react'
+import { Navbar } from '@/components/Navbar'
+import { useI18n } from '@/contexts/i18nContext'
+import { CheckCircle, Mail, MessageCircle, Phone, Send } from 'lucide-react'
+import { useState } from 'react'
 
 export default function ContactPage() {
-  const [sent, setSent]       = useState(false)
+  const { t } = useI18n()
+  const [sent, setSent] = useState(false)
   const [loading, setLoading] = useState(false)
-  const [form, setForm]       = useState({ nom: '', email: '', sujet: '', message: '' })
+  const [form, setForm] = useState({ nom: '', email: '', sujet: '', message: '' })
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -36,7 +38,7 @@ export default function ContactPage() {
     {
       icon: Phone,
       color: 'bg-orange-50 text-orange-600',
-      label: 'Téléphone',
+      label: t('contact_page.fullname').includes('Full') ? 'Phone' : 'Téléphone',
       value: '+225 07 00 00 00 00',
       href: 'tel:+2250700000000',
     },
@@ -49,10 +51,10 @@ export default function ContactPage() {
 
         <div className="text-center mb-10">
           <h1 className="font-sans font-extrabold text-3xl text-gray-900 mb-2">
-            Contactez-nous
+            {t('contact_page.title')}
           </h1>
           <p className="text-gray-500 text-sm max-w-md mx-auto">
-            Une question, un signalement ou un partenariat ? Notre équipe répond sous 48h.
+            {t('contact_page.subtitle')}
           </p>
         </div>
 
@@ -83,18 +85,20 @@ export default function ContactPage() {
               <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <CheckCircle size={32} className="text-emerald-500" />
               </div>
-              <h2 className="font-bold text-xl text-gray-900 mb-2">Message envoyé !</h2>
+              <h2 className="font-bold text-xl text-gray-900 mb-2">{t('contact_page.sent_title')}</h2>
               <p className="text-gray-500 text-sm">
-                Merci de nous avoir contactés. Nous vous répondrons sous 48h.
+                {t('contact_page.sent_desc')}
               </p>
             </div>
           ) : (
             <>
-              <h2 className="font-bold text-lg text-gray-900 mb-6">Envoyer un message</h2>
+              <h2 className="font-bold text-lg text-gray-900 mb-6">{t('contact_page.form_title')}</h2>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1.5">Nom complet *</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                      {t('contact_page.fullname')} *
+                    </label>
                     <input
                       type="text"
                       required
@@ -105,7 +109,9 @@ export default function ContactPage() {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1.5">Email *</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                      {t('contact_page.email')} *
+                    </label>
                     <input
                       type="email"
                       required
@@ -118,32 +124,36 @@ export default function ContactPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Sujet *</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                    {t('contact_page.subject')} *
+                  </label>
                   <select
                     required
                     value={form.sujet}
                     onChange={e => setForm(f => ({ ...f, sujet: e.target.value }))}
                     className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-100 transition-all bg-white"
                   >
-                    <option value="">Choisissez un sujet</option>
-                    <option value="signalement">Signaler une arnaque ou annonce frauduleuse</option>
-                    <option value="compte">Problème avec mon compte</option>
-                    <option value="annonce">Problème avec une annonce</option>
-                    <option value="paiement">Problème de paiement</option>
-                    <option value="partenariat">Partenariat & Presse</option>
-                    <option value="recrutement">Recrutement</option>
-                    <option value="autre">Autre</option>
+                    <option value="">{t('contact_page.choose_subject')}</option>
+                    <option value="signalement">{t('contact_page.subject_fraud')}</option>
+                    <option value="compte">{t('contact_page.subject_account')}</option>
+                    <option value="annonce">{t('contact_page.subject_ad')}</option>
+                    <option value="paiement">{t('contact_page.subject_payment')}</option>
+                    <option value="partenariat">{t('contact_page.subject_partner')}</option>
+                    <option value="recrutement">{t('contact_page.subject_jobs')}</option>
+                    <option value="autre">{t('contact_page.subject_other')}</option>
                   </select>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Message *</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                    {t('contact_page.message')} *
+                  </label>
                   <textarea
                     required
                     rows={5}
                     value={form.message}
                     onChange={e => setForm(f => ({ ...f, message: e.target.value }))}
-                    placeholder="Décrivez votre demande en détail..."
+                    placeholder={t('contact_page.message_placeholder')}
                     className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-100 transition-all resize-none"
                   />
                 </div>
@@ -158,11 +168,11 @@ export default function ContactPage() {
                   ) : (
                     <Send size={16} />
                   )}
-                  {loading ? 'Envoi en cours...' : 'Envoyer le message'}
+                  {loading ? t('contact_page.sending') : t('contact_page.send_btn')}
                 </button>
 
                 <p className="text-center text-gray-400 text-xs">
-                  Nous répondons sous 48h · Lundi–Vendredi
+                  {t('contact_page.response_time')}
                 </p>
               </form>
             </>

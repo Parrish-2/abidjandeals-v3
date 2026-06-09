@@ -1,62 +1,61 @@
+'use client'
 import { Footer } from '@/components/Footer'
 import { Navbar } from '@/components/Navbar'
+import { useI18n } from '@/contexts/i18nContext'
 import { AlertTriangle, CheckCircle, CreditCard, MapPin, Phone, Shield } from 'lucide-react'
 
-export const metadata = {
-  title: 'Sécurité & Conseils — Kivoo',
-  description: "Conseils de sécurité pour acheter et vendre en toute confiance sur Kivoo en Côte d'Ivoire.",
-}
-
-const TIPS = [
-  {
-    icon: MapPin,
-    color: 'bg-emerald-50 text-emerald-600',
-    title: 'Rencontrez-vous en lieu public',
-    desc: "Privilégiez toujours une rencontre dans un endroit fréquenté : centre commercial, commissariat, marché. Évitez les domiciles inconnus, surtout pour les premières transactions.",
-  },
-  {
-    icon: CreditCard,
-    color: 'bg-blue-50 text-blue-600',
-    title: 'Zéro paiement à distance',
-    desc: "Ne payez jamais avant d'avoir vu et inspecté le bien en personne. Aucun vendeur sérieux ne vous demandera un virement, un dépôt Orange Money ou Wave avant la remise du bien.",
-  },
-  {
-    icon: Phone,
-    color: 'bg-orange-50 text-orange-600',
-    title: 'Vérifiez le vendeur',
-    desc: "Privilégiez les vendeurs avec le badge Confirmé ✅ (identité vérifiée KYC). Consultez leurs annonces précédentes et leur note. Méfiez-vous des profils créés récemment.",
-  },
-  {
-    icon: Shield,
-    color: 'bg-violet-50 text-violet-600',
-    title: "Inspectez avant d'acheter",
-    desc: "Testez le produit sur place avant tout paiement. Pour les appareils électroniques, vérifiez l'IMEI. Pour les véhicules, demandez un essai et les papiers originaux.",
-  },
-  {
-    icon: AlertTriangle,
-    color: 'bg-red-50 text-red-600',
-    title: 'Signalez les arnaques',
-    desc: "Si vous suspectez une arnaque, utilisez le bouton Signaler sur l'annonce. Notre équipe de modération examine chaque signalement sous 24h et bloque les comptes frauduleux.",
-  },
-  {
-    icon: CheckCircle,
-    color: 'bg-amber-50 text-amber-600',
-    title: 'Utilisez la messagerie interne',
-    desc: "Communiquez via la messagerie Kivoo plutôt que par SMS. Cela nous permet de détecter et bloquer les tentatives d'arnaque et conserve un historique de vos échanges.",
-  },
-]
-
-const RED_FLAGS = [
-  "Le prix est anormalement bas par rapport au marché",
-  "Le vendeur refuse la rencontre en personne",
-  "On vous demande de payer avant de voir le bien",
-  "Le vendeur prétexte être à l'étranger ou en voyage",
-  "On vous envoie un lien externe suspect",
-  "Le vendeur demande vos informations bancaires",
-  "Les photos semblent être des images trouvées sur internet",
-]
-
 export default function SecuritePage() {
+  const { t } = useI18n()
+
+  const TIPS = [
+    {
+      icon: MapPin,
+      color: 'bg-emerald-50 text-emerald-600',
+      title: t('securite.rule1_title'),
+      desc: t('securite.rule1_desc'),
+    },
+    {
+      icon: CreditCard,
+      color: 'bg-blue-50 text-blue-600',
+      title: t('securite.rule2_title'),
+      desc: t('securite.rule2_desc'),
+    },
+    {
+      icon: Phone,
+      color: 'bg-orange-50 text-orange-600',
+      title: t('securite.rule3_title'),
+      desc: t('securite.rule3_desc'),
+    },
+    {
+      icon: Shield,
+      color: 'bg-violet-50 text-violet-600',
+      title: t('securite.rule4_title'),
+      desc: t('securite.rule4_desc'),
+    },
+    {
+      icon: AlertTriangle,
+      color: 'bg-red-50 text-red-600',
+      title: t('securite.rule5_title'),
+      desc: t('securite.rule5_desc'),
+    },
+    {
+      icon: CheckCircle,
+      color: 'bg-amber-50 text-amber-600',
+      title: t('securite.rule6_title'),
+      desc: t('securite.rule6_desc'),
+    },
+  ]
+
+  const RED_FLAGS = [
+    t('securite.scam1'),
+    t('securite.scam2'),
+    t('securite.scam3'),
+    t('securite.scam4'),
+    t('securite.scam5'),
+    t('securite.scam6'),
+    t('securite.scam7'),
+  ]
+
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
       <Navbar />
@@ -68,17 +67,16 @@ export default function SecuritePage() {
               <Shield size={24} className="text-orange-400" />
             </div>
             <div>
-              <h1 className="font-sans font-extrabold text-2xl">Sécurité & Conseils</h1>
-              <p className="text-white/60 text-sm">Achetez et vendez en toute confiance</p>
+              <h1 className="font-sans font-extrabold text-2xl">{t('securite.title')}</h1>
+              <p className="text-white/60 text-sm">{t('securite.subtitle')}</p>
             </div>
           </div>
           <p className="text-white/70 text-sm leading-relaxed">
-            Kivoo met tout en œuvre pour sécuriser votre expérience. Suivez ces conseils
-            pour éviter les arnaques et transacter sereinement partout en Côte d&apos;Ivoire.
+            {t('securite.intro')}
           </p>
         </div>
 
-        <h2 className="font-bold text-xl text-gray-900 mb-5">6 règles d&apos;or</h2>
+        <h2 className="font-bold text-xl text-gray-900 mb-5">{t('securite.rules_title')}</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-12">
           {TIPS.map((tip, i) => (
             <div key={i} className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
@@ -94,7 +92,7 @@ export default function SecuritePage() {
         <div className="bg-red-50 border border-red-100 rounded-2xl p-6 mb-10">
           <div className="flex items-center gap-2 mb-4">
             <AlertTriangle size={18} className="text-red-500" />
-            <h2 className="font-bold text-red-700">Signes d&apos;une arnaque potentielle</h2>
+            <h2 className="font-bold text-red-700">{t('securite.scam_title')}</h2>
           </div>
           <ul className="space-y-2">
             {RED_FLAGS.map((flag, i) => (
@@ -107,13 +105,12 @@ export default function SecuritePage() {
         </div>
 
         <div className="bg-orange-50 border border-orange-100 rounded-2xl p-6">
-          <p className="font-semibold text-orange-700 mb-1">Vous avez été victime d&apos;une arnaque ?</p>
+          <p className="font-semibold text-orange-700 mb-1">{t('securite.victim_title')}</p>
           <p className="text-orange-600 text-sm mb-3">
-            Signalez l&apos;annonce directement depuis la plateforme ou contactez-nous immédiatement.
-            Nous bloquerons le compte et coopérerons avec les autorités si nécessaire.
+            {t('securite.victim_desc')}
           </p>
           <a href="/contact" className="inline-flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white font-bold px-5 py-2.5 rounded-xl text-sm transition-colors">
-            Signaler un problème →
+            {t('securite.victim_cta')}
           </a>
         </div>
 
