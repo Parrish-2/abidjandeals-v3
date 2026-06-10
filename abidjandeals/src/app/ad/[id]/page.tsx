@@ -1,4 +1,5 @@
 'use client'
+import BoostCTA from '@/components/boost/BoostCTA'
 import { Footer } from '@/components/Footer'
 import { HybridGallery } from '@/components/HybridGallery'
 import { Navbar } from '@/components/Navbar'
@@ -316,6 +317,18 @@ export default function AdDetailPage() {
                                 </div>
                             )}
 
+                            {/* ── BoostCTA mobile (sticky bottom, visible uniquement sur mobile) ── */}
+                            {isOwner && (
+                                <BoostCTA
+                                    adId={adId}
+                                    adTitle={ad.title}
+                                    isBoosted={ad.boost_level > 0}
+                                    boostExpiresAt={ad.boost_expires_at ?? null}
+                                    userId={sessionUid ?? undefined}
+                                    adUserId={ad.user_id}
+                                />
+                            )}
+
                             {adBanner && (
                                 <div className="lg:hidden">
                                     <SmartBanner banner={adBanner} className="rounded-2xl overflow-hidden shadow-sm" />
@@ -323,6 +336,7 @@ export default function AdDetailPage() {
                             )}
                         </div>
 
+                        {/* ── Sidebar desktop ───────────────────────────────────────────────── */}
                         <div className="space-y-4 hidden lg:block">
                             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
                                 <div className="flex items-center gap-3 mb-4 pb-4 border-b border-gray-100">
@@ -358,6 +372,18 @@ export default function AdDetailPage() {
                                     <li>{t('ad.safety_1')}</li>
                                 </ul>
                             </div>
+
+                            {/* ── BoostCTA desktop (carte inline dans la sidebar) ── */}
+                            {isOwner && (
+                                <BoostCTA
+                                    adId={adId}
+                                    adTitle={ad.title}
+                                    isBoosted={ad.boost_level > 0}
+                                    boostExpiresAt={ad.boost_expires_at ?? null}
+                                    userId={sessionUid ?? undefined}
+                                    adUserId={ad.user_id}
+                                />
+                            )}
 
                             {adBanner && (
                                 <SmartBanner banner={adBanner} className="rounded-2xl overflow-hidden shadow-sm" />
