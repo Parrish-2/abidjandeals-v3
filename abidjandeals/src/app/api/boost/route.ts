@@ -1,4 +1,5 @@
 // src/app/api/boost/route.ts
+import { limitPublier } from '@/lib/ratelimit'
 import { createServerClient } from '@supabase/ssr'
 import { createClient } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
@@ -25,6 +26,10 @@ const OPERATOR_CODES: Record<string, string> = {
 }
 
 export async function POST(req: NextRequest) {
+
+  // ✅ 0. Rate limiting — 5 tentatives max par minute par IP
+  const rateLimitResponse = await limitPublier(req)
+  if (rateLimitResponse) return rateLimitResponse
 
   // ✅ 1. Vérifier la session côté serveur
   const supabaseAuth = createServerClient(
@@ -134,7 +139,7 @@ export async function POST(req: NextRequest) {
   })
 
   const data = await cinetpayRes.json()
-  console.log('CinetPay response:', JSON.stringify(data, null, 2))
+
   if (data.code !== '201') {
     await supabaseAdmin
       .from('payments')
