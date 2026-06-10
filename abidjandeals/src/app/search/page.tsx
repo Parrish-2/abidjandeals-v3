@@ -1,6 +1,7 @@
 ﻿"use client";
 
 import { AgeGate } from '@/components/AgeGate';
+import { BannerSlot } from '@/components/BannerSlot';
 import { SmartBanner } from '@/components/SmartBanner';
 import { formatFCFA } from '@/lib/format';
 import { createBrowserClient } from "@supabase/ssr";
@@ -405,6 +406,13 @@ function SearchContentV2() {
         </div>
       </div>
 
+      {/* ── Bannière category_top — pleine largeur sous le header ── */}
+      {categorySlug && (
+        <div className="max-w-7xl mx-auto px-4 md:px-8 pt-4">
+          <BannerSlot position="category_top" />
+        </div>
+      )}
+
       <div className="sticky top-0 z-30 bg-white border-b border-gray-100 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 md:px-8">
           <div className="flex items-center gap-2 py-2.5 overflow-x-auto">
@@ -507,9 +515,12 @@ function SearchContentV2() {
 
           {/* ── Sidebar bannière search_sidebar — desktop uniquement ── */}
           {searchBanner && (
-            <div className="hidden lg:block w-60 flex-shrink-0">
+            <div className="hidden lg:block w-72 flex-shrink-0">
               <div className="sticky top-24">
-                <SmartBanner banner={searchBanner} className="rounded-2xl overflow-hidden shadow-sm" />
+                <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-2">Publicité</p>
+                <div className="rounded-2xl overflow-hidden border border-gray-100 shadow-sm">
+                  <SmartBanner banner={searchBanner} />
+                </div>
               </div>
             </div>
           )}

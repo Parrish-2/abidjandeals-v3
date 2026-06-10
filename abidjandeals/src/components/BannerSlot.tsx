@@ -5,7 +5,14 @@
 import { supabase } from '@/lib/supabase'
 import { useEffect, useRef, useState } from 'react'
 
-export type BannerPosition = 'homepage_top' | 'homepage_mid' | 'sidebar' | 'footer'
+export type BannerPosition =
+    | 'homepage_top'
+    | 'homepage_mid'
+    | 'search_sidebar'
+    | 'category_top'
+    | 'ad_detail'
+    | 'sidebar'
+    | 'footer'
 
 interface Banner {
     id: string
@@ -15,10 +22,13 @@ interface Banner {
     click_count: number
 }
 
-// ── Largeur max par position (la hauteur s'adapte automatiquement) ──────────
+// ── Largeur max par position ───────────────────────────────────────────────
 const MAX_WIDTH: Record<BannerPosition, number> = {
     homepage_top: 970,
     homepage_mid: 970,
+    category_top: 970,
+    search_sidebar: 300,
+    ad_detail: 970,
     sidebar: 300,
     footer: 970,
 }
@@ -94,7 +104,6 @@ export default function BannerSlot({ position, className = '' }: BannerSlotProps
                 Publicité
             </p>
 
-            {/* ✅ Pas de hauteur fixe — l'image garde son ratio naturel */}
             <div
                 className="relative mx-auto rounded-xl overflow-hidden border border-gray-100 shadow-sm"
                 style={{ maxWidth }}
