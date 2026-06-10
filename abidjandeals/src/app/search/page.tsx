@@ -1,7 +1,7 @@
 ﻿"use client";
 
 import { AgeGate } from '@/components/AgeGate';
-import { BannerSlot } from '@/components/BannerSlot';
+import BannerSlot from '@/components/BannerSlot';
 import { SmartBanner } from '@/components/SmartBanner';
 import { formatFCFA } from '@/lib/format';
 import { createBrowserClient } from "@supabase/ssr";
