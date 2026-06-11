@@ -31,7 +31,7 @@ export interface MegaCat {
 
 // ── Age gate ──────────────────────────────────────────────────────────────────
 
-const STORAGE_KEY = 'abidjandeals_age_verified'
+const STORAGE_KEY = 'KIVOO_age_verified'
 function isAgeVerified(): boolean {
   try { return sessionStorage.getItem(STORAGE_KEY) === 'true' } catch { return false }
 }
@@ -189,6 +189,7 @@ const SUB_LABELS: Record<string, { en: string; fr: string }> = {
   'voitures-d-occasion': { en: 'Used Cars', fr: "Voitures d'occasion" },
   'voitures-neuves': { en: 'New Cars', fr: 'Voitures Neuves' },
   'motos-scooters': { en: 'Motorbikes & Scooters', fr: 'Motos & Scooters' },
+  'bateaux-nautisme': { en: 'Boats & Nautical', fr: 'Bateaux & Nautisme' },
   'pieces-detachees-pneus': { en: 'Spare Parts & Tyres', fr: 'Pièces détachées & Pneus' },
   'location-auto': { en: 'Car Rental', fr: 'Location Auto' },
   'camions-utilitaires': { en: 'Trucks & Vans', fr: 'Camions & Utilitaires' },
@@ -240,6 +241,7 @@ const SUB_LABELS: Record<string, { en: string; fr: string }> = {
   'velos': { en: 'Bikes & Scooters', fr: 'Vélos & Trottinettes' },
   // ── Autres & Divers ─────────────────────────────────────────────────────────
   'animaux': { en: 'Pets & Accessories', fr: 'Animaux & Accessoires' },
+  'fournitures-scolaires': { en: 'School Supplies', fr: 'Fournitures Scolaires' },
   'collection': { en: 'Collectibles', fr: 'Objets de Collection' },
   'inclassables': { en: 'Miscellaneous', fr: 'Inclassables' },
   // ── Bien-être & Intimité ────────────────────────────────────────────────────
