@@ -222,7 +222,7 @@ const SUB_LABELS: Record<string, { en: string; fr: string }> = {
   'decoration': { en: 'Decoration', fr: 'Décoration' },
   'jardin-bricolage': { en: 'Garden & DIY', fr: 'Jardin & Bricolage' },
   // ── Mode & Accessoires ──────────────────────────────────────────────────────
-  'vetements': { en: 'Clothing & Shoes', fr: 'Vêtements & Chaussures' },
+  'vetements': { en: 'Clothing', fr: 'Vêtements' },
   'chaussures': { en: 'Shoes', fr: 'Chaussures' },
   'sacs-accessoires': { en: 'Bags & Accessories', fr: 'Sacs & Accessoires' },
   'montres': { en: 'Watches & Jewellery', fr: 'Montres & Bijoux' },
