@@ -1,5 +1,5 @@
 // src/config/categories.config.tsx
-// SOURCE DE VÉRITÉ UNIQUE — Toutes les catégories AbidjanDeals Pro
+// SOURCE DE VÉRITÉ UNIQUE — Toutes les catégories KIVOO Pro
 
 import {
   Armchair,
@@ -46,7 +46,7 @@ export interface Category {
   color: CategoryColor
   bannerUrl?: string
   subCategories: SubCategory[]
-  isAdult?: boolean // 🔞 Flag adulte — déclenche l'age gate
+  isAdult?: boolean
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -169,6 +169,7 @@ export const CATEGORIES: Category[] = [
       { id: 'voitures-occasion', slug: 'voitures-occasion', labelKey: 'categories.sub.used_cars' },
       { id: 'voitures-neuves', slug: 'voitures-neuves', labelKey: 'categories.sub.new_cars' },
       { id: 'motos-scooters', slug: 'motos-scooters', labelKey: 'categories.sub.motorcycles' },
+      { id: 'bateaux-nautisme', slug: 'bateaux-nautisme', labelKey: 'categories.sub.boats' },
       { id: 'pieces-pneus', slug: 'pieces-pneus', labelKey: 'categories.sub.parts' },
       { id: 'location-auto', slug: 'location-auto', labelKey: 'categories.sub.car_rental' },
       { id: 'camions-utilitaires', slug: 'camions-utilitaires', labelKey: 'categories.sub.trucks' },
@@ -205,7 +206,7 @@ export const CATEGORIES: Category[] = [
     ],
   },
 
-  // ── 4. MODE & BEAUTÉ ──────────────────────────────────────────────────────
+  // ── 4. MODE & ACCESSOIRES ─────────────────────────────────────────────────
   {
     id: 'mode',
     slug: 'mode',
@@ -280,8 +281,10 @@ export const CATEGORIES: Category[] = [
     metadataType: 'default',
     color: 'slate',
     subCategories: [
-      { id: 'inclassables', slug: 'inclassables', labelKey: 'categories.sub.uncategorized' },
+      { id: 'animaux', slug: 'animaux', labelKey: 'categories.sub.animals' },
+      { id: 'fournitures-scolaires', slug: 'fournitures-scolaires', labelKey: 'categories.sub.school_supplies' },
       { id: 'collection', slug: 'collection', labelKey: 'categories.sub.collectibles' },
+      { id: 'inclassables', slug: 'inclassables', labelKey: 'categories.sub.uncategorized' },
     ],
   },
 
@@ -293,7 +296,7 @@ export const CATEGORIES: Category[] = [
     labelKey: 'categories.lingerie',
     metadataType: 'default',
     color: 'pink',
-    isAdult: true, // 🔞 Déclenche l'age gate automatiquement
+    isAdult: true,
     subCategories: [
       { id: 'lingerie-sous-vetements', slug: 'lingerie-sous-vetements', labelKey: 'categories.sub.lingerie' },
       { id: 'maillots-de-bain', slug: 'maillots-de-bain', labelKey: 'categories.sub.swimwear' },

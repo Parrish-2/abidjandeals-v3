@@ -1,6 +1,5 @@
 ﻿// SOURCE DE VÉRITÉ — KIVOO
 // Les subcats sont des strings = slug exact en DB (utilisé dans URL et filtre ads.subcategory)
-// Le label affiché est géré par SUB_LABELS dans MegaMenu.tsx
 
 export const CATEGORIES = [
   {
@@ -13,7 +12,7 @@ export const CATEGORIES = [
       'ordinateurs',
       'tablettes',
       'tv-son',
-      'photo-video',       // Fusion : photo-video + cameras
+      'photo-video',
       'consoles-jeux',
       'objets-connectes',
       'composants',
@@ -27,7 +26,8 @@ export const CATEGORIES = [
     subcats: [
       'voitures-d-occasion',
       'motos-scooters',
-      'pieces-detachees-pneus',   // Fusion : pièces détachées & pneus
+      'bateaux-nautisme',
+      'pieces-detachees-pneus',
       'location-auto',
       'camions-utilitaires',
       'groupes-electrogenes',
@@ -47,7 +47,7 @@ export const CATEGORIES = [
       'location-meublee',
       'maison-a-louer',
       'colocation',
-      'terrains-acd',             // Corrigé : terrains avec ACD
+      'terrains-acd',
       'bureaux-boutiques',
     ],
     requiresCertified: true,
@@ -106,7 +106,7 @@ export const CATEGORIES = [
     name: 'Autres & Divers',
     icon: '📦',
     color: '#64748b',
-    subcats: ['animaux', 'collection', 'inclassables'],
+    subcats: ['animaux', 'fournitures-scolaires', 'collection', 'inclassables'],
   },
   {
     id: 'cat_adulte',

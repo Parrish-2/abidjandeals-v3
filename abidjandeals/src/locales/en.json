@@ -551,6 +551,7 @@
     "services": "Services & Jobs",
     "sport": "Sport & Leisure",
     "other": "Other & Misc",
+    "lingerie": "Wellness & Intimacy",
     "see_all": "See all",
     "sub": {
       "apartment_sale": "Apartment Sale",
@@ -564,6 +565,7 @@
       "used_cars": "Used Cars",
       "new_cars": "New Cars",
       "motorcycles": "Motorcycles & Scooters",
+      "boats": "Boats & Nautical",
       "parts": "Parts & Tires",
       "car_rental": "Car Rental",
       "trucks": "Trucks & Vans",
@@ -601,9 +603,15 @@
       "music": "Musical Instruments",
       "toys": "Toys",
       "travel": "Travel",
+      "animals": "Animals & Accessories",
+      "school_supplies": "School Supplies",
       "uncategorized": "Uncategorized",
       "collectibles": "Collectibles",
-      "other": "Other / Misc"
+      "other": "Other / Misc",
+      "lingerie": "Lingerie & Underwear",
+      "swimwear": "Swimwear",
+      "wellness": "Cosmetics & Wellness",
+      "accessories": "Fashion Accessories"
     }
   }
 }
