@@ -212,6 +212,32 @@ function SuspicionBadge({ analysis }: { analysis: PhotoAnalysis | null }) {
   return <span title={analysis.reasons.join('\n')} style={{ fontSize: 10, fontWeight: 700, background: analysis.score >= 60 ? 'rgba(239,68,68,0.15)' : 'rgba(251,191,36,0.15)', color: analysis.score >= 60 ? '#f87171' : '#fbbf24', border: `1px solid ${analysis.score >= 60 ? 'rgba(239,68,68,0.3)' : 'rgba(251,191,36,0.3)'}`, padding: '2px 8px', borderRadius: 20, cursor: 'help' }}>{analysis.score >= 60 ? '⚠ Suspect' : '~ Douteux'}</span>
 }
 
+// ─── AI Result Badge ──────────────────────────────────────────────────────────
+
+function AIResultBadge({ result }: { result: any }) {
+  if (!result) return null
+  const colors: Record<string, any> = {
+    approve: { bg: 'rgba(34,197,94,0.12)', color: '#4ade80', border: 'rgba(34,197,94,0.3)' },
+    reject: { bg: 'rgba(239,68,68,0.12)', color: '#f87171', border: 'rgba(239,68,68,0.3)' },
+    manual: { bg: 'rgba(251,191,36,0.12)', color: '#fbbf24', border: 'rgba(251,191,36,0.3)' },
+  }
+  const c = colors[result.decision] ?? colors.manual
+  const labels: Record<string, string> = { approve: '✅ Approuver', reject: '❌ Rejeter', manual: '⚠️ Vérif. manuelle' }
+  return (
+    <div style={{ marginTop: 8, background: c.bg, border: `1px solid ${c.border}`, borderRadius: 10, padding: '10px 14px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: result.reasons?.length ? 6 : 0 }}>
+        <span style={{ fontSize: 12, fontWeight: 800, color: c.color }}>🤖 IA → {labels[result.decision]}</span>
+        <span style={{ fontSize: 10, color: c.color, background: c.bg, border: `1px solid ${c.border}`, borderRadius: 20, padding: '2px 8px', fontWeight: 700 }}>{result.confidence}% confiance</span>
+      </div>
+      {result.reasons?.length > 0 && (
+        <ul style={{ margin: 0, padding: '0 0 0 16px', fontSize: 11, color: c.color, opacity: 0.85 }}>
+          {result.reasons.map((r: string, i: number) => <li key={i}>{r}</li>)}
+        </ul>
+      )}
+    </div>
+  )
+}
+
 // ─── Reject Modal ─────────────────────────────────────────────────────────────
 
 const REJECTION_REASONS = [
@@ -335,7 +361,6 @@ function AssistedPublish({ BG_CARD, BG_CARD2, BORDER, TEXT_PRI, TEXT_SEC, TEXT_M
   const [form, setForm] = useState<AssistedAdForm>({ title: '', description: '', price: '', category_id: '', city: '', phone: '', images: '' })
   const [dynamicFields, setDynamicFields] = useState<Record<string, string>>({})
 
-  // Reset dynamic fields when category changes
   const handleCategoryChange = (catId: string) => {
     setForm(f => ({ ...f, category_id: catId }))
     setDynamicFields({})
@@ -357,7 +382,6 @@ function AssistedPublish({ BG_CARD, BG_CARD2, BORDER, TEXT_PRI, TEXT_SEC, TEXT_M
     setForm(f => ({ ...f, phone: user.phone || '' }))
   }
 
-  // Génère la description structurée depuis les champs dynamiques
   function buildDescription(): string {
     const lines: string[] = []
     for (const field of currentFields) {
@@ -420,8 +444,6 @@ function AssistedPublish({ BG_CARD, BG_CARD2, BORDER, TEXT_PRI, TEXT_SEC, TEXT_M
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-
-      {/* Banner */}
       <div style={{ background: 'rgba(249,115,22,0.08)', border: '1px solid rgba(249,115,22,0.2)', borderRadius: 14, padding: '14px 18px', display: 'flex', alignItems: 'flex-start', gap: 12 }}>
         <PlusCircle size={16} color={ORANGE} style={{ flexShrink: 0, marginTop: 1 }} />
         <div>
@@ -432,7 +454,6 @@ function AssistedPublish({ BG_CARD, BG_CARD2, BORDER, TEXT_PRI, TEXT_SEC, TEXT_M
         </div>
       </div>
 
-      {/* Étape 1 — Vendeur */}
       <div style={{ background: BG_CARD, border: `1px solid ${BORDER}`, borderRadius: 16, padding: 20 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
           <div style={{ width: 24, height: 24, borderRadius: 8, background: ORANGE, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 800, color: '#fff', flexShrink: 0 }}>1</div>
@@ -484,7 +505,6 @@ function AssistedPublish({ BG_CARD, BG_CARD2, BORDER, TEXT_PRI, TEXT_SEC, TEXT_M
         )}
       </div>
 
-      {/* Étape 2 — Annonce */}
       <div style={{ background: BG_CARD, border: `1px solid ${selectedUser ? BORDER : 'rgba(255,255,255,0.03)'}`, borderRadius: 16, padding: 20, opacity: selectedUser ? 1 : 0.4, pointerEvents: selectedUser ? 'auto' : 'none', transition: 'opacity 0.2s' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 20 }}>
           <div style={{ width: 24, height: 24, borderRadius: 8, background: selectedUser ? ORANGE : TEXT_MUT, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 800, color: '#fff', flexShrink: 0 }}>2</div>
@@ -492,14 +512,10 @@ function AssistedPublish({ BG_CARD, BG_CARD2, BORDER, TEXT_PRI, TEXT_SEC, TEXT_M
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-
-          {/* Titre */}
           <div style={{ gridColumn: '1 / -1' }}>
             <label style={labelStyle}>Titre de l'annonce *</label>
             <input type="text" placeholder="Ex: Toyota RAV4 2021 Full Options" value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} style={inputStyle} />
           </div>
-
-          {/* Catégorie */}
           <div>
             <label style={labelStyle}>Catégorie *</label>
             <select value={form.category_id} onChange={e => handleCategoryChange(e.target.value)} style={{ ...inputStyle, cursor: 'pointer' }}>
@@ -509,8 +525,6 @@ function AssistedPublish({ BG_CARD, BG_CARD2, BORDER, TEXT_PRI, TEXT_SEC, TEXT_M
               ))}
             </select>
           </div>
-
-          {/* Ville */}
           <div>
             <label style={labelStyle}>Ville *</label>
             <select value={form.city} onChange={e => setForm(f => ({ ...f, city: e.target.value }))} style={{ ...inputStyle, cursor: 'pointer' }}>
@@ -518,21 +532,16 @@ function AssistedPublish({ BG_CARD, BG_CARD2, BORDER, TEXT_PRI, TEXT_SEC, TEXT_M
               {CITIES_LIST.map(c => <option key={c} value={c}>{c}</option>)}
             </select>
           </div>
-
-          {/* Prix */}
           <div>
             <label style={labelStyle}>Prix (FCFA) *</label>
             <input type="number" placeholder="Ex: 18500000" value={form.price} onChange={e => setForm(f => ({ ...f, price: e.target.value }))} style={inputStyle} />
           </div>
-
-          {/* Téléphone */}
           <div>
             <label style={labelStyle}>Téléphone du vendeur *</label>
             <input type="tel" placeholder="Ex: +225 07 00 00 00 00" value={form.phone} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))} style={inputStyle} />
           </div>
         </div>
 
-        {/* ── Champs dynamiques par catégorie ── */}
         {currentFields.length > 0 && (
           <div style={{ marginTop: 20, paddingTop: 20, borderTop: `1px solid ${BORDER}` }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
@@ -544,61 +553,29 @@ function AssistedPublish({ BG_CARD, BG_CARD2, BORDER, TEXT_PRI, TEXT_SEC, TEXT_M
                 {currentFields.filter(f => dynamicFields[f.key]).length}/{currentFields.length} remplis
               </span>
             </div>
-
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
               {currentFields.map(field => (
                 <div key={field.key} style={{ gridColumn: field.type === 'radio' ? '1 / -1' : 'auto' }}>
                   <label style={{ ...labelStyle, color: field.required && !dynamicFields[field.key] ? 'rgba(249,115,22,0.7)' : TEXT_SEC }}>
                     {field.label} {field.required && <span style={{ color: ORANGE }}>*</span>}
                   </label>
-                  <DynamicField
-                    field={field}
-                    value={dynamicFields[field.key] || ''}
-                    onChange={v => setDynamicFields(prev => ({ ...prev, [field.key]: v }))}
-                    inputStyle={inputStyle}
-                    BORDER={BORDER} TEXT_PRI={TEXT_PRI} TEXT_SEC={TEXT_SEC} ORANGE={ORANGE}
-                  />
+                  <DynamicField field={field} value={dynamicFields[field.key] || ''} onChange={v => setDynamicFields(prev => ({ ...prev, [field.key]: v }))} inputStyle={inputStyle} BORDER={BORDER} TEXT_PRI={TEXT_PRI} TEXT_SEC={TEXT_SEC} ORANGE={ORANGE} />
                 </div>
               ))}
             </div>
           </div>
         )}
 
-        {/* ── Description libre ── */}
         <div style={{ marginTop: 20, paddingTop: 20, borderTop: `1px solid ${BORDER}` }}>
-          <label style={labelStyle}>
-            Description libre {!currentFields.length && <span style={{ color: ORANGE }}>*</span>}
-          </label>
-          <textarea
-            rows={4}
-            placeholder={currentFields.length
-              ? "Ajoutez des informations complémentaires (optionnel) — état, historique, raison de la vente..."
-              : "Décrivez le produit ou service en détail..."}
-            value={form.description}
-            onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
-            style={{ ...inputStyle, resize: 'vertical', lineHeight: 1.6 }}
-          />
-          {currentFields.length > 0 && (
-            <p style={{ fontSize: 11, color: TEXT_MUT, margin: '6px 0 0' }}>
-              La fiche technique sera automatiquement ajoutée au début de la description.
-            </p>
-          )}
+          <label style={labelStyle}>Description libre {!currentFields.length && <span style={{ color: ORANGE }}>*</span>}</label>
+          <textarea rows={4} placeholder={currentFields.length ? "Ajoutez des informations complémentaires (optionnel)..." : "Décrivez le produit ou service en détail..."} value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} style={{ ...inputStyle, resize: 'vertical', lineHeight: 1.6 }} />
         </div>
 
-        {/* Images */}
         <div style={{ marginTop: 16 }}>
           <label style={labelStyle}>URLs des photos (une par ligne)</label>
-          <textarea
-            rows={3}
-            placeholder={'https://example.com/photo1.jpg\nhttps://example.com/photo2.jpg'}
-            value={form.images}
-            onChange={e => setForm(f => ({ ...f, images: e.target.value }))}
-            style={{ ...inputStyle, resize: 'vertical', fontFamily: 'monospace', fontSize: 12 }}
-          />
-          <p style={{ fontSize: 11, color: TEXT_MUT, margin: '6px 0 0' }}>Collez les liens des photos envoyées par le vendeur, une URL par ligne.</p>
+          <textarea rows={3} placeholder={'https://example.com/photo1.jpg\nhttps://example.com/photo2.jpg'} value={form.images} onChange={e => setForm(f => ({ ...f, images: e.target.value }))} style={{ ...inputStyle, resize: 'vertical', fontFamily: 'monospace', fontSize: 12 }} />
         </div>
 
-        {/* Aperçu description générée */}
         {currentFields.length > 0 && (Object.keys(dynamicFields).length > 0 || form.description) && (
           <div style={{ marginTop: 16, background: 'rgba(59,130,246,0.06)', border: '1px solid rgba(59,130,246,0.15)', borderRadius: 12, padding: '12px 16px' }}>
             <p style={{ fontSize: 11, fontWeight: 700, color: '#60a5fa', margin: '0 0 8px' }}>👁 Aperçu de la description finale :</p>
@@ -606,10 +583,9 @@ function AssistedPublish({ BG_CARD, BG_CARD2, BORDER, TEXT_PRI, TEXT_SEC, TEXT_M
           </div>
         )}
 
-        {/* Submit */}
         <div style={{ marginTop: 20, paddingTop: 20, borderTop: `1px solid ${BORDER}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
           <p style={{ fontSize: 12, color: TEXT_MUT, margin: 0 }}>
-            Annonce au nom de <strong style={{ color: TEXT_SEC }}>{selectedUser ? `${selectedUser.prenom} ${selectedUser.nom}` : '...'}</strong> — passera en attente de validation.
+            Annonce au nom de <strong style={{ color: TEXT_SEC }}>{selectedUser ? `${selectedUser.prenom} ${selectedUser.nom}` : '...'}</strong>
           </p>
           <button onClick={handleSubmit} disabled={submitting}
             style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '11px 24px', borderRadius: 12, border: 'none', background: submitting ? TEXT_MUT : `linear-gradient(135deg, ${ORANGE}, #ef4444)`, color: '#fff', fontSize: 13, fontWeight: 700, cursor: submitting ? 'not-allowed' : 'pointer', fontFamily: 'inherit', flexShrink: 0, boxShadow: submitting ? 'none' : `0 4px 14px rgba(249,115,22,0.35)`, transition: 'all 0.2s' }}>
@@ -638,6 +614,8 @@ export default function ModerationPage() {
   const [dbError, setDbError] = useState<string | null>(null)
   const [massMode, setMassMode] = useState(false)
   const [selected, setSelected] = useState<Set<string>>(new Set())
+  const [aiResults, setAiResults] = useState<Record<string, any>>({})
+  const [aiLoading, setAiLoading] = useState<Record<string, boolean>>({})
 
   const BG_PAGE = '#0f1219'; const BG_CARD = '#161b27'; const BG_CARD2 = '#1a2035'
   const BORDER = 'rgba(255,255,255,0.07)'; const TEXT_PRI = '#f1f5f9'
@@ -696,7 +674,7 @@ export default function ModerationPage() {
     } catch { toast.error('Erreur réseau'); setProcessingId(null); return }
     if (message && user_id) {
       await supabase.from('notifications').insert({ user_id, type: 'ad_rejected', title: 'Annonce refusée', message, ad_id: id, read: false })
-        .then(({ error }) => { if (error) console.warn('Notif échouée:', error.message) })
+        .then(() => null).catch(err => console.warn('Notif échouée:', err.message))
     }
     toast.success('Annonce refusée'); setAds(p => p.filter(a => a.id !== id)); setProcessingId(null)
   }
@@ -712,6 +690,30 @@ export default function ModerationPage() {
       else { toast.success('Annonce supprimée'); setAds(p => p.filter(a => a.id !== id)) }
     } catch { toast.error('Erreur réseau') }
     setProcessingId(null)
+  }
+
+  async function analyzeWithAI(ad: Ad) {
+    setAiLoading(prev => ({ ...prev, [ad.id]: true }))
+    try {
+      const res = await fetch('/api/admin/ai-moderate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ adId: ad.id }),
+      })
+      const json = await res.json()
+      if (!res.ok) {
+        toast.error(json.error || 'Erreur analyse IA')
+      } else {
+        setAiResults(prev => ({ ...prev, [ad.id]: json.analysis }))
+        if (json.analysis.confidence >= 85) {
+          if (json.analysis.decision === 'approve')
+            toast.success('🤖 IA → APPROUVER (' + json.analysis.confidence + '% confiance)')
+          else if (json.analysis.decision === 'reject')
+            toast.error('🤖 IA → REJETER — ' + json.analysis.rejection_reason)
+        }
+      }
+    } catch { toast.error('Erreur réseau IA') }
+    setAiLoading(prev => ({ ...prev, [ad.id]: false }))
   }
 
   async function massApprove() {
@@ -744,7 +746,7 @@ export default function ModerationPage() {
 
       <header style={{ background: BG_CARD, borderBottom: `1px solid ${BORDER}`, padding: '0 24px', height: 58, display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 50 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-          <Link href="/" style={{ textDecoration: 'none', fontSize: 17, fontWeight: 800, color: TEXT_PRI, letterSpacing: '-0.4px' }}>Abidjan<span style={{ color: ORANGE }}>Deals</span></Link>
+          <Link href="/" style={{ textDecoration: 'none', fontSize: 17, fontWeight: 800, color: TEXT_PRI, letterSpacing: '-0.4px' }}>ki<span style={{ color: ORANGE }}>voo</span></Link>
           <div style={{ width: 1, height: 18, background: BORDER }} />
           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
             <Shield size={13} color={ORANGE} />
@@ -772,7 +774,6 @@ export default function ModerationPage() {
           </div>
         )}
 
-        {/* Onglets */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 20, flexWrap: 'wrap' }}>
           {TABS.map(tab => (
             <button key={tab.id} onClick={() => handleTabChange(tab.id)}
@@ -860,10 +861,19 @@ export default function ModerationPage() {
                             <span style={{ fontSize: 15, fontWeight: 800, color: ORANGE, whiteSpace: 'nowrap', flexShrink: 0 }}>{fmtPrice(ad.price)}</span>
                           </div>
                           <p style={{ fontSize: 12, color: TEXT_SEC, margin: '8px 0 0', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{ad.description}</p>
+                          {/* ── Résultat analyse IA ── */}
+                          <AIResultBadge result={aiResults[ad.id]} />
                         </div>
                       </div>
                       <div style={{ borderTop: `1px solid ${BORDER}`, background: 'rgba(255,255,255,0.02)', padding: '10px 16px', display: 'flex', alignItems: 'center', gap: 10 }}>
                         <a href={`/ad/${ad.id}`} target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#60a5fa', textDecoration: 'none', fontWeight: 600 }}><Eye size={13} /> Prévisualiser</a>
+                        {/* ── Bouton Analyser IA ── */}
+                        {activeTab === 'pending' && (
+                          <button onClick={() => analyzeWithAI(ad)} disabled={!!aiLoading[ad.id] || isProcessing}
+                            style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 14px', borderRadius: 9, background: 'rgba(139,92,246,0.12)', border: '1px solid rgba(139,92,246,0.3)', color: '#a78bfa', fontSize: 12, fontWeight: 600, cursor: aiLoading[ad.id] ? 'not-allowed' : 'pointer', fontFamily: 'inherit', opacity: aiLoading[ad.id] ? 0.6 : 1 }}>
+                            {aiLoading[ad.id] ? <Spinner size={13} /> : '🤖'} Analyser IA
+                          </button>
+                        )}
                         <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 8 }}>
                           {activeTab === 'pending' && (
                             <>
