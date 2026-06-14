@@ -1,22 +1,26 @@
 // src/app/api/search-ai/route.ts
 import { NextRequest, NextResponse } from 'next/server'
 
+// ── Normalise une chaîne (supprime accents, minuscules) ──────────────────────
 function normalize(s: string): string {
     return s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
 }
 
+// ── Détecte si une requête nécessite l'IA ────────────────────────────────────
 function isComplexQuery(query: string): boolean {
     const words = query.trim().split(/\s+/)
     if (words.length <= 2) return false
 
+    // Requêtes simples = nom de produit/marque connue
     const simplePatterns = [
         /^(iphone|samsung|toyota|honda|mercedes|bmw|audi|huawei|xiaomi|tecno|infinix)\s/i,
-        /^\d+/,
+        /^\d+/,  // commence par un chiffre
     ]
     for (const p of simplePatterns) {
         if (p.test(query)) return false
     }
 
+    // Indicateurs de requête complexe (sans accents — normalisés à la comparaison)
     const complexIndicators = [
         'cherche', 'recherche', 'besoin', 'voudrais', 'veux', 'trouve',
         'pas cher', 'pas chere', 'bon marche', 'budget', 'moins de', 'entre',
@@ -37,29 +41,21 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: 'Requête manquante' }, { status: 400 })
         }
 
-        // ── DEBUG TEMPORAIRE ──────────────────────────────────────────────────
-        const debugInfo = {
-            originalQuery: query,
-            wordsCount: query.trim().split(/\s+/).length,
-            normalized: normalize(query),
-            isComplex: isComplexQuery(query),
-            hasApiKey: !!process.env.ANTHROPIC_API_KEY,
-        }
-
+        // ── Si requête simple, pas besoin d'IA ───────────────────────────────────
         if (!isComplexQuery(query)) {
             return NextResponse.json({
                 useAI: false,
                 keywords: query,
                 filters: {},
-                _debug: debugInfo,
             })
         }
 
         const apiKey = process.env.ANTHROPIC_API_KEY
         if (!apiKey) {
-            return NextResponse.json({ error: 'Clé API manquante', _debug: debugInfo }, { status: 500 })
+            return NextResponse.json({ error: 'Clé API manquante' }, { status: 500 })
         }
 
+        // ── Appel Claude Haiku pour extraire les critères ─────────────────────────
         const prompt = `Tu es un assistant pour Kivoo, un marketplace ivoirien (Côte d'Ivoire). 
 L'utilisateur cherche : "${query}"${city ? ` (ville actuelle: ${city})` : ''}
 
@@ -97,8 +93,9 @@ Règles :
         })
 
         if (!response.ok) {
-            const errText = await response.text()
-            return NextResponse.json({ useAI: false, keywords: query, filters: {}, _debug: { ...debugInfo, claudeError: errText } })
+            console.error('[search-ai] Claude error:', await response.text())
+            // Fallback : recherche classique
+            return NextResponse.json({ useAI: false, keywords: query, filters: {} })
         }
 
         const data = await response.json()
@@ -109,7 +106,8 @@ Règles :
             const clean = rawText.replace(/```json|```/g, '').trim()
             filters = JSON.parse(clean)
         } catch {
-            return NextResponse.json({ useAI: false, keywords: query, filters: {}, _debug: { ...debugInfo, rawText } })
+            console.error('[search-ai] Parse error:', rawText)
+            return NextResponse.json({ useAI: false, keywords: query, filters: {} })
         }
 
         return NextResponse.json({
@@ -123,10 +121,11 @@ Règles :
                 condition: filters.condition ?? null,
             },
             intent: filters.intent ?? null,
-            _debug: debugInfo,
         })
 
     } catch (err) {
-        return NextResponse.json({ useAI: false, keywords: '', filters: {}, _debug: { error: String(err) } })
+        console.error('[search-ai]', err)
+        // Toujours fallback propre, jamais d'erreur visible
+        return NextResponse.json({ useAI: false, keywords: '', filters: {} })
     }
 }
