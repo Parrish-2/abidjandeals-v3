@@ -18,10 +18,10 @@ function isComplexQuery(query: string): boolean {
     // Indicateurs de requête complexe
     const complexIndicators = [
         'cherche', 'recherche', 'besoin', 'voudrais', 'veux', 'trouve',
-        'pas cher', 'bon marché', 'budget', 'moins de', 'entre',
+        'pas cher', 'pas chère', 'pas chere', 'bon marché', 'budget', 'moins de', 'entre',
         'familial', 'spacieux', 'récent', 'neuf', 'occasion',
         'urgent', 'rapide', 'livraison',
-        'à cocody', 'à abidjan', 'à yopougon', 'à marcory', 'à plateau',
+        'à cocody', 'a cocody', 'à abidjan', 'a abidjan', 'à yopougon', 'a yopougon', 'à marcory', 'a marcory', 'à plateau', 'a plateau',
     ]
     const lower = query.toLowerCase()
     return complexIndicators.some(ind => lower.includes(ind))
