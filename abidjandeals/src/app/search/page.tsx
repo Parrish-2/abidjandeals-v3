@@ -7,11 +7,11 @@ import { formatFCFA } from '@/lib/format';
 import { createBrowserClient } from "@supabase/ssr";
 import {
   ChevronRight, Clock, Eye, GridIcon, LayoutList,
-  MapPin, Search, SlidersHorizontal, Star, Tag, TrendingUp, X, Zap,
+  MapPin, Search, SlidersHorizontal, Sparkles, Star, Tag, TrendingUp, X, Zap,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useEffect, useMemo, useRef, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { CATEGORIES as CAT_DATA } from '@/lib/data';
 
@@ -102,6 +102,19 @@ interface Ad {
   subcategory?: string; etat: string; marque: string; city: string;
   quartier: string; images: string[]; boost_level: 'STANDARD' | 'PREMIUM' | 'URGENT' | null;
   views: number; status: string; created_at: string;
+}
+
+interface AISearchResult {
+  useAI: boolean;
+  keywords: string;
+  filters: {
+    category?: string | null;
+    city?: string | null;
+    price_max?: number | null;
+    price_min?: number | null;
+    condition?: string | null;
+  };
+  intent?: string | null;
 }
 
 function AdCardSkeleton() {
@@ -267,6 +280,10 @@ function SearchContentV2() {
   const [priceMax, setPriceMax] = useState("")
   const [selectedEtat, setSelectedEtat] = useState("")
 
+  // ── IA Search state ─────────────────────────────────────────────────────────
+  const [aiResult, setAiResult] = useState<AISearchResult | null>(null)
+  const [aiSearching, setAiSearching] = useState(false)
+
   // ── Bannière search_sidebar ─────────────────────────────────────────────────
   const [searchBanner, setSearchBanner] = useState<any>(null)
 
@@ -299,7 +316,7 @@ function SearchContentV2() {
     loadBanner()
   }, [supabase])
 
-  const fetchAds = useMemo(() => async (params: {
+  const fetchAds = useCallback(async (params: {
     dbCategoryId: string | null
     subcatLabel?: string | null
     q: string
@@ -307,24 +324,39 @@ function SearchContentV2() {
     priceMin: string
     priceMax: string
     selectedEtat: string
+    aiFilters?: AISearchResult['filters'] | null
+    aiKeywords?: string | null
   }) => {
     setLoading(true)
     setError(null)
     try {
+      // ── Utilise les filtres IA si disponibles ──────────────────────────────
+      const effectiveCategory = params.dbCategoryId ?? params.aiFilters?.category ?? null
+      const effectiveKeywords = params.aiKeywords ?? params.q
+      const effectivePriceMax = params.priceMax || (params.aiFilters?.price_max ? String(params.aiFilters.price_max) : '')
+      const effectivePriceMin = params.priceMin || (params.aiFilters?.price_min ? String(params.aiFilters.price_min) : '')
+      const effectiveEtat = params.selectedEtat || params.aiFilters?.condition || ''
+
       let query = supabase
         .from("ads")
         .select(`id, title, price, category_id, subcategory, etat, marque, city, quartier, images, boost_level, views, status, created_at`, { count: "exact" })
         .in("status", ["active", "approved"])
 
-      if (params.dbCategoryId) {
-        query = query.eq("category_id", params.dbCategoryId)
+      if (effectiveCategory) {
+        query = query.eq("category_id", effectiveCategory)
         if (params.subcatLabel) query = query.eq("subcategory", params.subcatLabel)
       }
 
-      if (params.q.trim()) query = query.or(`title.ilike.%${params.q.trim()}%,description.ilike.%${params.q.trim()}%`)
-      if (params.priceMin) query = query.gte("price", parseInt(params.priceMin))
-      if (params.priceMax) query = query.lte("price", parseInt(params.priceMax))
-      if (params.selectedEtat) query = query.eq("etat", params.selectedEtat)
+      // Ville — priorité URL > IA
+      const effectiveCity = params.aiFilters?.city
+      if (effectiveCity && !params.dbCategoryId) {
+        query = query.eq("city", effectiveCity)
+      }
+
+      if (effectiveKeywords.trim()) query = query.or(`title.ilike.%${effectiveKeywords.trim()}%,description.ilike.%${effectiveKeywords.trim()}%`)
+      if (effectivePriceMin) query = query.gte("price", parseInt(effectivePriceMin))
+      if (effectivePriceMax) query = query.lte("price", parseInt(effectivePriceMax))
+      if (effectiveEtat) query = query.eq("etat", effectiveEtat)
 
       switch (params.sort) {
         case "price_asc": query = query.order("price", { ascending: true }); break
@@ -344,14 +376,47 @@ function SearchContentV2() {
     }
   }, [supabase])
 
+  // ── Recherche avec IA si requête complexe ───────────────────────────────────
+  const performSearch = useCallback(async (searchQ: string) => {
+    if (!ageCleared) return
+
+    let aiFilters: AISearchResult['filters'] | null = null
+    let aiKeywords: string | null = null
+
+    if (searchQ.trim()) {
+      setAiSearching(true)
+      try {
+        const res = await fetch('/api/search-ai', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ query: searchQ }),
+        })
+        const aiData: AISearchResult = await res.json()
+        setAiResult(aiData)
+        if (aiData.useAI) {
+          aiFilters = aiData.filters
+          aiKeywords = aiData.keywords
+        }
+      } catch {
+        setAiResult(null)
+      } finally {
+        setAiSearching(false)
+      }
+    } else {
+      setAiResult(null)
+    }
+
+    fetchAds({ dbCategoryId, subcatLabel, q: searchQ, sort, priceMin, priceMax, selectedEtat, aiFilters, aiKeywords })
+  }, [ageCleared, dbCategoryId, subcatLabel, sort, priceMin, priceMax, selectedEtat, fetchAds])
+
   useEffect(() => {
     if (!ageCleared) return
-    fetchAds({ dbCategoryId, subcatLabel, q, sort, priceMin, priceMax, selectedEtat })
-  }, [ageCleared, dbCategoryId, q, sort, priceMin, priceMax, selectedEtat, fetchAds])
+    performSearch(q)
+  }, [ageCleared, dbCategoryId, q, sort, priceMin, priceMax, selectedEtat]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleApplyFilters = () => {
     if (!ageCleared) return
-    fetchAds({ dbCategoryId, subcatLabel, q, sort, priceMin, priceMax, selectedEtat })
+    performSearch(q)
     setShowFilters(false)
   }
 
@@ -403,10 +468,27 @@ function SearchContentV2() {
               <button type="submit" className="px-4 py-2.5 bg-orange-500 hover:bg-orange-600 text-white text-sm font-semibold rounded-xl transition-colors flex-shrink-0">OK</button>
             </form>
           </div>
+
+          {/* ── Bandeau IA intent ── */}
+          {aiResult?.useAI && aiResult.intent && (
+            <div className="mt-4 flex items-center gap-2 bg-orange-500/10 border border-orange-500/20 rounded-xl px-4 py-2.5 w-fit">
+              <Sparkles size={14} className="text-orange-400 flex-shrink-0" />
+              <span className="text-sm text-orange-300">
+                <span className="font-semibold">IA :</span> {aiResult.intent}
+                {aiResult.filters.price_max && <span className="ml-2 text-orange-400/80">· max {Number(aiResult.filters.price_max).toLocaleString('fr-CI')} FCFA</span>}
+              </span>
+            </div>
+          )}
+          {aiSearching && (
+            <div className="mt-4 flex items-center gap-2 text-white/40 text-sm">
+              <div className="w-3 h-3 border border-orange-400 border-t-transparent rounded-full animate-spin" />
+              Analyse IA en cours...
+            </div>
+          )}
         </div>
       </div>
 
-      {/* ── Bannière category_top — pleine largeur sous le header ── */}
+      {/* ── Bannière category_top ── */}
       {categorySlug && (
         <div className="max-w-7xl mx-auto px-4 md:px-8 pt-4">
           <BannerSlot position="category_top" />
@@ -459,17 +541,16 @@ function SearchContentV2() {
         )}
       </div>
 
-      {/* ── Zone résultats + sidebar bannière ── */}
+      {/* ── Zone résultats + sidebar ── */}
       <div className="max-w-7xl mx-auto px-4 py-6 md:px-8">
         <div className="flex gap-6">
-
-          {/* Résultats */}
           <div className="flex-1 min-w-0">
             {!loading && !error && ads.length > 0 && ageCleared && (
               <div className="flex items-center justify-between mb-5">
                 <p className="text-sm text-gray-500">
                   <span className="font-semibold text-gray-800">{ads.length}</span> annonce{ads.length > 1 ? "s" : ""} affichée{ads.length > 1 ? "s" : ""}
                   {total > ads.length ? ` sur ${total.toLocaleString("fr-CI")}` : ""}
+                  {aiResult?.useAI && <span className="ml-2 inline-flex items-center gap-1 text-orange-500 text-xs font-semibold"><Sparkles size={11} /> Résultats IA</span>}
                 </p>
                 {(categorySlug || subcategorySlug || q) && (
                   <Link href="/search" className="text-xs text-gray-400 hover:text-orange-500 transition-colors flex items-center gap-1">
@@ -513,7 +594,7 @@ function SearchContentV2() {
             )}
           </div>
 
-          {/* ── Sidebar bannière search_sidebar — desktop uniquement ── */}
+          {/* ── Sidebar bannière ── */}
           {searchBanner && (
             <div className="hidden lg:block w-72 flex-shrink-0">
               <div className="sticky top-24">
@@ -524,7 +605,6 @@ function SearchContentV2() {
               </div>
             </div>
           )}
-
         </div>
       </div>
     </main>
