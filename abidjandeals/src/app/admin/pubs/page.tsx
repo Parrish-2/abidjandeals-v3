@@ -26,7 +26,7 @@ interface Ad {
   id: string
   title: string
   city: string
-  category: string
+  category_id: string
   price: number
   status: string
   is_boosted: boolean
@@ -84,8 +84,6 @@ const inp: React.CSSProperties = {
 }
 
 // ✅ FIX CRITIQUE : Supabase au niveau module, PAS dans le composant
-// Cela évite de recréer le client à chaque rendu ET permet aux hooks
-// d'être appelés inconditionnellement avant le guard admin.
 const supabase = createBrowserClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
@@ -95,10 +93,6 @@ const supabase = createBrowserClient(
 
 export default function PubsPage() {
   const { user } = useStore()
-
-  // ✅ FIX CRITIQUE : TOUS les hooks sont déclarés ICI,
-  // AVANT tout return conditionnel (règle des hooks React).
-  // Auparavant ils étaient après le guard if(!user) → crash garanti.
 
   // Boosts
   const [tab, setTab] = useState<'boosts' | 'banners'>('boosts')
@@ -121,10 +115,11 @@ export default function PubsPage() {
     placement: 'homepage_top' as BannerPlacement,
     contract_end_date: '',
   })
+  // ── Renouvellement de contrat ───────────────────────────────────────────────
+  const [renewDates, setRenewDates] = useState<Record<string, string>>({})
 
   const fileRef = useRef<HTMLInputElement>(null)
 
-  // ✅ useEffect AVANT le guard — si l'utilisateur n'est pas admin, on ne charge rien
   useEffect(() => {
     if (!user || user.role !== 'admin') return
     fetchAds()
@@ -132,7 +127,6 @@ export default function PubsPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.role])
 
-  // ── ✅ GUARD ADMIN — placé APRÈS tous les hooks ───────────────────────────
   if (!user || user.role !== 'admin') {
     return (
       <div style={{ padding: '60px 32px', textAlign: 'center' }}>
@@ -150,6 +144,7 @@ export default function PubsPage() {
     )
   }
 
+  // ── Fetch annonces ────────────────────────────────────────────────────────
   async function fetchAds() {
     setAdsLoading(true)
     const { data } = await supabase
@@ -210,6 +205,7 @@ export default function PubsPage() {
       active: b.active,
       contract_end: b.contract_end ? new Date(b.contract_end).getTime() : null,
       click_count: b.click_count ?? 0,
+      impression_count: b.impression_count ?? 0,
       created_at: b.created_at,
     }))
     setBanners(mapped)
@@ -272,6 +268,26 @@ export default function PubsPage() {
     await supabase.from('banners').delete().eq('id', banner.id)
     toast.success('🗑️ Supprimée')
     fetchBanners()
+  }
+
+  // ── Renouveler le contrat d'une bannière ─────────────────────────────────────
+  async function renewBanner(bannerId: string, newDate: string) {
+    if (!newDate) {
+      toast.error('Choisissez une date')
+      return
+    }
+    const { error } = await supabase
+      .from('banners')
+      .update({ contract_end: new Date(newDate).toISOString() })
+      .eq('id', bannerId)
+
+    if (error) {
+      toast.error('Erreur : ' + error.message)
+    } else {
+      toast.success('✅ Contrat renouvelé')
+      setRenewDates(prev => ({ ...prev, [bannerId]: '' }))
+      fetchBanners()
+    }
   }
 
   const filteredAds = ads.filter(
@@ -355,7 +371,7 @@ export default function PubsPage() {
                       <p style={{ fontSize: 13, fontWeight: 600, color: '#111827', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {ad.title}
                       </p>
-                      <p style={{ fontSize: 11, color: '#6b7280' }}>{ad.city} · {ad.category}</p>
+                      <p style={{ fontSize: 11, color: '#6b7280' }}>{ad.city} · {ad.category_id}</p>
                     </div>
                     {lvl && (
                       <span style={{ fontSize: 11, fontWeight: 700, color: lvl.color, background: lvl.bg, border: `0.5px solid ${lvl.border}`, borderRadius: 6, padding: '3px 10px', flexShrink: 0 }}>
@@ -567,6 +583,24 @@ export default function PubsPage() {
                         </span>
                       )}
                     </div>
+
+                    {/* ── Renouvellement du contrat (visible si expiré) ── */}
+                    {isExpired && (
+                      <div style={{ display: 'flex', gap: 8, marginTop: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                        <input
+                          type="date"
+                          value={renewDates[banner.id] || ''}
+                          onChange={(e) => setRenewDates(prev => ({ ...prev, [banner.id]: e.target.value }))}
+                          style={{ ...inp, width: 'auto', padding: '6px 10px', fontSize: 12 }}
+                        />
+                        <button
+                          onClick={() => renewBanner(banner.id, renewDates[banner.id])}
+                          style={{ padding: '6px 14px', borderRadius: 7, border: 'none', background: '#16a34a', color: 'white', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}
+                        >
+                          🔄 Renouveler
+                        </button>
+                      </div>
+                    )}
                   </div>
                   <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
                     <button
