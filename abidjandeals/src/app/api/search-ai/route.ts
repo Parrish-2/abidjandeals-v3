@@ -1,6 +1,11 @@
 // src/app/api/search-ai/route.ts
 import { NextRequest, NextResponse } from 'next/server'
 
+// ── Normalise une chaîne (supprime accents, minuscules) ──────────────────────
+function normalize(s: string): string {
+    return s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+}
+
 // ── Détecte si une requête nécessite l'IA ────────────────────────────────────
 function isComplexQuery(query: string): boolean {
     const words = query.trim().split(/\s+/)
@@ -15,16 +20,17 @@ function isComplexQuery(query: string): boolean {
         if (p.test(query)) return false
     }
 
-    // Indicateurs de requête complexe
+    // Indicateurs de requête complexe (sans accents — normalisés à la comparaison)
     const complexIndicators = [
         'cherche', 'recherche', 'besoin', 'voudrais', 'veux', 'trouve',
-        'pas cher', 'pas chère', 'pas chere', 'bon marché', 'budget', 'moins de', 'entre',
-        'familial', 'spacieux', 'récent', 'neuf', 'occasion',
+        'pas cher', 'pas chere', 'bon marche', 'budget', 'moins de', 'entre',
+        'familial', 'spacieux', 'recent', 'neuf', 'occasion',
         'urgent', 'rapide', 'livraison',
-        'à cocody', 'a cocody', 'à abidjan', 'a abidjan', 'à yopougon', 'a yopougon', 'à marcory', 'a marcory', 'à plateau', 'a plateau',
+        'a cocody', 'a abidjan', 'a yopougon', 'a marcory', 'a plateau',
     ]
-    const lower = query.toLowerCase()
-    return complexIndicators.some(ind => lower.includes(ind))
+
+    const lower = normalize(query)
+    return complexIndicators.some(ind => lower.includes(normalize(ind)))
 }
 
 export async function POST(req: NextRequest) {
