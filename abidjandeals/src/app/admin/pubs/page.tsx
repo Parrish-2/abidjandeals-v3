@@ -150,12 +150,11 @@ export default function PubsPage() {
     )
   }
 
-  // ── Fetch annonces ────────────────────────────────────────────────────────
   async function fetchAds() {
     setAdsLoading(true)
     const { data } = await supabase
       .from('ads')
-      .select('id, title, city, category, price, status, is_boosted, boost_level, boost_until, images')
+      .select('id, title, city, category_id, price, status, is_boosted, boost_level, boost_until, images')
       .order('created_at', { ascending: false })
     setAds((data as Ad[]) || [])
     setAdsLoading(false)
