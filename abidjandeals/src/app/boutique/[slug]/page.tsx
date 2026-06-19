@@ -7,7 +7,7 @@ import ShopHours from './ShopHours'
 export default async function BoutiquePage({ params }: { params: { slug: string } }) {
     const supabase = await createSupabaseServer()
 
-    const { data: profile } = await supabase
+    const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select(`id, boutique_name, boutique_slug, boutique_description,
       logo_url, banner_url, boutique_active,
@@ -15,7 +15,11 @@ export default async function BoutiquePage({ params }: { params: { slug: string 
       trust_badge, verified_seller, note, nb_avis`)
         .eq('boutique_slug', params.slug)
         .eq('boutique_active', true)
-        .single()
+        .maybeSingle()
+
+    if (profileError) {
+        console.error('Erreur chargement profil boutique:', profileError)
+    }
 
     if (!profile) notFound()
 
@@ -23,7 +27,7 @@ export default async function BoutiquePage({ params }: { params: { slug: string 
         .from('seller_subscriptions')
         .select('plan, expires_at')
         .eq('seller_id', profile.id)
-        .single()
+        .maybeSingle()
 
     const isPro = Boolean(
         sub &&
