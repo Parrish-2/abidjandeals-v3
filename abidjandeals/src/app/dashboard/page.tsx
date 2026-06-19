@@ -38,6 +38,7 @@ interface BoutiqueProfile {
   banner_url: string | null
   boutique_active: boolean | null
   level: string | null
+  role: string | null
 }
 
 // ─── Composants utilitaires ───────────────────────────────────────────────────
@@ -157,7 +158,7 @@ function BoutiqueTab({ userId }: { userId: string }) {
     async function load() {
       const { data } = await supabase
         .from('profiles')
-        .select('boutique_slug, boutique_name, boutique_description, logo_url, banner_url, boutique_active, level')
+        .select('boutique_slug, boutique_name, boutique_description, logo_url, banner_url, boutique_active, level, role')
         .eq('id', userId)
         .single()
       if (data) {
@@ -236,7 +237,7 @@ function BoutiqueTab({ userId }: { userId: string }) {
 
   if (loading) return <div style={{ padding: 40, textAlign: 'center', color: '#9ca3af' }}>Chargement...</div>
 
-  const isConfirmed = boutique?.level === 'confirmed' || boutique?.level === 'certified'
+  const isConfirmed = boutique?.level === 'confirmed' || boutique?.level === 'certified' || boutique?.role === 'admin'
 
   if (!isConfirmed) {
     return (
