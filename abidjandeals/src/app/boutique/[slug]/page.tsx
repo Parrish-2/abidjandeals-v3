@@ -1,9 +1,11 @@
 import { createSupabaseServer } from '@/lib/supabase-server'
 import Image from 'next/image'
+import { notFound } from 'next/navigation'
 import ShopActions from './ShopActions'
 import ShopHours from './ShopHours'
 
-export default async function BoutiquePage({ params }: { params: { slug: string } }) {
+export default async function BoutiquePage({ params }: { params: Promise<{ slug: string }> }) {
+    const { slug } = await params
     const supabase = await createSupabaseServer()
 
     const { data: profile, error: profileError } = await supabase
@@ -12,20 +14,11 @@ export default async function BoutiquePage({ params }: { params: { slug: string 
       logo_url, banner_url, boutique_active,
       shop_phone, shop_whatsapp, shop_facebook, shop_instagram, shop_hours, shop_is_open,
       trust_badge, verified_seller, note, nb_avis`)
-        .eq('boutique_slug', params.slug)
+        .eq('boutique_slug', slug)
         .eq('boutique_active', true)
         .maybeSingle()
 
-    if (!profile) {
-        return (
-            <pre style={{ padding: 20, fontSize: 13, whiteSpace: 'pre-wrap', background: '#fff7ed' }}>
-                DEBUG TEMPORAIRE — a retirer apres diagnostic{'\n\n'}
-                slug recherche: {JSON.stringify(params.slug)}{'\n'}
-                profile trouve: {JSON.stringify(profile)}{'\n'}
-                profileError: {JSON.stringify(profileError, null, 2)}
-            </pre>
-        )
-    }
+    if (!profile) notFound()
 
     const { data: sub } = await supabase
         .from('seller_subscriptions')
