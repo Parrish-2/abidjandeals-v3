@@ -5,6 +5,7 @@ import { HybridGallery } from '@/components/HybridGallery'
 import { Navbar } from '@/components/Navbar'
 import { SmartBanner } from '@/components/SmartBanner'
 import { useI18n } from '@/contexts/i18nContext'
+import { useStore } from '@/lib/store'
 import { supabase } from '@/lib/supabase'
 import { AlertTriangle, Calendar, Edit, Eye, Heart, Loader2, MapPin, MessageCircle, Phone, Share2, Shield, Trash2 } from 'lucide-react'
 import Link from 'next/link'
@@ -26,10 +27,10 @@ export default function AdDetailPage() {
     const router = useRouter()
     const { t, locale } = useI18n()
     const adId = params?.id as string
+    const storeUser = useStore(s => s.user)
 
     const [ad, setAd] = useState<any>(null)
     const [found, setFound] = useState<boolean | null>(null)
-    const [sessionUid, setSessionUid] = useState<string | null>(null)
     const [isFav, setIsFav] = useState(false)
     const [deleting, setDeleting] = useState(false)
     const [adBanner, setAdBanner] = useState<any>(null)
@@ -61,23 +62,11 @@ export default function AdDetailPage() {
         loadAd()
     }, [adId])
 
-    // ── Session utilisateur — chargee separement, en best-effort ──────────────
-    // Si ce call echoue ou est en conflit avec un autre lock, l'annonce
-    // reste affichee normalement (on perd juste isOwner=false par defaut).
-    useEffect(() => {
-        let cancelled = false
-        async function loadSession() {
-            try {
-                const { data: { session } } = await supabase.auth.getSession()
-                if (!cancelled) setSessionUid(session?.user?.id ?? null)
-            } catch {
-                // Echec silencieux : l'utilisateur sera simplement traite
-                // comme non-proprietaire, ce qui est un fallback sans danger.
-            }
-        }
-        loadSession()
-        return () => { cancelled = true }
-    }, [])
+    // Note: l'utilisateur connecte est lu depuis le store global (useStore),
+    // deja alimente par AuthProvider au niveau racine de l'app. On evite
+    // ainsi un second appel a supabase.auth.getSession() ici, qui entrait
+    // en conflit de lock avec celui d'AuthProvider (meme token, meme onglet).
+    const sessionUid = storeUser?.id ?? null
 
     // Bannière ad_detail
     useEffect(() => {
