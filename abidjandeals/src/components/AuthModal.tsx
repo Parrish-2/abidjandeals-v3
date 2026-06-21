@@ -30,6 +30,13 @@ export function AuthModal() {
   const [regEmail, setRegEmail] = useState('')
   const [regPwd, setRegPwd] = useState('')
 
+  // ── Seul declencheur de fermeture + toast + redirection ────────────────────
+  // Ce useEffect est l'UNIQUE endroit ou closeAndRedirect() est appele.
+  // handleLogin() se contente de faire setUser(profile) ; c'est le changement
+  // de `user` qui declenche ce useEffect, qui ferme la modal et affiche le
+  // toast UNE SEULE FOIS. Avant ce fix, handleLogin() appelait aussi
+  // closeAndRedirect() directement, doublant le toast (1x direct + 1x via
+  // ce useEffect declenche par le re-render de setUser()).
   useEffect(() => {
     if (!user || !authModalOpen || !loading) return
     closeAndRedirect(user.prenom)
@@ -49,7 +56,7 @@ export function AuthModal() {
   function closeAndRedirect(prenom?: string) {
     setLoading(false)
     setAuthModalOpen(false)
-    toast.success(`Bienvenue ${prenom || ''} 👋`)
+    toast.success(`Bienvenue ${prenom || ''} 👋`, { duration: 2000 })
     if (pendingAction === 'publish') {
       setPendingAction(null)
       router.push('/publier')
@@ -77,8 +84,10 @@ export function AuthModal() {
       const { data: profile, error: profileError } = await supabase
         .from('profiles').select('*').eq('id', userId).single()
       if (profileError || !profile) { toast.error('Profil introuvable.'); setLoading(false); return }
+      // On ne fait QUE mettre a jour le store ici. C'est le useEffect [user]
+      // ci-dessus qui se charge de fermer la modal, afficher le toast et
+      // rediriger — une seule fois, proprement, des que `user` est rempli.
       setUser(profile as Profile)
-      closeAndRedirect(profile.prenom)
     } catch {
       toast.error('Erreur de connexion. Réessayez.')
       setLoading(false)
