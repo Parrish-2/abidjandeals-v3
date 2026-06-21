@@ -39,13 +39,15 @@ export default function AdDetailPage() {
     const [translating, setTranslating] = useState(false)
     const lastTranslatedLocale = useRef<string | null>(null)
 
-    // ── Chargement original — séquentiel et stable ────────────────────────────
+    // ── Chargement de l'annonce — INDEPENDANT de la session ───────────────────
+    // Le chargement de l'annonce ne doit JAMAIS dependre de l'auth :
+    // une annonce active est publique (RLS: status='active'), donc on la
+    // charge sans attendre/bloquer sur getSession() pour eviter tout conflit
+    // de lock Supabase entre plusieurs appels auth concurrents sur la page.
     useEffect(() => {
         async function loadAd() {
             if (!adId) return
             try {
-                const { data: { session } } = await supabase.auth.getSession()
-                setSessionUid(session?.user?.id ?? null)
                 const { data, error } = await supabase
                     .from('ads').select('*').eq('id', adId).maybeSingle()
                 if (error || !data) { setFound(false); return }
@@ -58,6 +60,24 @@ export default function AdDetailPage() {
         }
         loadAd()
     }, [adId])
+
+    // ── Session utilisateur — chargee separement, en best-effort ──────────────
+    // Si ce call echoue ou est en conflit avec un autre lock, l'annonce
+    // reste affichee normalement (on perd juste isOwner=false par defaut).
+    useEffect(() => {
+        let cancelled = false
+        async function loadSession() {
+            try {
+                const { data: { session } } = await supabase.auth.getSession()
+                if (!cancelled) setSessionUid(session?.user?.id ?? null)
+            } catch {
+                // Echec silencieux : l'utilisateur sera simplement traite
+                // comme non-proprietaire, ce qui est un fallback sans danger.
+            }
+        }
+        loadSession()
+        return () => { cancelled = true }
+    }, [])
 
     // Bannière ad_detail
     useEffect(() => {
