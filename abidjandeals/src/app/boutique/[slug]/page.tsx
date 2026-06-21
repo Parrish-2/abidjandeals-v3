@@ -17,6 +17,10 @@ export default async function BoutiquePage({ params }: { params: { slug: string 
         .eq('boutique_active', true)
         .maybeSingle()
 
+    console.log('DEBUG boutique slug recherche:', JSON.stringify(params.slug))
+    console.log('DEBUG profile trouve:', JSON.stringify(profile))
+    console.log('DEBUG profileError:', JSON.stringify(profileError))
+
     if (profileError) {
         console.error('Erreur chargement profil boutique:', profileError)
     }
