@@ -129,7 +129,7 @@ export default async function BoutiquePage({ params }: { params: Promise<{ slug:
                     {listings?.map((ad) => (
                         <a
                             key={ad.id}
-                            href={`/annonces/${ad.id}`}
+                            href={`/ad/${ad.id}`}
                             className="border rounded-xl overflow-hidden hover:shadow-sm transition"
                         >
                             <div className="relative aspect-square bg-gray-100">
