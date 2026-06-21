@@ -1,6 +1,5 @@
 import { createSupabaseServer } from '@/lib/supabase-server'
 import Image from 'next/image'
-import { notFound } from 'next/navigation'
 import ShopActions from './ShopActions'
 import ShopHours from './ShopHours'
 
@@ -17,15 +16,16 @@ export default async function BoutiquePage({ params }: { params: { slug: string 
         .eq('boutique_active', true)
         .maybeSingle()
 
-    console.log('DEBUG boutique slug recherche:', JSON.stringify(params.slug))
-    console.log('DEBUG profile trouve:', JSON.stringify(profile))
-    console.log('DEBUG profileError:', JSON.stringify(profileError))
-
-    if (profileError) {
-        console.error('Erreur chargement profil boutique:', profileError)
+    if (!profile) {
+        return (
+            <pre style={{ padding: 20, fontSize: 13, whiteSpace: 'pre-wrap', background: '#fff7ed' }}>
+                DEBUG TEMPORAIRE — a retirer apres diagnostic{'\n\n'}
+                slug recherche: {JSON.stringify(params.slug)}{'\n'}
+                profile trouve: {JSON.stringify(profile)}{'\n'}
+                profileError: {JSON.stringify(profileError, null, 2)}
+            </pre>
+        )
     }
-
-    if (!profile) notFound()
 
     const { data: sub } = await supabase
         .from('seller_subscriptions')
