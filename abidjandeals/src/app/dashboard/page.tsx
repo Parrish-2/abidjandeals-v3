@@ -545,7 +545,7 @@ export default function DashboardPage() {
           <h1 style={{ fontSize: 22, fontWeight: 800, color: '#111827', marginBottom: 4 }}>Bonjour{prenom ? `, ${prenom}` : ''} 👋</h1>
           <p style={{ fontSize: 13, color: '#6b7280' }}>
             {isPro && (
-              <span style={{ fontSize: 11, fontWeight: 700, background: isTrial ? '#fff7ed' : '#fef3c7', color: isTrial ? '#ea580c' : '#92400e', border: isTrial ? '1px solid #fed7aa' : '1px solid #fde68a', borderRadius: 20, padding: '2px 10px', display: 'inline-block', marginBottom: 6 }}>
+              <span style={{ fontSize: 11, fontWeight: 700, background: isTrial ? '#fff7ed' : '#0F1117', color: isTrial ? '#ea580c' : '#F5C842', border: isTrial ? '1px solid #fed7aa' : '1px solid #F5C842', borderRadius: 20, padding: '2px 10px', display: 'inline-block', marginBottom: 6 }}>
                 {isTrial ? 'Pro - Essai gratuit' : 'Abonnement Pro actif'}
               </span>
             )}
