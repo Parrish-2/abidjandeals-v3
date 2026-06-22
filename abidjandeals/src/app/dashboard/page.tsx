@@ -1,9 +1,10 @@
-'use client'
+﻿'use client'
 
 import { BoostModal } from '@/components/BoostModal'
 import { ChangePasswordModal } from '@/components/ChangePasswordModal'
 import { formatFCFA } from '@/lib/format'
 import { useStore } from '@/lib/store'
+import { usePlan } from '@/hooks/usePlan'
 import { supabase } from '@/lib/supabase'
 import {
   CheckCircle, Clock, Eye, KeyRound, Package,
@@ -390,6 +391,7 @@ type Tab = 'annonces' | 'boutique'
 
 export default function DashboardPage() {
   const { user, setUser } = useStore()
+  const { isPro, isTrial } = usePlan()
 
   const [profile, setProfile] = useState<Profile | null>(null)
   const [ads, setAds] = useState<Ad[]>([])
