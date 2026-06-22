@@ -2,9 +2,10 @@
 
 import { BoostModal } from '@/components/BoostModal'
 import { ChangePasswordModal } from '@/components/ChangePasswordModal'
+import ShopStats from '@/components/dashboard/ShopStats'
+import { usePlan } from '@/hooks/usePlan'
 import { formatFCFA } from '@/lib/format'
 import { useStore } from '@/lib/store'
-import { usePlan } from '@/hooks/usePlan'
 import { supabase } from '@/lib/supabase'
 import {
   CheckCircle, Clock, Eye, KeyRound, Package,
@@ -281,6 +282,9 @@ function BoutiqueTab({ userId }: { userId: string }) {
           </div>
         </div>
       )}
+
+      {/* ── Stats boutique ── */}
+      <ShopStats userId={userId} />
 
       {/* Logo + Bannière */}
       <div style={{ background: 'white', border: '0.5px solid #e5e7eb', borderRadius: 12, overflow: 'hidden' }}>
