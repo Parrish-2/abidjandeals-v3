@@ -543,7 +543,12 @@ export default function DashboardPage() {
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 24, flexWrap: 'wrap', gap: 12 }}>
         <div>
           <h1 style={{ fontSize: 22, fontWeight: 800, color: '#111827', marginBottom: 4 }}>Bonjour{prenom ? `, ${prenom}` : ''} 👋</h1>
-          <p style={{ fontSize: 13, color: '#6b7280' }}>Gérez vos annonces et votre boutique KIVOO</p>
+          <p style={{ fontSize: 13, color: '#6b7280' }}>
+            {isPro && (
+              <span style={{ fontSize: 11, fontWeight: 700, background: isTrial ? '#fff7ed' : '#fef3c7', color: isTrial ? '#ea580c' : '#92400e', border: isTrial ? '1px solid #fed7aa' : '1px solid #fde68a', borderRadius: 20, padding: '2px 10px', display: 'inline-block', marginBottom: 4 }}>
+                {isTrial ? 'Pro Essai gratuit' : 'Pro'}
+              </span>
+            )}Gérez vos annonces et votre boutique KIVOO</p>
         </div>
         <Link href="/publier" style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#F97316', color: 'white', borderRadius: 12, padding: '8px 16px', fontSize: 13, fontWeight: 700, textDecoration: 'none' }}>
           <PlusCircle size={16} /> Nouvelle annonce
