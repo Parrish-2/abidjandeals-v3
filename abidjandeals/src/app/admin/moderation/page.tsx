@@ -741,7 +741,7 @@ export default function ModerationPage() {
 
   return (
     <div style={{ minHeight: '100vh', background: BG_PAGE, color: TEXT_PRI, fontFamily: "'DM Sans', system-ui, sans-serif" }}>
-      <Toaster position="top-center" toastOptions={{ style: { background: BG_CARD2, color: TEXT_PRI, border: `1px solid ${BORDER}` } }} />
+      position="top-center" toastOptions={{ style: { background: BG_CARD2, color: TEXT_PRI, border: `1px solid ${BORDER}` } }} />
       {rejectingAd && <RejectModal ad={rejectingAd} onClose={() => setRejectingAd(null)} onConfirm={handleRejectConfirm} />}
 
       <header style={{ background: BG_CARD, borderBottom: `1px solid ${BORDER}`, padding: '0 24px', height: 58, display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 50 }}>

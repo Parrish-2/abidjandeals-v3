@@ -11,7 +11,7 @@ import { AlertTriangle, Calendar, Edit, Eye, Heart, Loader2, MapPin, MessageCirc
 import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
 import { useEffect, useRef, useState } from 'react'
-import toast, { Toaster } from 'react-hot-toast'
+import toast from 'react-hot-toast'
 
 function filterMedia(images: string[]): { images: string[]; videoUrl: string | null } {
     const videoExtensions = ['.mp4', '.webm', '.mov', '.mkv', '.avi']
@@ -243,7 +243,7 @@ export default function AdDetailPage() {
     return (
         <>
             <div className="min-h-screen flex flex-col bg-gray-50">
-                <Toaster position="top-center" />
+
                 <Navbar />
                 <main className="flex-1 max-w-5xl mx-auto w-full px-4 py-6 pb-28 lg:pb-6">
                     <div className="flex items-center gap-2 text-sm text-gray-400 mb-4">

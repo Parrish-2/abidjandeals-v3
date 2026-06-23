@@ -1,24 +1,24 @@
 'use client'
 
-import { useState, useCallback, useRef } from 'react'   // ← ajoute useRef
-import { useRouter } from 'next/navigation'
-import { supabase } from '@/lib/supabase'
-import { useStore } from '@/lib/store'
 import { useMediaUpload } from '@/hooks/useMediaUpload'
-import toast, { Toaster } from 'react-hot-toast'
-import { Volume2, VolumeX } from 'lucide-react'          // ← ajoute cet import
+import { useStore } from '@/lib/store'
+import { supabase } from '@/lib/supabase'
+import { Volume2, VolumeX } from 'lucide-react'; // ← ajoute cet import
+import { useRouter } from 'next/navigation'
+import { useCallback, useRef, useState } from 'react'; // ← ajoute useRef
+import toast from 'react-hot-toast'
 
 const CATEGORIES = [
-  { slug: 'immobilier',   label: 'Immobilier',     emoji: '🏠', videoInfo: '3 min max' },
-  { slug: 'vehicules',    label: 'Véhicules',       emoji: '🚗', videoInfo: '2 min max' },
-  { slug: 'electronique', label: 'Électronique',    emoji: '📱', videoInfo: '1 min max' },
-  { slug: 'mode',         label: 'Mode & Beauté',   emoji: '👗', videoInfo: '45 sec max' },
-  { slug: 'emploi',       label: 'Emploi',          emoji: '💼', videoInfo: '1 min max' },
-  { slug: 'alimentation', label: 'Alimentation',    emoji: '🍽️', videoInfo: '45 sec max' },
-  { slug: 'services',     label: 'Services',        emoji: '🛠️', videoInfo: '1 min max' },
-  { slug: 'animaux',      label: 'Animaux',         emoji: '🐾', videoInfo: '45 sec max' },
-  { slug: 'sport',        label: 'Sport & Loisirs', emoji: '⚽', videoInfo: '1 min max' },
-  { slug: 'autres',       label: 'Autres',          emoji: '📦', videoInfo: '1 min max' },
+  { slug: 'immobilier', label: 'Immobilier', emoji: '🏠', videoInfo: '3 min max' },
+  { slug: 'vehicules', label: 'Véhicules', emoji: '🚗', videoInfo: '2 min max' },
+  { slug: 'electronique', label: 'Électronique', emoji: '📱', videoInfo: '1 min max' },
+  { slug: 'mode', label: 'Mode & Beauté', emoji: '👗', videoInfo: '45 sec max' },
+  { slug: 'emploi', label: 'Emploi', emoji: '💼', videoInfo: '1 min max' },
+  { slug: 'alimentation', label: 'Alimentation', emoji: '🍽️', videoInfo: '45 sec max' },
+  { slug: 'services', label: 'Services', emoji: '🛠️', videoInfo: '1 min max' },
+  { slug: 'animaux', label: 'Animaux', emoji: '🐾', videoInfo: '45 sec max' },
+  { slug: 'sport', label: 'Sport & Loisirs', emoji: '⚽', videoInfo: '1 min max' },
+  { slug: 'autres', label: 'Autres', emoji: '📦', videoInfo: '1 min max' },
 ]
 
 const CITIES = [
@@ -176,7 +176,7 @@ export default function CreateAdPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 pb-24">
-      <Toaster position="top-center" />
+
 
       {/* Header */}
       <div className="bg-white border-b px-4 py-4 flex items-center gap-3">
@@ -189,9 +189,8 @@ export default function CreateAdPage() {
         <div className="max-w-lg mx-auto flex items-center gap-2">
           {[1, 2, 3].map((s) => (
             <div key={s} className="flex items-center gap-2 flex-1">
-              <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-colors ${
-                step > s ? 'bg-green-500 text-white' : step === s ? 'bg-orange-500 text-white' : 'bg-gray-200 text-gray-500'
-              }`}>
+              <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-colors ${step > s ? 'bg-green-500 text-white' : step === s ? 'bg-orange-500 text-white' : 'bg-gray-200 text-gray-500'
+                }`}>
                 {step > s ? '✓' : s}
               </div>
               <span className={`text-xs ${step === s ? 'text-orange-500 font-medium' : 'text-gray-400'}`}>
@@ -239,11 +238,10 @@ export default function CreateAdPage() {
                     key={cat.slug}
                     type="button"
                     onClick={() => setForm(f => ({ ...f, category: cat.slug }))}
-                    className={`flex items-center gap-2 px-3 py-2.5 rounded-xl border text-sm transition ${
-                      form.category === cat.slug
-                        ? 'border-orange-500 bg-orange-50 text-orange-700 font-medium'
-                        : 'border-gray-200 hover:border-gray-300 text-gray-700'
-                    }`}
+                    className={`flex items-center gap-2 px-3 py-2.5 rounded-xl border text-sm transition ${form.category === cat.slug
+                      ? 'border-orange-500 bg-orange-50 text-orange-700 font-medium'
+                      : 'border-gray-200 hover:border-gray-300 text-gray-700'
+                      }`}
                   >
                     <span>{cat.emoji}</span>
                     <span>{cat.label}</span>
@@ -260,11 +258,10 @@ export default function CreateAdPage() {
                     key={city}
                     type="button"
                     onClick={() => setForm(f => ({ ...f, city }))}
-                    className={`px-3 py-1.5 rounded-lg border text-sm transition ${
-                      form.city === city
-                        ? 'border-orange-500 bg-orange-50 text-orange-700 font-medium'
-                        : 'border-gray-200 hover:border-gray-300'
-                    }`}
+                    className={`px-3 py-1.5 rounded-lg border text-sm transition ${form.city === city
+                      ? 'border-orange-500 bg-orange-50 text-orange-700 font-medium'
+                      : 'border-gray-200 hover:border-gray-300'
+                      }`}
                   >
                     {city}
                   </button>

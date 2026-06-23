@@ -4,10 +4,10 @@ import { Navbar } from '@/components/Navbar'
 import { CATEGORIES } from '@/lib/data'
 import { useStore } from '@/lib/store'
 import { supabase } from '@/lib/supabase'
-import { CheckCircle, ChevronRight, Loader2, MapPin, Phone, Save, Upload, Video, X } from 'lucide-react'
+import { CheckCircle, ChevronRight, Loader2, MapPin, Phone, Save, Sparkles, Upload, Video, X } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useCallback, useEffect, useRef, useState } from 'react'
-import toast, { Toaster } from 'react-hot-toast'
+import toast from 'react-hot-toast'
 
 type ExtraField = { name: string; label: string; type?: string; options?: string[]; placeholder?: string }
 type CatConfig = { etats: string[]; extraFields: ExtraField[] }
@@ -123,7 +123,11 @@ export default function PublierPage() {
   const [lastSaved, setLastSaved] = useState<string | null>(null)
   const [uploadProgress, setUploadProgress] = useState<{ current: number; total: number; label: string } | null>(null)
 
-  // ── Localisation depuis Supabase ────────────────────────────
+  // ── IA ─────────────────────────────────────────────────────────────────────
+  const [improving, setImproving] = useState(false)
+  const [aiSuggestion, setAiSuggestion] = useState<{ title: string; description: string } | null>(null)
+
+  // ── Localisation depuis Supabase ────────────────────────────────────────────
   const [regions, setRegions] = useState<string[]>([])
   const [quartiersDB, setQuartiersDB] = useState<string[]>([])
 
@@ -132,7 +136,6 @@ export default function PublierPage() {
   const selectedCat = CATEGORIES.find(c => c.id === form.category)
   const catConfig: CatConfig = form.category ? (CATEGORY_FIELDS[form.category] ?? DEFAULT_CONFIG) : DEFAULT_CONFIG
 
-  // Charge toutes les régions (communes) au montage
   useEffect(() => {
     supabase.from('locations').select('region').eq('is_active', true)
       .then(({ data }) => {
@@ -143,7 +146,6 @@ export default function PublierPage() {
       })
   }, [])
 
-  // Charge les quartiers quand la commune change
   useEffect(() => {
     if (!form.city) { setQuartiersDB([]); return }
     supabase.from('locations').select('name')
@@ -153,7 +155,6 @@ export default function PublierPage() {
       })
   }, [form.city])
 
-  // Brouillon
   useEffect(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY)
@@ -200,6 +201,50 @@ export default function PublierPage() {
 
   function handleCategoryChange(catId: string) {
     setForm(f => ({ ...f, category: catId, subcategory: '', etat: '' }))
+  }
+
+  // ── Assistant IA ────────────────────────────────────────────────────────────
+  async function handleImprove() {
+    if (!form.title && !form.description) {
+      toast.error('Remplissez d\'abord le titre ou la description')
+      return
+    }
+    setImproving(true)
+    setAiSuggestion(null)
+    try {
+      const res = await fetch('/api/seller/improve-listing', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: form.title,
+          description: form.description,
+          category: form.category,
+        }),
+      })
+      if (!res.ok) throw new Error('api_error')
+      const data = await res.json()
+      if (data.error) throw new Error(data.error)
+      if (data.title || data.description) {
+        setAiSuggestion(data)
+        toast.success('Suggestion IA prête ✨')
+      } else {
+        toast.error('L\'IA n\'a pas pu améliorer cette annonce')
+      }
+    } catch {
+      toast.error('Erreur IA. Vérifiez les crédits Anthropic.')
+    }
+    setImproving(false)
+  }
+
+  function applyAiSuggestion() {
+    if (!aiSuggestion) return
+    setForm(f => ({
+      ...f,
+      title: aiSuggestion.title || f.title,
+      description: aiSuggestion.description || f.description,
+    }))
+    setAiSuggestion(null)
+    toast.success('Suggestion appliquée ✅')
   }
 
   async function addMedia(files: FileList | null, type: 'image' | 'video') {
@@ -279,7 +324,6 @@ export default function PublierPage() {
           }
         }
 
-        // ✅ Upload parallèle — toutes les photos en même temps
         setUploadProgress({ current: 0, total: media.length, label: '⚡ Upload en cours...' })
         let completed = 0
         const results = await Promise.all(
@@ -364,7 +408,7 @@ export default function PublierPage() {
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
-      <Toaster position="top-center" />
+
       <Navbar />
       <main className="flex-1 w-full max-w-6xl mx-auto px-4 py-8 pb-28 lg:pb-8">
         <div className="flex items-start justify-between mb-8">
@@ -491,6 +535,7 @@ export default function PublierPage() {
                   <input name="title" value={form.title} onChange={handleChange} required
                     placeholder={selectedCat ? `Titre — ex: ${selectedCat.name} à vendre...` : "Titre de l'annonce *"}
                     className="w-full border border-gray-100 bg-gray-50 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-orange-400 focus:bg-white transition font-medium" />
+
                   <textarea name="description" value={form.description} onChange={handleChange} rows={4}
                     placeholder={
                       form.category === 'cat_auto' ? "Décrivez la voiture : options, historique d'entretien, raison de vente..." :
@@ -500,6 +545,64 @@ export default function PublierPage() {
                               'Décrivez votre article en détail...'
                     }
                     className="w-full border border-gray-100 bg-gray-50 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-orange-400 focus:bg-white transition resize-none" />
+
+                  {/* ── Bouton IA ── */}
+                  <div className="flex justify-end">
+                    <button
+                      type="button"
+                      onClick={handleImprove}
+                      disabled={improving || (!form.title && !form.description)}
+                      className="flex items-center gap-2 text-xs font-semibold text-violet-600 bg-violet-50 hover:bg-violet-100 border border-violet-200 rounded-xl px-4 py-2.5 transition disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                      {improving
+                        ? <Loader2 size={13} className="animate-spin" />
+                        : <Sparkles size={13} />
+                      }
+                      {improving ? 'IA en cours...' : 'Améliorer avec l\'IA ✨'}
+                    </button>
+                  </div>
+
+                  {/* ── Suggestion IA ── */}
+                  {aiSuggestion && (
+                    <div className="bg-violet-50 border border-violet-200 rounded-xl p-4 space-y-3">
+                      <div className="flex items-center gap-2">
+                        <Sparkles size={14} className="text-violet-600" />
+                        <p className="text-xs font-bold text-violet-700 uppercase tracking-wide">Suggestion de l'IA</p>
+                        <button type="button" onClick={() => setAiSuggestion(null)} className="ml-auto text-violet-400 hover:text-violet-600">
+                          <X size={14} />
+                        </button>
+                      </div>
+                      {aiSuggestion.title && (
+                        <div>
+                          <p className="text-xs text-violet-500 mb-1 font-medium">Titre suggéré</p>
+                          <p className="text-sm font-semibold text-gray-800 bg-white rounded-lg px-3 py-2 border border-violet-100">{aiSuggestion.title}</p>
+                        </div>
+                      )}
+                      {aiSuggestion.description && (
+                        <div>
+                          <p className="text-xs text-violet-500 mb-1 font-medium">Description suggérée</p>
+                          <p className="text-sm text-gray-700 leading-relaxed bg-white rounded-lg px-3 py-2 border border-violet-100">{aiSuggestion.description}</p>
+                        </div>
+                      )}
+                      <div className="flex gap-2 pt-1">
+                        <button
+                          type="button"
+                          onClick={applyAiSuggestion}
+                          className="flex-1 py-2 bg-violet-600 hover:bg-violet-700 text-white text-xs font-bold rounded-xl transition"
+                        >
+                          ✅ Appliquer la suggestion
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setAiSuggestion(null)}
+                          className="px-4 py-2 border border-violet-200 text-violet-600 text-xs font-semibold rounded-xl hover:bg-white transition"
+                        >
+                          Ignorer
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
                   <div className="grid grid-cols-2 gap-3">
                     <div className="relative">
                       <input name="price" value={form.price} onChange={handleChange} required type="number" min="0"
@@ -513,6 +616,7 @@ export default function PublierPage() {
                       {catConfig.etats.map(e => <option key={e} value={e}>{e}</option>)}
                     </select>
                   </div>
+
                   {catConfig.extraFields.length > 0 && (
                     <div className="grid grid-cols-2 gap-3 pt-3 border-t border-gray-50">
                       {catConfig.extraFields.map(field => (
@@ -535,7 +639,7 @@ export default function PublierPage() {
                 </div>
               </div>
 
-              {/* Étape 4 — Localisation (chargée depuis Supabase) */}
+              {/* Étape 4 — Localisation */}
               <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
                 <div className="flex items-center gap-2 mb-4">
                   <div className="w-7 h-7 rounded-full bg-orange-500 text-white text-xs font-bold flex items-center justify-center">4</div>
@@ -543,14 +647,11 @@ export default function PublierPage() {
                   <h2 className="font-bold text-gray-800">Localisation</h2>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
-                  {/* Commune — chargée depuis la table locations */}
                   <select name="city" value={form.city} onChange={handleChange} required
                     className="border border-gray-100 bg-gray-50 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-orange-400 focus:bg-white transition">
                     <option value="">Commune *</option>
                     {regions.map(r => <option key={r} value={r}>{r}</option>)}
                   </select>
-
-                  {/* Quartier — filtré par commune */}
                   {quartiersDB.length > 0 ? (
                     <select name="quartier" value={form.quartier} onChange={handleChange}
                       className="border border-gray-100 bg-gray-50 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-orange-400 focus:bg-white transition">

@@ -18,7 +18,7 @@ import {
 } from '@/types/admin'
 import { createBrowserClient } from '@supabase/ssr'
 import { useEffect, useRef, useState } from 'react'
-import toast, { Toaster } from 'react-hot-toast'
+import toast from 'react-hot-toast'
 
 // ─── Types locaux ─────────────────────────────────────────────────────────────
 
@@ -300,7 +300,7 @@ export default function PubsPage() {
   // ── RENDU ─────────────────────────────────────────────────────────────────
   return (
     <div style={{ padding: '28px 32px', maxWidth: 960, fontFamily: "'DM Sans', system-ui, sans-serif" }}>
-      <Toaster position="top-center" />
+
 
       {/* En-tête */}
       <div style={{ marginBottom: 24 }}>

@@ -13,7 +13,7 @@ import {
 } from 'lucide-react'
 import Link from 'next/link'
 import { useEffect, useRef, useState } from 'react'
-import toast, { Toaster } from 'react-hot-toast'
+import toast from 'react-hot-toast'
 
 interface Ad {
   id: string
@@ -521,7 +521,7 @@ export default function DashboardPage() {
 
   return (
     <div style={{ padding: '28px 24px', maxWidth: 900, margin: '0 auto', fontFamily: "'DM Sans', system-ui, sans-serif" }}>
-      <Toaster position="top-center" />
+
       <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
 
       {showChangePwd && <ChangePasswordModal onClose={() => setShowChangePwd(false)} />}

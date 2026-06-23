@@ -3,11 +3,11 @@
 // ✅ Aucune mutation Supabase directe — tout passe par /api/admin/vendors
 // ✅ Pas de vérification de rôle côté client — le middleware et l'API s'en chargent
 
-import { useEffect, useState, useCallback } from 'react'
-import { useRouter } from 'next/navigation'
+import { ArrowLeft, Award, CheckCircle, ExternalLink, LogOut, Star, Store, User } from 'lucide-react'
 import Link from 'next/link'
-import toast, { Toaster } from 'react-hot-toast'
-import { LogOut, ArrowLeft, CheckCircle, Star, Award, User, Store, ExternalLink } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { useCallback, useEffect, useState } from 'react'
+import toast from 'react-hot-toast'
 
 interface Vendor {
   id: string
@@ -32,9 +32,9 @@ interface Vendor {
 }
 
 const LEVEL_CONFIG = {
-  basic:     { label: 'Basic',     color: 'bg-gray-100 text-gray-600',       next: 'confirmed' },
-  confirmed: { label: 'Confirmé',  color: 'bg-blue-100 text-blue-600',       next: 'certified' },
-  certified: { label: 'Certifié',  color: 'bg-emerald-100 text-emerald-600', next: null },
+  basic: { label: 'Basic', color: 'bg-gray-100 text-gray-600', next: 'confirmed' },
+  confirmed: { label: 'Confirmé', color: 'bg-blue-100 text-blue-600', next: 'certified' },
+  certified: { label: 'Certifié', color: 'bg-emerald-100 text-emerald-600', next: null },
 }
 
 // ✅ Toutes les mutations passent par la route API sécurisée
@@ -51,9 +51,9 @@ async function adminAction(action: string, vendorId: string) {
 
 export default function AdminVendeursPage() {
   const router = useRouter()
-  const [vendors, setVendors]         = useState<Vendor[]>([])
-  const [loading, setLoading]         = useState(true)
-  const [filter, setFilter]           = useState<'all' | 'requested' | 'verified' | 'boutiques'>('requested')
+  const [vendors, setVendors] = useState<Vendor[]>([])
+  const [loading, setLoading] = useState(true)
+  const [filter, setFilter] = useState<'all' | 'requested' | 'verified' | 'boutiques'>('requested')
   const [processingId, setProcessingId] = useState<string | null>(null)
 
   // ✅ Fetch via l'API route — le serveur vérifie le rôle à chaque appel
@@ -167,7 +167,7 @@ export default function AdminVendeursPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Toaster position="top-center" />
+
 
       <header
         className="bg-white border-b border-gray-200 px-4 flex items-center justify-between"
@@ -234,15 +234,14 @@ export default function AdminVendeursPage() {
 
         <div className="flex gap-2 mb-4 overflow-x-auto scrollbar-hide">
           {[
-            { key: 'requested', label: '⏳ Demandes'  },
-            { key: 'verified',  label: '✅ Vérifiés'  },
+            { key: 'requested', label: '⏳ Demandes' },
+            { key: 'verified', label: '✅ Vérifiés' },
             { key: 'boutiques', label: '🪟 Boutiques' },
-            { key: 'all',       label: '👥 Tous'      },
+            { key: 'all', label: '👥 Tous' },
           ].map(f => (
             <button key={f.key} onClick={() => setFilter(f.key as typeof filter)}
-              className={`flex-shrink-0 px-4 py-2 rounded-xl text-sm font-medium transition-all ${
-                filter === f.key ? 'bg-orange-500 text-white' : 'bg-white text-gray-600 border border-gray-200'
-              }`}>
+              className={`flex-shrink-0 px-4 py-2 rounded-xl text-sm font-medium transition-all ${filter === f.key ? 'bg-orange-500 text-white' : 'bg-white text-gray-600 border border-gray-200'
+                }`}>
               {f.label}
             </button>
           ))}
@@ -345,11 +344,10 @@ export default function AdminVendeursPage() {
                     <button
                       onClick={() => toggleTrustBadge(vendor)}
                       disabled={processingId === vendor.id}
-                      className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium transition-all disabled:opacity-50 ${
-                        vendor.trust_badge
-                          ? 'bg-amber-100 text-amber-700 hover:bg-amber-200'
-                          : 'bg-gray-100 text-gray-600 hover:bg-amber-50 hover:text-amber-600'
-                      }`}
+                      className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium transition-all disabled:opacity-50 ${vendor.trust_badge
+                        ? 'bg-amber-100 text-amber-700 hover:bg-amber-200'
+                        : 'bg-gray-100 text-gray-600 hover:bg-amber-50 hover:text-amber-600'
+                        }`}
                     >
                       <Award size={12} />
                       {vendor.trust_badge ? 'Retirer badge' : 'Badge confiance'}
@@ -369,11 +367,10 @@ export default function AdminVendeursPage() {
                       <button
                         onClick={() => toggleBoutique(vendor)}
                         disabled={processingId === vendor.id}
-                        className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium transition-all disabled:opacity-50 ${
-                          vendor.boutique_active
-                            ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200'
-                            : 'bg-gray-100 text-gray-600 hover:bg-emerald-50 hover:text-emerald-600'
-                        }`}
+                        className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium transition-all disabled:opacity-50 ${vendor.boutique_active
+                          ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200'
+                          : 'bg-gray-100 text-gray-600 hover:bg-emerald-50 hover:text-emerald-600'
+                          }`}
                       >
                         <Store size={12} />
                         {vendor.boutique_active ? 'Désactiver boutique' : 'Activer boutique'}

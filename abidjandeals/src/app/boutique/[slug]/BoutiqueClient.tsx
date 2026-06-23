@@ -19,7 +19,7 @@ import {
 import Image from 'next/image'
 import Link from 'next/link'
 import { useMemo, useState } from 'react'
-import toast, { Toaster } from 'react-hot-toast'
+import toast from 'react-hot-toast'
 import ShopHours from './ShopHours'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -165,7 +165,7 @@ export default function BoutiqueClient({ profile, isPro, listings, totalViews, s
 
     return (
         <>
-            <Toaster position="top-center" />
+
 
             <div style={{ minHeight: '100vh', background: '#f9fafb', paddingBottom: 100 }}>
                 <div style={{ maxWidth: 860, margin: '0 auto', padding: '16px 16px 0' }}>

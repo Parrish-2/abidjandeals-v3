@@ -14,19 +14,19 @@ export function Providers({ children }: { children: ReactNode }) {
       <I18nProvider>
         <AuthProvider>
           {children}
-          <Toaster
-            position="bottom-center"
-            toastOptions={{
-              style: {
-                background: '#1A1D27',
-                color: '#fff',
-                borderRadius: '12px',
-                padding: '12px 20px',
-                fontSize: '14px',
-                fontFamily: 'var(--font-dm-sans)',
-              },
-              success: { iconTheme: { primary: '#F5620F', secondary: '#fff' } },
-            }}
+
+          position="bottom-center"
+          toastOptions={{
+            style: {
+              background: '#1A1D27',
+              color: '#fff',
+              borderRadius: '12px',
+              padding: '12px 20px',
+              fontSize: '14px',
+              fontFamily: 'var(--font-dm-sans)',
+            },
+            success: { iconTheme: { primary: '#F5620F', secondary: '#fff' } },
+          }}
           />
         </AuthProvider>
       </I18nProvider>

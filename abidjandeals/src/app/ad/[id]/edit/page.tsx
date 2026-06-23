@@ -8,7 +8,7 @@ import { AlertTriangle, ArrowLeft, ImagePlus, Loader2, Save, X } from 'lucide-re
 import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
 import { useCallback, useEffect, useState } from 'react'
-import toast, { Toaster } from 'react-hot-toast'
+import toast from 'react-hot-toast'
 
 const ETATS = ['Neuf', 'Très bon état', 'Bon état', 'État correct', 'À réparer']
 
@@ -272,7 +272,7 @@ export default function EditAdPage() {
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
-      <Toaster position="top-center" />
+
       <Navbar />
       <main className="flex-1">
         <div className="max-w-2xl mx-auto px-4 py-8">
