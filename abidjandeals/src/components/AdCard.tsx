@@ -2,14 +2,14 @@
 
 // src/components/AdCard.tsx
 
-import Link from 'next/link'
-import { Heart, Eye, MapPin, CheckCircle } from 'lucide-react'
-import { useState } from 'react'
 import { formatFCFA } from '@/lib/format'
 import { useStore } from '@/lib/store'
 import { supabase } from '@/lib/supabase'
-import toast from 'react-hot-toast'
 import type { BoostLevel } from '@/types/admin'
+import { CheckCircle, Eye, Heart, MapPin } from 'lucide-react'
+import Link from 'next/link'
+import { useState } from 'react'
+import toast from 'react-hot-toast'
 
 // ─── Import du slider unifié ──────────────────────────────────────────────────
 import MediaSlider, { type MediaItem } from './MediaSlider'
@@ -26,42 +26,42 @@ interface AdCardProps {
     certified?: boolean
     views: number
     badge?: string | null
-    img?: string              // ← conservé pour rétrocompatibilité
-    media?: MediaItem[]       // ← NOUVEAU : tableau mixte photos + vidéos
+    img?: string
+    media?: MediaItem[]
     emoji?: string
     category: string
     is_boosted?: boolean
     boost_until?: string | null
     boost_level?: BoostLevel | null
+    seller_is_pro?: boolean   // ← NOUVEAU : badge Pro vendeur (optionnel)
   }
 }
 
 const BADGE_CONFIG: Record<string, { label: string; className: string }> = {
-  boost:  { label: 'Boosté',  className: 'bg-orange-500 text-white' },
-  new:    { label: 'Nouveau', className: 'bg-emerald-500 text-white' },
-  urgent: { label: 'Urgent',  className: 'bg-red-500 text-white' },
-  pro:    { label: 'Pro',     className: 'bg-violet-600 text-white' },
+  boost: { label: 'Boosté', className: 'bg-orange-500 text-white' },
+  new: { label: 'Nouveau', className: 'bg-emerald-500 text-white' },
+  urgent: { label: 'Urgent', className: 'bg-red-500 text-white' },
+  pro: { label: 'Pro', className: 'bg-violet-600 text-white' },
 }
 
 const BOOST_LEVEL_LABEL: Record<BoostLevel, string> = {
   STANDARD: '⚡ Sponsorisé',
-  PREMIUM:  '★ Sponsorisé Premium',
-  URGENT:   '🔥 Sponsorisé Urgent',
+  PREMIUM: '★ Sponsorisé Premium',
+  URGENT: '🔥 Sponsorisé Urgent',
 }
 
 const BOOST_LEVEL_STYLE: Record<BoostLevel, { bg: string; border: string; text: string; icon: string }> = {
-  STANDARD: { bg: 'bg-orange-50',  border: 'border-orange-100', text: 'text-orange-600', icon: 'text-orange-500' },
-  PREMIUM:  { bg: 'bg-violet-50',  border: 'border-violet-100', text: 'text-violet-700', icon: 'text-violet-500' },
-  URGENT:   { bg: 'bg-red-50',     border: 'border-red-100',    text: 'text-red-600',    icon: 'text-red-500'    },
+  STANDARD: { bg: 'bg-orange-50', border: 'border-orange-100', text: 'text-orange-600', icon: 'text-orange-500' },
+  PREMIUM: { bg: 'bg-violet-50', border: 'border-violet-100', text: 'text-violet-700', icon: 'text-violet-500' },
+  URGENT: { bg: 'bg-red-50', border: 'border-red-100', text: 'text-red-600', icon: 'text-red-500' },
 }
 
 const BOOST_LEVEL_RING: Record<BoostLevel, string> = {
   STANDARD: 'ring-2 ring-orange-400 shadow-md shadow-orange-100',
-  PREMIUM:  'ring-2 ring-violet-400 shadow-md shadow-violet-100',
-  URGENT:   'ring-2 ring-red-400 shadow-md shadow-red-100',
+  PREMIUM: 'ring-2 ring-violet-400 shadow-md shadow-violet-100',
+  URGENT: 'ring-2 ring-red-400 shadow-md shadow-red-100',
 }
 
-// ─── Construit le tableau MediaItem depuis les données de l'annonce ───────────
 function buildMediaItems(ad: AdCardProps['ad']): MediaItem[] {
   if (ad.media && ad.media.length > 0) return ad.media
   if (ad.img) return [{ type: 'image', url: ad.img }]
@@ -69,10 +69,10 @@ function buildMediaItems(ad: AdCardProps['ad']): MediaItem[] {
 }
 
 export function AdCard({ ad }: AdCardProps) {
-  const [liked, setLiked]             = useState(false)
+  const [liked, setLiked] = useState(false)
   const [likeLoading, setLikeLoading] = useState(false)
-  const { user, setAuthModalOpen }    = useStore()
-  const badge                         = ad.badge ? BADGE_CONFIG[ad.badge] : null
+  const { user, setAuthModalOpen } = useStore()
+  const badge = ad.badge ? BADGE_CONFIG[ad.badge] : null
 
   const isBoosted =
     ad.is_boosted &&
@@ -81,7 +81,7 @@ export function AdCard({ ad }: AdCardProps) {
   const boostLevel: BoostLevel = ad.boost_level ?? 'STANDARD'
   const boostStyle = isBoosted ? BOOST_LEVEL_STYLE[boostLevel] : null
   const boostLabel = isBoosted ? BOOST_LEVEL_LABEL[boostLevel] : null
-  const boostRing  = isBoosted ? BOOST_LEVEL_RING[boostLevel] : ''
+  const boostRing = isBoosted ? BOOST_LEVEL_RING[boostLevel] : ''
 
   const mediaItems = buildMediaItems(ad)
 
@@ -133,7 +133,7 @@ export function AdCard({ ad }: AdCardProps) {
           </div>
         )}
 
-        {/* ── Zone média : slider unifié photos + vidéo ─────────────────────── */}
+        {/* ── Zone média ────────────────────────────────────────────────────── */}
         <div className="relative">
           {mediaItems.length > 0 ? (
             <MediaSlider
@@ -197,9 +197,27 @@ export function AdCard({ ad }: AdCardProps) {
 
         {/* ── Pied de carte ─────────────────────────────────────────────────── */}
         <div className="px-4 pb-3 flex items-center justify-between border-t border-gray-50 pt-3">
-          <span className="text-xs text-gray-500 truncate">{ad.seller}</span>
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="text-xs text-gray-500 truncate">{ad.seller}</span>
+            {/* ── Badge Pro vendeur ── */}
+            {ad.seller_is_pro && (
+              <span style={{
+                fontSize: 10,
+                fontWeight: 700,
+                background: '#0F1117',
+                color: '#F5C842',
+                border: '1px solid #F5C842',
+                borderRadius: 4,
+                padding: '1px 6px',
+                flexShrink: 0,
+                letterSpacing: '0.03em',
+              }}>
+                PRO
+              </span>
+            )}
+          </div>
           {ad.etat && (
-            <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${ad.etat === 'Neuf' ? 'bg-emerald-50 text-emerald-600' : 'bg-gray-100 text-gray-600'}`}>
+            <span className={`text-xs font-medium px-2 py-0.5 rounded-full flex-shrink-0 ${ad.etat === 'Neuf' ? 'bg-emerald-50 text-emerald-600' : 'bg-gray-100 text-gray-600'}`}>
               {ad.etat}
             </span>
           )}

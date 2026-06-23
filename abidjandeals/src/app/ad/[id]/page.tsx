@@ -34,17 +34,14 @@ export default function AdDetailPage() {
     const [isFav, setIsFav] = useState(false)
     const [deleting, setDeleting] = useState(false)
     const [adBanner, setAdBanner] = useState<any>(null)
+    const [vendorIsPro, setVendorIsPro] = useState(false)   // ← NOUVEAU
 
     const [translatedTitle, setTranslatedTitle] = useState<string | null>(null)
     const [translatedDesc, setTranslatedDesc] = useState<string | null>(null)
     const [translating, setTranslating] = useState(false)
     const lastTranslatedLocale = useRef<string | null>(null)
 
-    // ── Chargement de l'annonce — INDEPENDANT de la session ───────────────────
-    // Le chargement de l'annonce ne doit JAMAIS dependre de l'auth :
-    // une annonce active est publique (RLS: status='active'), donc on la
-    // charge sans attendre/bloquer sur getSession() pour eviter tout conflit
-    // de lock Supabase entre plusieurs appels auth concurrents sur la page.
+    // ── Chargement de l'annonce ───────────────────────────────────────────────
     useEffect(() => {
         async function loadAd() {
             if (!adId) return
@@ -62,13 +59,27 @@ export default function AdDetailPage() {
         loadAd()
     }, [adId])
 
-    // Note: l'utilisateur connecte est lu depuis le store global (useStore),
-    // deja alimente par AuthProvider au niveau racine de l'app. On evite
-    // ainsi un second appel a supabase.auth.getSession() ici, qui entrait
-    // en conflit de lock avec celui d'AuthProvider (meme token, meme onglet).
+    // ── Plan Pro du vendeur (lecture publique) ────────────────────────────────
+    useEffect(() => {
+        if (!ad?.user_id) return
+        async function loadVendorPlan() {
+            try {
+                const { data } = await supabase
+                    .from('seller_subscriptions')
+                    .select('plan, expires_at')
+                    .eq('seller_id', ad.user_id)
+                    .maybeSingle()
+                if (!data) return
+                const isActive = !data.expires_at || new Date(data.expires_at) > new Date()
+                setVendorIsPro(data.plan === 'pro' && isActive)
+            } catch { /* silencieux */ }
+        }
+        loadVendorPlan()
+    }, [ad?.user_id])
+
     const sessionUid = storeUser?.id ?? null
 
-    // Bannière ad_detail
+    // ── Bannière ad_detail ────────────────────────────────────────────────────
     useEffect(() => {
         async function loadBanner() {
             try {
@@ -100,7 +111,7 @@ export default function AdDetailPage() {
         loadBanner()
     }, [])
 
-    // Traduction DeepL
+    // ── Traduction DeepL ──────────────────────────────────────────────────────
     useEffect(() => {
         if (!ad || locale === lastTranslatedLocale.current) return
         if (locale === 'en') {
@@ -326,7 +337,6 @@ export default function AdDetailPage() {
                                 </div>
                             )}
 
-                            {/* ── BoostCTA mobile (sticky bottom, visible uniquement sur mobile) ── */}
                             {isOwner && (
                                 <BoostCTA
                                     adId={adId}
@@ -350,7 +360,24 @@ export default function AdDetailPage() {
                             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
                                 <div className="flex items-center gap-3 mb-4 pb-4 border-b border-gray-100">
                                     <div className="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center text-orange-600 font-bold">V</div>
-                                    <p className="font-bold text-gray-900">{t('ad.seller')}</p>
+                                    <div className="flex items-center gap-2">
+                                        <p className="font-bold text-gray-900">{t('ad.seller')}</p>
+                                        {/* ── Badge Pro vendeur ── */}
+                                        {vendorIsPro && (
+                                            <span style={{
+                                                fontSize: 10,
+                                                fontWeight: 700,
+                                                background: '#0F1117',
+                                                color: '#F5C842',
+                                                border: '1px solid #F5C842',
+                                                borderRadius: 4,
+                                                padding: '2px 7px',
+                                                letterSpacing: '0.04em',
+                                            }}>
+                                                PRO
+                                            </span>
+                                        )}
+                                    </div>
                                 </div>
                                 <div className="space-y-2.5">
                                     {ad.tel && (
@@ -382,7 +409,6 @@ export default function AdDetailPage() {
                                 </ul>
                             </div>
 
-                            {/* ── BoostCTA desktop (carte inline dans la sidebar) ── */}
                             {isOwner && (
                                 <BoostCTA
                                     adId={adId}
