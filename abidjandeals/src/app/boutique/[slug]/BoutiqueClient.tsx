@@ -211,7 +211,7 @@ export default function BoutiqueClient({ profile, isPro, listings, totalViews, s
                     </div>
 
                     {/* ── LOGO + NOM + BADGES ──────────────────────────────────────────── */}
-                    <div style={{ display: 'flex', alignItems: 'flex-end', gap: 14, marginTop: -36, marginBottom: 14, paddingLeft: 12 }}>
+                    <div style={{ display: 'flex', alignItems: 'flex-end', gap: 14, marginTop: 10, marginBottom: 14, paddingLeft: 12 }}>
                         {/* Logo chevauchant la bannière */}
                         <div style={{
                             width: 80, height: 80, borderRadius: 16,
