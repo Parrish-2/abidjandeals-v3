@@ -5,7 +5,7 @@ import { AlertTriangle, CheckCircle2, Eye, LogOut, PlusCircle, RefreshCw, Search
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useCallback, useEffect, useState } from 'react'
-import toast, { Toaster } from 'react-hot-toast'
+import toast from 'react-hot-toast'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -741,7 +741,6 @@ export default function ModerationPage() {
 
   return (
     <div style={{ minHeight: '100vh', background: BG_PAGE, color: TEXT_PRI, fontFamily: "'DM Sans', system-ui, sans-serif" }}>
-      position="top-center" toastOptions={{ style: { background: BG_CARD2, color: TEXT_PRI, border: `1px solid ${BORDER}` } }} />
       {rejectingAd && <RejectModal ad={rejectingAd} onClose={() => setRejectingAd(null)} onConfirm={handleRejectConfirm} />}
 
       <header style={{ background: BG_CARD, borderBottom: `1px solid ${BORDER}`, padding: '0 24px', height: 58, display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 50 }}>
