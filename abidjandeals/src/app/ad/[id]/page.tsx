@@ -177,6 +177,15 @@ export default function AdDetailPage() {
         }
     }
 
+    // ── Partage WhatsApp ──────────────────────────────────────────────────────
+    function shareWhatsApp() {
+        if (!ad) return
+        const text = encodeURIComponent(
+            `🛍️ "${ad.title}" — ${formatPrice(ad.price)}\n📍 ${ad.city}\n👉 https://www.kivoo.ci/ad/${adId}`
+        )
+        window.open(`https://wa.me/?text=${text}`, '_blank', 'noopener')
+    }
+
     async function handleDelete() {
         if (!confirm(t('moderation.confirm_delete'))) return
         setDeleting(true)
@@ -269,6 +278,12 @@ export default function AdDetailPage() {
                                     className="flex items-center gap-2 px-4 py-2 rounded-xl border border-gray-200 bg-white text-gray-500 text-sm font-medium hover:border-orange-200 transition">
                                     <Share2 size={15} /> {t('ad.share')}
                                 </button>
+                                {/* ── Bouton Partager WhatsApp ── */}
+                                <a
+                                    onClick={shareWhatsApp}
+                                    className="flex items-center gap-2 px-4 py-2 rounded-xl border border-green-200 bg-white text-green-600 text-sm font-medium hover:bg-green-50 transition cursor-pointer">
+                                    <MessageCircle size={15} /> Partager
+                                </a>
                             </div>
 
                             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
