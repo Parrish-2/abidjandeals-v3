@@ -181,7 +181,7 @@ export default function AdDetailPage() {
     function shareWhatsApp() {
         if (!ad) return
         const text = encodeURIComponent(
-            `🛍️ "${ad.title}" — ${formatPrice(ad.price)}\n📍 ${ad.city}\n👉 https://www.kivoo.ci/ad/${adId}`
+            `"${ad.title}" - ${formatPrice(ad.price)} FCFA\n${ad.city}\nhttps://www.kivoo.ci/ad/${adId}`
         )
         window.open(`https://wa.me/?text=${text}`, '_blank', 'noopener')
     }
@@ -282,7 +282,7 @@ export default function AdDetailPage() {
                                 <a
                                     onClick={shareWhatsApp}
                                     className="flex items-center gap-2 px-4 py-2 rounded-xl border border-green-200 bg-white text-green-600 text-sm font-medium hover:bg-green-50 transition cursor-pointer">
-                                    <MessageCircle size={15} /> Partager
+                                    <MessageCircle size={15} /> WhatsApp
                                 </a>
                             </div>
 
