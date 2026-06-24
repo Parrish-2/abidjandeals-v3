@@ -362,7 +362,6 @@ function SearchContentV2() {
         case "price_asc": query = query.order("price", { ascending: true }); break
         case "price_desc": query = query.order("price", { ascending: false }); break
         case "popular": query = query.order("views", { ascending: false }); break
-        default: query = query.order("created_at", { ascending: false })
       }
 
       const { data, error: sbError, count } = await query.limit(48)
