@@ -15,7 +15,7 @@ import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "rea
 
 import { CATEGORIES as CAT_DATA } from '@/lib/data';
 
-const ADULT_CATEGORIES = ['lingerie', 'cat_lingerie']
+const ADULT_CATEGORIES = ['lingerie', 'cat_lingerie', 'cat_adulte']
 const STORAGE_KEY = 'KIVOO_age_verified'
 
 function isAgeVerified(): boolean {
@@ -67,7 +67,7 @@ const LABELS: Record<string, string> = {
   "hightech-informatique": "High-Tech & Informatique", "vehicules-equipements": "Véhicules & Équipements",
   "location": "Location & Mobilité", "immobilier": "Immobilier", "mode": "Mode & Beauté",
   "maison": "Maison & Décoration", "services": "Services & Emploi", "sport": "Sport & Loisirs",
-  "sport-loisirs": "Sport & Loisirs", "autres": "Autres & Divers", "lingerie": "Lingerie & Adulte",
+  "sport-loisirs": "Sport & Loisirs", "autres": "Autres & Divers", "cat_adulte": "Bien-être & Intimité", "lingerie": "Lingerie & Adulte",
   "cat_lingerie": "Lingerie & Adulte", "cat_auto": "Automobile & Industrie",
   "cat_tech": "High-Tech & Informatique", "cat_immo": "Immobilier", "cat_mode": "Mode & Beauté",
   "cat_maison": "Maison & Décoration", "cat_serv": "Services & Emploi", "cat_loisir": "Sport & Loisirs",
