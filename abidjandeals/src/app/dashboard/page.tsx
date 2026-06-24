@@ -406,8 +406,23 @@ export default function DashboardPage() {
   const [boostTarget, setBoostTarget] = useState<Ad | null>(null)
   const [showChangePwd, setShowChangePwd] = useState(false)
   const [activeTab, setActiveTab] = useState<Tab>('annonces')
+  const [subscribing, setSubscribing] = useState(false)   // ← NOUVEAU
 
   const fetchedRef = useRef(false)
+
+  // ── Gestion retour GeniusPay (success / error) ────────────────────────────
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const params = new URLSearchParams(window.location.search)
+    const sub = params.get('subscription')
+    if (sub === 'success') {
+      toast.success('🎉 Abonnement Pro activé ! Bienvenue dans le club.')
+      window.history.replaceState({}, '', '/dashboard')
+    } else if (sub === 'error') {
+      toast.error('Paiement annulé ou échoué. Réessayez.')
+      window.history.replaceState({}, '', '/dashboard')
+    }
+  }, [])
 
   useEffect(() => {
     let cancelled = false
@@ -469,6 +484,24 @@ export default function DashboardPage() {
     fetchData()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authChecked, authed])
+
+  // ── Abonnement Pro GeniusPay ──────────────────────────────────────────────
+  async function handleSubscribePro() {
+    setSubscribing(true)
+    try {
+      const res = await fetch('/api/subscribe', { method: 'POST' })
+      const data = await res.json()
+      if (!res.ok || !data.checkout_url) {
+        toast.error(data.error || 'Erreur lors de la création du paiement')
+        return
+      }
+      window.location.href = data.checkout_url
+    } catch {
+      toast.error('Erreur réseau. Réessayez.')
+    } finally {
+      setSubscribing(false)
+    }
+  }
 
   if (authChecked && !authed) {
     if (typeof window !== 'undefined') window.location.href = '/?auth=login&redirect=/dashboard'
@@ -570,6 +603,43 @@ export default function DashboardPage() {
       {ads.length > 0 && (
         <div style={{ marginBottom: 20 }}>
           <BoostBanner onBoostClick={() => setBoostTarget(ads.find(a => !a.boost_level) ?? ads[0])} />
+        </div>
+      )}
+
+      {/* ── Bannière Passer Pro (non-Pro uniquement) ── */}
+      {!isPro && (
+        <div style={{
+          background: 'linear-gradient(135deg, #0F1117 0%, #1a2535 100%)',
+          borderRadius: 14, padding: '20px 24px', marginBottom: 20,
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          gap: 16, flexWrap: 'wrap',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+            <div style={{ width: 44, height: 44, borderRadius: 12, background: 'rgba(245,200,66,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <span style={{ fontSize: 20, color: '#F5C842' }}>★</span>
+            </div>
+            <div>
+              <p style={{ fontSize: 15, fontWeight: 700, color: '#fff', margin: 0 }}>
+                Passez <span style={{ color: '#F5C842' }}>Pro</span> et boostez votre visibilité
+              </p>
+              <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.45)', margin: '3px 0 0' }}>
+                Badge PRO · Statistiques boutique · Priorité dans les résultats · 5 000 FCFA/mois
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={handleSubscribePro}
+            disabled={subscribing}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 8,
+              padding: '10px 22px', borderRadius: 10,
+              border: '1px solid #F5C842',
+              background: subscribing ? 'rgba(245,200,66,0.1)' : 'rgba(245,200,66,0.15)',
+              color: '#F5C842', fontSize: 13, fontWeight: 700,
+              cursor: subscribing ? 'not-allowed' : 'pointer', flexShrink: 0,
+            }}>
+            {subscribing ? 'Redirection...' : '★ Passer Pro — 5 000 FCFA'}
+          </button>
         </div>
       )}
 
