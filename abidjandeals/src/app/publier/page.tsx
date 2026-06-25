@@ -4,7 +4,7 @@ import { Navbar } from '@/components/Navbar'
 import { CATEGORIES } from '@/lib/data'
 import { useStore } from '@/lib/store'
 import { supabase } from '@/lib/supabase'
-import { CheckCircle, ChevronRight, Loader2, MapPin, Phone, Save, Sparkles, Upload, Video, X } from 'lucide-react'
+import { CheckCircle, ChevronRight, GripVertical, Loader2, MapPin, Phone, Save, Sparkles, Upload, Video, X } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import toast from 'react-hot-toast'
@@ -108,6 +108,7 @@ const EMPTY_FORM = {
   category: '', subcategory: '', etat: '',
   city: '', quartier: '', tel: '', whatsapp: '',
 }
+const MAX_IMAGES = 8
 type MediaFile = { file: File; url: string; type: 'image' | 'video' }
 
 export default function PublierPage() {
@@ -127,15 +128,23 @@ export default function PublierPage() {
   const [improving, setImproving] = useState(false)
   const [aiSuggestion, setAiSuggestion] = useState<{ title: string; description: string } | null>(null)
 
+  // ── Drag & Drop réordonnancement ───────────────────────────────────────────
+  const [dragIndex, setDragIndex] = useState<number | null>(null)
+  const [dragOver, setDragOver] = useState<number | null>(null)
+
   // ── Localisation depuis Supabase ────────────────────────────────────────────
   const [regions, setRegions] = useState<string[]>([])
   const [quartiersDB, setQuartiersDB] = useState<string[]>([])
+  const [regionsLoaded, setRegionsLoaded] = useState(false)  // ← FIX bug communes
 
   const [form, setForm] = useState<Record<string, string>>(EMPTY_FORM)
 
   const selectedCat = CATEGORIES.find(c => c.id === form.category)
   const catConfig: CatConfig = form.category ? (CATEGORY_FIELDS[form.category] ?? DEFAULT_CONFIG) : DEFAULT_CONFIG
+  const imageCount = media.filter(m => m.type === 'image').length
+  const hasVideo = !!media.find(m => m.type === 'video')
 
+  // ── 1. Charger les régions en premier ──────────────────────────────────────
   useEffect(() => {
     supabase.from('locations').select('region').eq('is_active', true)
       .then(({ data }) => {
@@ -143,19 +152,13 @@ export default function PublierPage() {
           const unique = [...new Set(data.map((d: any) => d.region))].sort() as string[]
           setRegions(unique)
         }
+        setRegionsLoaded(true)  // ← déclenche le chargement du brouillon
       })
   }, [])
 
+  // ── 2. Charger le brouillon APRÈS les régions (FIX bug communes) ───────────
   useEffect(() => {
-    if (!form.city) { setQuartiersDB([]); return }
-    supabase.from('locations').select('name')
-      .eq('region', form.city).eq('is_active', true).order('name')
-      .then(({ data }) => {
-        if (data) setQuartiersDB(data.map((d: any) => d.name))
-      })
-  }, [form.city])
-
-  useEffect(() => {
+    if (!regionsLoaded) return
     try {
       const saved = localStorage.getItem(STORAGE_KEY)
       if (saved) {
@@ -165,8 +168,19 @@ export default function PublierPage() {
         setLastSaved(draft.savedAt || null)
       }
     } catch { }
-  }, [])
+  }, [regionsLoaded])
 
+  // ── 3. Quartiers selon commune ─────────────────────────────────────────────
+  useEffect(() => {
+    if (!form.city) { setQuartiersDB([]); return }
+    supabase.from('locations').select('name')
+      .eq('region', form.city).eq('is_active', true).order('name')
+      .then(({ data }) => {
+        if (data) setQuartiersDB(data.map((d: any) => d.name))
+      })
+  }, [form.city])
+
+  // ── Sauvegarde automatique brouillon ───────────────────────────────────────
   useEffect(() => {
     const hasContent = form.title || form.description || form.price || form.category
     if (!hasContent) return
@@ -203,10 +217,24 @@ export default function PublierPage() {
     setForm(f => ({ ...f, category: catId, subcategory: '', etat: '' }))
   }
 
+  // ── Drag & Drop réordonnancement photos ────────────────────────────────────
+  function handleDragStart(i: number) { setDragIndex(i) }
+  function handleDragOver(e: React.DragEvent, i: number) { e.preventDefault(); setDragOver(i) }
+  function handleDragEnd() { setDragIndex(null); setDragOver(null) }
+  function handleDropOnItem(e: React.DragEvent, i: number) {
+    e.preventDefault()
+    if (dragIndex === null || dragIndex === i) { handleDragEnd(); return }
+    const newMedia = [...media]
+    const [moved] = newMedia.splice(dragIndex, 1)
+    newMedia.splice(i, 0, moved)
+    setMedia(newMedia)
+    handleDragEnd()
+  }
+
   // ── Assistant IA ────────────────────────────────────────────────────────────
   async function handleImprove() {
     if (!form.title && !form.description) {
-      toast.error('Remplissez d\'abord le titre ou la description')
+      toast.error("Remplissez d'abord le titre ou la description")
       return
     }
     setImproving(true)
@@ -215,11 +243,7 @@ export default function PublierPage() {
       const res = await fetch('/api/seller/improve-listing', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          title: form.title,
-          description: form.description,
-          category: form.category,
-        }),
+        body: JSON.stringify({ title: form.title, description: form.description, category: form.category }),
       })
       if (!res.ok) throw new Error('api_error')
       const data = await res.json()
@@ -228,7 +252,7 @@ export default function PublierPage() {
         setAiSuggestion(data)
         toast.success('Suggestion IA prête ✨')
       } else {
-        toast.error('L\'IA n\'a pas pu améliorer cette annonce')
+        toast.error("L'IA n'a pas pu améliorer cette annonce")
       }
     } catch {
       toast.error('Erreur IA. Vérifiez les crédits Anthropic.')
@@ -249,14 +273,14 @@ export default function PublierPage() {
 
   async function addMedia(files: FileList | null, type: 'image' | 'video') {
     if (!files) return
-    const limit = type === 'video' ? 1 : 8 - media.filter(m => m.type === 'image').length
+    const limit = type === 'video' ? 1 : MAX_IMAGES - media.filter(m => m.type === 'image').length
     const fileArray = Array.from(files).slice(0, limit)
     if (type === 'image') {
       const items = fileArray.map(file => ({ file, url: URL.createObjectURL(file), type: 'image' as const }))
-      setMedia(prev => [...prev, ...items].slice(0, 9))
+      setMedia(prev => [...prev, ...items].slice(0, MAX_IMAGES + 1))
     } else {
       const items: MediaFile[] = fileArray.map(file => ({ file, url: URL.createObjectURL(file), type }))
-      setMedia(prev => [...prev, ...items].slice(0, 9))
+      setMedia(prev => [...prev, ...items].slice(0, MAX_IMAGES + 1))
     }
   }
 
@@ -408,7 +432,6 @@ export default function PublierPage() {
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
-
       <Navbar />
       <main className="flex-1 w-full max-w-6xl mx-auto px-4 py-8 pb-28 lg:pb-8">
         <div className="flex items-start justify-between mb-8">
@@ -466,40 +489,83 @@ export default function PublierPage() {
                 )}
               </div>
 
-              {/* Étape 2 — Photos & Vidéo */}
+              {/* Étape 2 — Photos & Vidéo (grille unifiée + drag & drop) */}
               <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
                 <div className="px-5 pt-5 pb-3 border-b border-gray-50 flex items-center gap-2">
                   <div className="w-7 h-7 rounded-full bg-orange-500 text-white text-xs font-bold flex items-center justify-center">2</div>
                   <h2 className="font-bold text-gray-800">Photos & Vidéo</h2>
-                  <span className="ml-auto text-xs text-gray-400">{media.length}/9</span>
+                  <span className="ml-auto text-xs text-gray-400">{imageCount}/{MAX_IMAGES} photos{hasVideo ? ' · 1 vidéo' : ''}</span>
                 </div>
                 <div className="p-5">
+
+                  {/* Zone drag & drop upload */}
                   <div onDrop={onDrop} onDragOver={e => e.preventDefault()}
                     className="border-2 border-dashed border-gray-200 rounded-2xl p-6 text-center hover:border-orange-400 transition-colors cursor-pointer mb-4 group"
                     onClick={() => fileInputRef.current?.click()}>
                     <Upload size={28} className="mx-auto text-gray-300 group-hover:text-orange-400 transition mb-2" />
-                    <p className="font-semibold text-gray-600 text-sm">Glissez vos photos ou cliquez</p>
-                    <p className="text-xs text-gray-400 mt-1">JPG, PNG, WEBP · Max 8 photos + 1 vidéo</p>
+                    <p className="font-semibold text-gray-600 text-sm">Glissez vos photos/vidéo ici ou cliquez</p>
+                    <p className="text-xs text-gray-400 mt-1">JPG, PNG, WEBP · Max {MAX_IMAGES} photos + 1 vidéo</p>
                     <input ref={fileInputRef} type="file" accept="image/*" multiple className="hidden"
                       onChange={e => addMedia(e.target.files, 'image')} />
                   </div>
+
+                  {/* Grille unifiée photos + vidéo avec drag & drop */}
                   {media.length > 0 && (
-                    <div className="grid grid-cols-4 gap-2 mb-3">
-                      {media.map((m, i) => (
-                        <div key={i} className={`relative rounded-xl overflow-hidden border-2 aspect-square ${i === 0 ? 'border-orange-400' : 'border-gray-100'}`}>
-                          {m.type === 'image'
-                            ? <img src={m.url} alt="" className="w-full h-full object-cover" />
-                            : <video src={m.url} className="w-full h-full object-cover" muted />}
-                          {i === 0 && <span className="absolute bottom-0 left-0 right-0 bg-orange-500 text-white text-[9px] font-bold text-center py-0.5">PRINCIPALE</span>}
-                          {m.type === 'video' && <span className="absolute top-1 left-1 bg-black/60 text-white text-[9px] px-1 rounded">🎬</span>}
-                          <button type="button" onClick={() => removeMedia(i)}
-                            className="absolute top-1 right-1 w-5 h-5 rounded-full bg-black/60 text-white flex items-center justify-center hover:bg-red-500 transition">
-                            <X size={10} />
+                    <>
+                      <p className="text-xs text-gray-400 mb-2 flex items-center gap-1">
+                        <GripVertical size={11} /> Glissez pour réordonner · La 1ère photo est la principale
+                      </p>
+                      <div className="grid grid-cols-4 gap-2 mb-3">
+                        {media.map((m, i) => (
+                          <div
+                            key={i}
+                            draggable={m.type === 'image'}
+                            onDragStart={() => handleDragStart(i)}
+                            onDragOver={e => handleDragOver(e, i)}
+                            onDrop={e => handleDropOnItem(e, i)}
+                            onDragEnd={handleDragEnd}
+                            className={`relative rounded-xl overflow-hidden border-2 aspect-square transition-all cursor-grab active:cursor-grabbing
+                              ${i === 0 ? 'border-orange-400' : 'border-gray-100'}
+                              ${dragOver === i && dragIndex !== i ? 'border-orange-300 scale-105 opacity-80' : ''}
+                              ${dragIndex === i ? 'opacity-50' : ''}
+                            `}>
+                            {m.type === 'image'
+                              ? <img src={m.url} alt="" className="w-full h-full object-cover" />
+                              : <video src={m.url} className="w-full h-full object-cover" muted />}
+                            {i === 0 && m.type === 'image' && (
+                              <span className="absolute bottom-0 left-0 right-0 bg-orange-500 text-white text-[9px] font-bold text-center py-0.5">PRINCIPALE</span>
+                            )}
+                            {m.type === 'video' && (
+                              <span className="absolute top-1 left-1 bg-black/60 text-white text-[9px] px-1 rounded">🎬 Vidéo</span>
+                            )}
+                            <button type="button" onClick={() => removeMedia(i)}
+                              className="absolute top-1 right-1 w-5 h-5 rounded-full bg-black/60 text-white flex items-center justify-center hover:bg-red-500 transition">
+                              <X size={10} />
+                            </button>
+                          </div>
+                        ))}
+
+                        {/* Cellule ajouter vidéo dans la grille */}
+                        {!hasVideo && (
+                          <button type="button" onClick={() => videoInputRef.current?.click()}
+                            className="aspect-square rounded-xl border-2 border-dashed border-gray-200 hover:border-orange-300 bg-gray-50 hover:bg-orange-50 flex flex-col items-center justify-center gap-1 transition text-gray-400 hover:text-orange-500">
+                            <Video size={18} />
+                            <span className="text-[9px] font-medium text-center leading-tight">Ajouter<br />vidéo</span>
                           </button>
-                        </div>
-                      ))}
-                    </div>
+                        )}
+
+                        {/* Cellule ajouter plus de photos */}
+                        {imageCount < MAX_IMAGES && (
+                          <button type="button" onClick={() => fileInputRef.current?.click()}
+                            className="aspect-square rounded-xl border-2 border-dashed border-gray-200 hover:border-orange-300 bg-gray-50 hover:bg-orange-50 flex flex-col items-center justify-center gap-1 transition text-gray-400 hover:text-orange-500">
+                            <Upload size={18} />
+                            <span className="text-[9px] font-medium">+ Photo</span>
+                          </button>
+                        )}
+                      </div>
+                    </>
                   )}
+
                   {uploadProgress && (
                     <div className="mb-3 bg-gray-50 border border-gray-100 rounded-xl px-4 py-3">
                       <div className="flex items-center justify-between mb-1.5">
@@ -512,14 +578,16 @@ export default function PublierPage() {
                       </div>
                     </div>
                   )}
-                  {!media.find(m => m.type === 'video') && (
+
+                  <input ref={videoInputRef} type="file" accept="video/*" className="hidden"
+                    onChange={e => addMedia(e.target.files, 'video')} />
+
+                  {!hasVideo && media.length === 0 && (
                     <button type="button" onClick={() => videoInputRef.current?.click()}
-                      className="flex items-center gap-2 text-sm text-gray-500 hover:text-orange-500 border border-dashed border-gray-200 hover:border-orange-300 rounded-xl px-4 py-2.5 w-full justify-center transition">
+                      className="flex items-center gap-2 text-sm text-gray-500 hover:text-orange-500 border border-dashed border-gray-200 hover:border-orange-300 rounded-xl px-4 py-2.5 w-full justify-center transition mt-2">
                       <Video size={15} /> Ajouter une vidéo (booste les contacts ×3)
                     </button>
                   )}
-                  <input ref={videoInputRef} type="file" accept="video/*" className="hidden"
-                    onChange={e => addMedia(e.target.files, 'video')} />
                 </div>
               </div>
 
@@ -532,37 +600,44 @@ export default function PublierPage() {
                   </h2>
                 </div>
                 <div className="space-y-3">
-                  <input name="title" value={form.title} onChange={handleChange} required
-                    placeholder={selectedCat ? `Titre — ex: ${selectedCat.name} à vendre...` : "Titre de l'annonce *"}
-                    className="w-full border border-gray-100 bg-gray-50 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-orange-400 focus:bg-white transition font-medium" />
 
-                  <textarea name="description" value={form.description} onChange={handleChange} rows={4}
-                    placeholder={
-                      form.category === 'cat_auto' ? "Décrivez la voiture : options, historique d'entretien, raison de vente..." :
-                        form.category === 'cat_immo' ? 'Décrivez le bien : équipements, voisinage, accès, charges...' :
-                          form.category === 'cat_tech' ? "Décrivez l'état, les accessoires inclus, raison de vente..." :
-                            form.category === 'cat_serv' ? 'Décrivez votre service, vos compétences, vos références...' :
-                              'Décrivez votre article en détail...'
-                    }
-                    className="w-full border border-gray-100 bg-gray-50 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-orange-400 focus:bg-white transition resize-none" />
+                  {/* Titre + compteur */}
+                  <div className="relative">
+                    <input name="title" value={form.title} onChange={handleChange} required maxLength={100}
+                      placeholder={selectedCat ? `Titre — ex: ${selectedCat.name} à vendre...` : "Titre de l'annonce *"}
+                      className="w-full border border-gray-100 bg-gray-50 rounded-xl px-4 py-3 pr-16 text-sm focus:outline-none focus:border-orange-400 focus:bg-white transition font-medium" />
+                    <span className={`absolute right-3 top-1/2 -translate-y-1/2 text-xs ${form.title.length > 80 ? 'text-orange-500' : 'text-gray-300'}`}>
+                      {form.title.length}/80
+                    </span>
+                  </div>
 
-                  {/* ── Bouton IA ── */}
-                  <div className="flex justify-end">
-                    <button
-                      type="button"
-                      onClick={handleImprove}
-                      disabled={improving || (!form.title && !form.description)}
-                      className="flex items-center gap-2 text-xs font-semibold text-violet-600 bg-violet-50 hover:bg-violet-100 border border-violet-200 rounded-xl px-4 py-2.5 transition disabled:opacity-40 disabled:cursor-not-allowed"
-                    >
-                      {improving
-                        ? <Loader2 size={13} className="animate-spin" />
-                        : <Sparkles size={13} />
+                  {/* Description + compteur */}
+                  <div className="relative">
+                    <textarea name="description" value={form.description} onChange={handleChange} rows={4} maxLength={2000}
+                      placeholder={
+                        form.category === 'cat_auto' ? "Décrivez la voiture : options, historique d'entretien, raison de vente..." :
+                          form.category === 'cat_immo' ? 'Décrivez le bien : équipements, voisinage, accès, charges...' :
+                            form.category === 'cat_tech' ? "Décrivez l'état, les accessoires inclus, raison de vente..." :
+                              form.category === 'cat_serv' ? 'Décrivez votre service, vos compétences, vos références...' :
+                                'Décrivez votre article en détail...'
                       }
-                      {improving ? 'IA en cours...' : 'Améliorer avec l\'IA ✨'}
+                      className="w-full border border-gray-100 bg-gray-50 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-orange-400 focus:bg-white transition resize-none" />
+                    <span className={`absolute right-3 bottom-3 text-xs ${form.description.length > 450 ? 'text-orange-500' : 'text-gray-300'}`}>
+                      {form.description.length}/500
+                    </span>
+                  </div>
+
+                  {/* Bouton IA */}
+                  <div className="flex justify-end">
+                    <button type="button" onClick={handleImprove}
+                      disabled={improving || (!form.title && !form.description)}
+                      className="flex items-center gap-2 text-xs font-semibold text-violet-600 bg-violet-50 hover:bg-violet-100 border border-violet-200 rounded-xl px-4 py-2.5 transition disabled:opacity-40 disabled:cursor-not-allowed">
+                      {improving ? <Loader2 size={13} className="animate-spin" /> : <Sparkles size={13} />}
+                      {improving ? 'IA en cours...' : "Améliorer avec l'IA ✨"}
                     </button>
                   </div>
 
-                  {/* ── Suggestion IA ── */}
+                  {/* Suggestion IA */}
                   {aiSuggestion && (
                     <div className="bg-violet-50 border border-violet-200 rounded-xl p-4 space-y-3">
                       <div className="flex items-center gap-2">
@@ -585,18 +660,12 @@ export default function PublierPage() {
                         </div>
                       )}
                       <div className="flex gap-2 pt-1">
-                        <button
-                          type="button"
-                          onClick={applyAiSuggestion}
-                          className="flex-1 py-2 bg-violet-600 hover:bg-violet-700 text-white text-xs font-bold rounded-xl transition"
-                        >
+                        <button type="button" onClick={applyAiSuggestion}
+                          className="flex-1 py-2 bg-violet-600 hover:bg-violet-700 text-white text-xs font-bold rounded-xl transition">
                           ✅ Appliquer la suggestion
                         </button>
-                        <button
-                          type="button"
-                          onClick={() => setAiSuggestion(null)}
-                          className="px-4 py-2 border border-violet-200 text-violet-600 text-xs font-semibold rounded-xl hover:bg-white transition"
-                        >
+                        <button type="button" onClick={() => setAiSuggestion(null)}
+                          className="px-4 py-2 border border-violet-200 text-violet-600 text-xs font-semibold rounded-xl hover:bg-white transition">
                           Ignorer
                         </button>
                       </div>
@@ -685,16 +754,55 @@ export default function PublierPage() {
               </div>
             </div>
 
-            {/* Colonne droite sticky */}
+            {/* ── Colonne droite sticky ── */}
             <div className="hidden lg:block">
               <div className="sticky top-4 space-y-4">
+
+                {/* Preview temps réel */}
+                <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                  <div className="px-4 py-3 border-b border-gray-50">
+                    <p className="text-xs font-bold text-gray-400 uppercase tracking-wide">Aperçu de l'annonce</p>
+                  </div>
+                  <div>
+                    <div className="aspect-[4/3] bg-gray-100 relative overflow-hidden">
+                      {media[0] ? (
+                        media[0].type === 'image'
+                          ? <img src={media[0].url} className="w-full h-full object-cover" alt="preview" />
+                          : <video src={media[0].url} className="w-full h-full object-cover" muted />
+                      ) : (
+                        <div className="w-full h-full flex flex-col items-center justify-center gap-2 bg-gradient-to-br from-orange-50 to-amber-50">
+                          <span className="text-4xl opacity-50">{selectedCat?.icon ?? '📦'}</span>
+                          <span className="text-xs text-gray-400">Pas encore de photo</span>
+                        </div>
+                      )}
+                    </div>
+                    <div className="p-3">
+                      {selectedCat && (
+                        <p className="text-[10px] text-orange-500 font-bold uppercase tracking-wide mb-1">{selectedCat.name}</p>
+                      )}
+                      <p className="text-sm font-semibold text-gray-800 line-clamp-2 min-h-[2.5rem]">
+                        {form.title || <span className="text-gray-300">Titre de l'annonce</span>}
+                      </p>
+                      <p className="text-base font-extrabold text-orange-500 mt-1">
+                        {form.price ? `${parseInt(form.price).toLocaleString('fr')} FCFA` : <span className="text-gray-300 text-sm font-normal">Prix non défini</span>}
+                      </p>
+                      {form.city && (
+                        <p className="text-xs text-gray-400 mt-1 flex items-center gap-1">
+                          <MapPin size={9} /> {form.city}{form.quartier ? `, ${form.quartier}` : ''}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Résumé */}
                 <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
                   <h3 className="font-bold text-gray-800 mb-4">Résumé</h3>
                   <div className="space-y-2.5">
                     {[
                       { label: 'Catégorie', value: selectedCat ? `${selectedCat.icon} ${selectedCat.name}` : '—' },
-                      { label: 'Photos', value: `${media.filter(m => m.type === 'image').length}/5` },
-                      { label: 'Vidéo', value: media.find(m => m.type === 'video') ? '✅' : '—' },
+                      { label: 'Photos', value: `${imageCount}/${MAX_IMAGES}` },
+                      { label: 'Vidéo', value: hasVideo ? '✅' : '—' },
                       { label: 'Prix', value: form.price ? `${parseInt(form.price).toLocaleString('fr')} FCFA` : '—' },
                       { label: 'Commune', value: form.city || '—' },
                       { label: 'Quartier', value: form.quartier || '—' },
