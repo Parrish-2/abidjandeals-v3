@@ -54,30 +54,6 @@ export async function POST(req: NextRequest) {
     const plan = BOOST_PLANS[boostType];
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.kivoo.ci";
 
-    const requestBody = {
-      amount: plan.price,
-      description: `${plan.label} — ${ad.title}`,
-      customer: {
-        name: customerName,
-        email: user.email ?? "",
-        phone: customerPhone,
-        country: "CI",
-      },
-      success_url: `${siteUrl}/ad/${adId}?boost=success`,
-      error_url: `${siteUrl}/ad/${adId}?boost=error`,
-      metadata: {
-        type: "boost",
-        ad_id: adId,
-        user_id: user.id,
-        boost_type: boostType,
-        boost_days: plan.days,
-      },
-    };
-
-    console.log("[boost] Sending to GeniusPay:", JSON.stringify(requestBody));
-    console.log("[boost] Public key present:", !!process.env.GENIUSPAY_PUBLIC_KEY);
-    console.log("[boost] Secret key present:", !!process.env.GENIUSPAY_SECRET_KEY);
-
     const gpRes = await fetch(`${GENIUSPAY_BASE}/payments`, {
       method: "POST",
       headers: {
@@ -85,21 +61,34 @@ export async function POST(req: NextRequest) {
         "X-API-Secret": process.env.GENIUSPAY_SECRET_KEY!,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(requestBody),
+      body: JSON.stringify({
+        amount: plan.price,
+        description: `${plan.label} — ${ad.title}`,
+        customer: {
+          name: customerName,
+          email: user.email ?? "",
+          phone: customerPhone,
+          country: "CI",
+        },
+        success_url: `${siteUrl}/ad/${adId}?boost=success`,
+        error_url: `${siteUrl}/ad/${adId}?boost=error`,
+        metadata: {
+          type: "boost",
+          ad_id: adId,
+          user_id: user.id,
+          boost_type: boostType,
+          boost_days: plan.days,
+        },
+      }),
     });
-
-    console.log("[boost] GeniusPay status:", gpRes.status);
 
     if (!gpRes.ok) {
       const err = await gpRes.json().catch(() => ({}));
       console.error("[boost] GeniusPay error:", JSON.stringify(err));
-      console.error("[boost] HTTP status:", gpRes.status);
       return NextResponse.json({ error: "Erreur création paiement GeniusPay." }, { status: 500 });
     }
 
     const gpData = await gpRes.json();
-    console.log("[boost] GeniusPay response:", JSON.stringify(gpData));
-
     const checkoutUrl = gpData.data?.checkout_url ?? gpData.data?.payment_url;
 
     if (!checkoutUrl) {
