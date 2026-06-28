@@ -1,104 +1,111 @@
-import { createClient } from '@supabase/supabase-js'
-import crypto from 'crypto'
-import { NextRequest, NextResponse } from 'next/server'
+import { createSupabaseServer } from "@/lib/supabase-server";
+import crypto from "crypto";
+import { NextRequest, NextResponse } from "next/server";
+
+const BOOST_PLANS: Record<string, { days: number }> = {
+    urgent: { days: 7 },
+    top: { days: 15 },
+    vedette: { days: 30 },
+};
+
+function verifySignature(payload: string, signature: string, secret: string): boolean {
+    const expected = crypto
+        .createHmac("sha256", secret)
+        .update(payload)
+        .digest("hex");
+    return crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(signature));
+}
 
 export async function POST(req: NextRequest) {
+    const rawBody = await req.text();
+    const signature = req.headers.get("x-geniuspay-signature") ?? "";
+    const webhookSecret = process.env.GENIUSPAY_WEBHOOK_SECRET ?? "";
+
+    if (!verifySignature(rawBody, signature, webhookSecret)) {
+        console.warn("[webhook] Signature invalide");
+        return NextResponse.json({ error: "Signature invalide" }, { status: 401 });
+    }
+
+    let event: {
+        status: string;
+        transaction_id: string;
+        metadata?: {
+            type?: string;
+            // Abonnement
+            user_id?: string;
+            plan?: string;
+            // Boost
+            ad_id?: string;
+            boost_type?: string;
+            boost_days?: number;
+        };
+    };
+
     try {
-        const signature = req.headers.get('X-Webhook-Signature') ?? ''
-        const timestamp = req.headers.get('X-Webhook-Timestamp') ?? ''
-        const event = req.headers.get('X-Webhook-Event') ?? ''
+        event = JSON.parse(rawBody);
+    } catch {
+        return NextResponse.json({ error: "Payload invalide" }, { status: 400 });
+    }
 
-        const rawBody = await req.text()
+    if (event.status !== "success") {
+        return NextResponse.json({ received: true });
+    }
 
-        // ── 1. Vérifier la signature HMAC-SHA256 ──────────────────────────────────
-        const webhookSecret = process.env.GENIUSPAY_WEBHOOK_SECRET
-        if (!webhookSecret) {
-            console.error('GENIUSPAY_WEBHOOK_SECRET manquant')
-            return NextResponse.json({ error: 'Config error' }, { status: 500 })
-        }
+    const meta = event.metadata ?? {};
+    const supabase = await createSupabaseServer();
 
-        const dataToVerify = `${timestamp}.${rawBody}`
-        const expectedSig = crypto
-            .createHmac('sha256', webhookSecret)
-            .update(dataToVerify)
-            .digest('hex')
+    // ── CAS 1 : BOOST ─────────────────────────────────────────────
+    if (meta.type === "boost" && meta.ad_id && meta.boost_type) {
+        const boostDays = meta.boost_days ?? BOOST_PLANS[meta.boost_type]?.days ?? 7;
+        const expiresAt = new Date(Date.now() + boostDays * 86400000).toISOString();
 
-        // Comparaison sécurisée (protection timing attack)
-        try {
-            const sigOk = crypto.timingSafeEqual(
-                Buffer.from(signature, 'hex'),
-                Buffer.from(expectedSig, 'hex')
-            )
-            if (!sigOk) {
-                console.warn('Webhook GeniusPay: signature invalide')
-                return NextResponse.json({ error: 'Invalid signature' }, { status: 401 })
-            }
-        } catch {
-            console.warn('Webhook GeniusPay: signature invalide (format)')
-            return NextResponse.json({ error: 'Invalid signature' }, { status: 401 })
-        }
-
-        // ── 2. Protection replay attack (5 minutes) ───────────────────────────────
-        const tsInt = parseInt(timestamp, 10)
-        if (isNaN(tsInt) || Math.abs(Date.now() / 1000 - tsInt) > 300) {
-            console.warn('Webhook GeniusPay: timestamp trop ancien', timestamp)
-            return NextResponse.json({ error: 'Timestamp invalide' }, { status: 400 })
-        }
-
-        // ── 3. Traiter l'événement ────────────────────────────────────────────────
-        const payload = JSON.parse(rawBody)
-
-        // On ne traite que les paiements réussis
-        if (event !== 'payment.success') {
-            console.log(`Webhook GeniusPay ignoré: ${event}`)
-            return NextResponse.json({ received: true })
-        }
-
-        const txData = payload.data ?? {}
-        const metadata = txData.metadata ?? {}
-
-        if (txData.status !== 'completed') {
-            return NextResponse.json({ received: true })
-        }
-
-        const sellerId = metadata.seller_id
-        const plan = metadata.plan ?? 'pro'
-
-        if (!sellerId) {
-            console.error('Webhook GeniusPay: seller_id manquant dans metadata', metadata)
-            return NextResponse.json({ error: 'seller_id manquant' }, { status: 400 })
-        }
-
-        // ── 4. Activer l'abonnement dans Supabase (service role) ─────────────────
-        const adminSupabase = createClient(
-            process.env.NEXT_PUBLIC_SUPABASE_URL!,
-            process.env.SUPABASE_SERVICE_ROLE_KEY!
-        )
-
-        const expiresAt = new Date()
-        expiresAt.setDate(expiresAt.getDate() + 30) // 30 jours
-
-        const { error } = await adminSupabase
-            .from('seller_subscriptions')
-            .upsert(
-                {
-                    seller_id: sellerId,
-                    plan,
-                    expires_at: expiresAt.toISOString(),
-                },
-                { onConflict: 'seller_id' }
-            )
+        const { error } = await supabase
+            .from("ads")
+            .update({
+                is_boosted: true,
+                boost_expires_at: expiresAt,
+                boost_type: meta.boost_type,
+            })
+            .eq("id", meta.ad_id);
 
         if (error) {
-            console.error('Webhook GeniusPay: erreur upsert seller_subscriptions', error)
-            return NextResponse.json({ error: 'Erreur BDD' }, { status: 500 })
+            console.error("[webhook] Erreur boost update:", error);
+            return NextResponse.json({ error: "DB error" }, { status: 500 });
         }
 
-        console.log(`✅ Abonnement ${plan} activé — seller ${sellerId} — expire ${expiresAt.toISOString()}`)
-        return NextResponse.json({ received: true, status: 'processed' })
-
-    } catch (e) {
-        console.error('Webhook GeniusPay: erreur inattendue', e)
-        return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 })
+        console.log(`[webhook] Boost activé — ad ${meta.ad_id} (${meta.boost_type}, ${boostDays}j)`);
+        return NextResponse.json({ received: true });
     }
+
+    // ── CAS 2 : ABONNEMENT PRO ────────────────────────────────────
+    if (meta.type === "subscription" && meta.user_id && meta.plan) {
+        const now = new Date();
+        const expiresAt = new Date(now.getTime() + 30 * 86400000).toISOString();
+
+        const { error } = await supabase
+            .from("seller_subscriptions")
+            .upsert(
+                {
+                    user_id: meta.user_id,
+                    plan: meta.plan,
+                    status: "active",
+                    started_at: now.toISOString(),
+                    expires_at: expiresAt,
+                    geniuspay_transaction_id: event.transaction_id,
+                },
+                { onConflict: "user_id" }
+            );
+
+        if (error) {
+            console.error("[webhook] Erreur subscription upsert:", error);
+            return NextResponse.json({ error: "DB error" }, { status: 500 });
+        }
+
+        console.log(`[webhook] Abonnement activé — user ${meta.user_id} (${meta.plan})`);
+        return NextResponse.json({ received: true });
+    }
+
+    // Événement non géré — on répond OK pour éviter les retries
+    console.log("[webhook] Événement ignoré:", meta.type, event.transaction_id);
+    return NextResponse.json({ received: true });
 }

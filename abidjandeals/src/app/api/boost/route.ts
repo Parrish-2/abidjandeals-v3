@@ -1,166 +1,86 @@
-// src/app/api/boost/route.ts
-import { limitPublier } from '@/lib/ratelimit'
-import { createServerClient } from '@supabase/ssr'
-import { createClient } from '@supabase/supabase-js'
-import { NextRequest, NextResponse } from 'next/server'
+import { createSupabaseServer } from "@/lib/supabase-server";
+import { NextRequest, NextResponse } from "next/server";
 
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
+const GENIUSPAY_API_URL = "https://api.geniuspay.ci/v1/payment/initialize";
 
-// Whitelist stricte — prix déterminés côté serveur uniquement
-const ALLOWED_BOOSTS: Record<string, number> = {
-  urgent: 2500,
-  top: 7000,
-  vedette: 20000,
-}
-
-const ALLOWED_OPERATORS = ['wave', 'orange', 'mtn', 'moov']
-
-const OPERATOR_CODES: Record<string, string> = {
-  wave: 'WAVE_CI',
-  orange: 'ORANGE_MONEY_CI',
-  mtn: 'MTN_MONEY_CI',
-  moov: 'MOOV_MONEY_CI',
-}
+const BOOST_PLANS: Record<string, { label: string; price: number; days: number }> = {
+  urgent: { label: "Boost Urgent", price: 2500, days: 7 },
+  top: { label: "Boost Top Annonce", price: 7000, days: 15 },
+  vedette: { label: "Boost Vedette", price: 20000, days: 30 },
+};
 
 export async function POST(req: NextRequest) {
+  try {
+    const { adId, boostType } = await req.json();
 
-  // ✅ 0. Rate limiting — 5 tentatives max par minute par IP
-  const rateLimitResponse = await limitPublier(req)
-  if (rateLimitResponse) return rateLimitResponse
-
-  // ✅ 1. Vérifier la session côté serveur
-  const supabaseAuth = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() { return req.cookies.getAll() },
-        setAll() { },
-      },
+    if (!adId || !boostType || !BOOST_PLANS[boostType]) {
+      return NextResponse.json({ error: "Paramètres invalides." }, { status: 400 });
     }
-  )
 
-  const { data: { user }, error: authError } = await supabaseAuth.auth.getUser()
-  if (authError || !user) {
-    return NextResponse.json({ error: 'Non authentifié' }, { status: 401 })
+    const supabase = await createSupabaseServer();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+      return NextResponse.json({ error: "Non authentifié." }, { status: 401 });
+    }
+
+    // Vérifier que l'annonce appartient à l'utilisateur
+    const { data: ad, error: adError } = await supabase
+      .from("ads")
+      .select("id, title, user_id")
+      .eq("id", adId)
+      .single();
+
+    if (adError || !ad) {
+      return NextResponse.json({ error: "Annonce introuvable." }, { status: 404 });
+    }
+
+    if (ad.user_id !== user.id) {
+      return NextResponse.json({ error: "Accès refusé." }, { status: 403 });
+    }
+
+    const plan = BOOST_PLANS[boostType];
+    const transactionId = `boost_${adId}_${boostType}_${Date.now()}`;
+    const returnUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/annonces/${adId}?boost=success`;
+    const cancelUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/annonces/${adId}?boost=cancel`;
+
+    // Initialiser le paiement GeniusPay
+    const gpRes = await fetch(GENIUSPAY_API_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${process.env.GENIUSPAY_API_KEY}`,
+      },
+      body: JSON.stringify({
+        amount: plan.price,
+        currency: "XOF",
+        description: `${plan.label} — ${ad.title}`,
+        transaction_id: transactionId,
+        return_url: returnUrl,
+        cancel_url: cancelUrl,
+        metadata: {
+          type: "boost",
+          ad_id: adId,
+          user_id: user.id,
+          boost_type: boostType,
+          boost_days: plan.days,
+        },
+      }),
+    });
+
+    const gpData = await gpRes.json();
+
+    if (!gpRes.ok || !gpData.payment_url) {
+      console.error("[boost] GeniusPay error:", gpData);
+      return NextResponse.json(
+        { error: gpData.message ?? "Erreur GeniusPay." },
+        { status: 502 }
+      );
+    }
+
+    return NextResponse.json({ paymentUrl: gpData.payment_url });
+  } catch (err) {
+    console.error("[boost] Unexpected error:", err);
+    return NextResponse.json({ error: "Erreur serveur." }, { status: 500 });
   }
-
-  // ✅ 2. Parser et valider les paramètres
-  const { adId, boostType, phone, operator } = await req.json()
-
-  if (!adId || !boostType || !phone || !operator) {
-    return NextResponse.json({ error: 'Paramètres manquants' }, { status: 400 })
-  }
-
-  // ✅ 3. Montant déterminé par le serveur — jamais depuis le client
-  const amount = ALLOWED_BOOSTS[boostType]
-  if (!amount) {
-    return NextResponse.json({ error: 'Type de boost invalide' }, { status: 400 })
-  }
-
-  if (!ALLOWED_OPERATORS.includes(operator)) {
-    return NextResponse.json({ error: 'Opérateur invalide' }, { status: 400 })
-  }
-
-  // ✅ 4. Vérifier que l'annonce appartient à l'utilisateur connecté
-  const { data: ad } = await supabaseAdmin
-    .from('ads')
-    .select('id, user_id, title')
-    .eq('id', adId)
-    .eq('user_id', user.id)
-    .single()
-
-  if (!ad) {
-    return NextResponse.json(
-      { error: 'Annonce introuvable ou non autorisée' },
-      { status: 404 }
-    )
-  }
-
-  // ✅ 5. Créer le paiement — operator et phone dans metadata (JSONB)
-  const { data: payment, error: dbErr } = await supabaseAdmin
-    .from('payments')
-    .insert({
-      ad_id: adId,
-      user_id: user.id,
-      amount,
-      boost_type: boostType,
-      status: 'pending',
-      metadata: { operator, phone },
-    })
-    .select('id')
-    .single()
-
-  if (dbErr || !payment) {
-    return NextResponse.json({ error: 'Erreur création paiement' }, { status: 500 })
-  }
-
-  // ✅ 6. Clés CinetPay SANS préfixe NEXT_PUBLIC_ — jamais dans le bundle JS
-  const apiKey = process.env.CINETPAY_API_KEY
-  const siteId = process.env.CINETPAY_SITE_ID
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'
-  const webhook = process.env.CINETPAY_WEBHOOK_URL
-    ?? 'https://vhfdexmyfkueyhztgjws.supabase.co/functions/v1/cinetpay-webhook'
-
-  if (!apiKey || !siteId) {
-    await supabaseAdmin.from('payments').delete().eq('id', payment.id)
-    return NextResponse.json(
-      { error: 'Configuration paiement manquante' },
-      { status: 500 }
-    )
-  }
-
-  const transactionId = `BOOST-${payment.id}-${Date.now()}`
-
-  // ✅ 7. Appel CinetPay depuis le serveur
-  const cinetpayRes = await fetch('https://api-checkout.cinetpay.com/v2/payment', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      apikey: apiKey,
-      site_id: siteId,
-      transaction_id: transactionId,
-      amount,
-      currency: 'XOF',
-      description: `Boost KIVOO - Pack ${boostType}`,
-      customer_phone_number: `+225${phone}`,
-      customer_name: 'Client',
-      customer_surname: 'KIVOO',
-      customer_email: 'client@kivoo.ci',
-      channels: OPERATOR_CODES[operator],
-      metadata: payment.id,
-      return_url: `${appUrl}/dashboard?boost=success`,
-      notify_url: webhook,
-      cancel_url: `${appUrl}/dashboard?boost=cancelled`,
-    }),
-  })
-
-  const data = await cinetpayRes.json()
-
-  if (data.code !== '201') {
-    await supabaseAdmin
-      .from('payments')
-      .update({ status: 'failed', error_message: data.message })
-      .eq('id', payment.id)
-
-    return NextResponse.json(
-      { error: data.message ?? 'Erreur CinetPay' },
-      { status: 502 }
-    )
-  }
-
-  // ✅ 8. Sauvegarder la référence CinetPay
-  await supabaseAdmin
-    .from('payments')
-    .update({ cinetpay_ref: transactionId })
-    .eq('id', payment.id)
-
-  return NextResponse.json({
-    success: true,
-    paymentUrl: data.data.payment_url,
-    paymentId: payment.id,
-  })
 }
