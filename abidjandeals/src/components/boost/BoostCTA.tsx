@@ -14,7 +14,7 @@ interface BoostCTAProps {
 const BOOST_PLANS = [
   {
     id: "urgent",
-    label: "Urgent",
+    label: "Pack Urgent",
     price: 2500,
     icon: "⚡",
     color: "#F5A623",
@@ -31,7 +31,7 @@ const BOOST_PLANS = [
   },
   {
     id: "vedette",
-    label: "Vedette",
+    label: "Pack Vedette",
     price: 20000,
     icon: "👑",
     color: "#7C3AED",
@@ -59,6 +59,19 @@ export default function BoostCTA({
     ? Math.max(0, Math.ceil((new Date(boostExpiresAt).getTime() - Date.now()) / 86400000))
     : 0;
 
+  // ── Gestion retour GeniusPay ───────────────────────────────────────────────
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    const boost = params.get("boost");
+    if (boost === "success") {
+      window.history.replaceState({}, "", window.location.pathname);
+    } else if (boost === "error") {
+      setError("Paiement annulé ou échoué. Réessayez.");
+      window.history.replaceState({}, "", window.location.pathname);
+    }
+  }, []);
+
   useEffect(() => {
     const onScroll = () => setIsVisible(window.scrollY > 100);
     window.addEventListener("scroll", onScroll, { passive: true });
@@ -70,16 +83,10 @@ export default function BoostCTA({
 
   const plan = BOOST_PLANS.find((p) => p.id === selectedPlan)!;
 
-  const handleOpen = () => {
-    setError("");
-    setIsOpen(true);
-  };
+  const handleOpen = () => { setError(""); setIsOpen(true); };
+  const handleClose = () => { setIsOpen(false); setError(""); };
 
-  const handleClose = () => {
-    setIsOpen(false);
-    setError("");
-  };
-
+  // ── Paiement GeniusPay checkout ────────────────────────────────────────────
   const handlePay = async () => {
     setIsLoading(true);
     setError("");
@@ -90,13 +97,11 @@ export default function BoostCTA({
         body: JSON.stringify({ adId, boostType: selectedPlan }),
       });
       const data = await res.json();
-      if (!res.ok) {
-        setError(data.error ?? "Une erreur est survenue.");
+      if (!res.ok || !data.checkout_url) {
+        setError(data.error ?? "Erreur lors de la création du paiement.");
         return;
       }
-      if (data.paymentUrl) {
-        window.location.href = data.paymentUrl;
-      }
+      window.location.href = data.checkout_url;
     } catch {
       setError("Impossible de contacter le serveur.");
     } finally {
@@ -106,7 +111,7 @@ export default function BoostCTA({
 
   return (
     <>
-      {/* ── DESKTOP : carte inline dans la sidebar ── */}
+      {/* ── DESKTOP : carte inline sidebar ── */}
       <div className="bct-desktop-card">
         {isBoosted ? (
           <div className="bct-desktop-boosted">
@@ -122,14 +127,14 @@ export default function BoostCTA({
             <span>⚡</span>
             <div>
               <strong>Booster cette annonce</strong>
-              <span>Dès 2 500 FCFA · Mobile Money</span>
+              <span>Dès 2 500 FCFA · Wave, Orange, MTN, Moov</span>
             </div>
           </button>
         )}
       </div>
 
       {/* ── MOBILE : barre sticky bottom ── */}
-      <div className={`bct-sticky ${isVisible ? "bct-on" : ""} ${isBoosted ? "bct-boosted" : ""}`}>
+      <div className={`bct-sticky ${isVisible ? "bct-on" : ""}`}>
         {isBoosted ? (
           <div className="bct-active">
             <span className="bct-active__crown">👑</span>
@@ -144,7 +149,7 @@ export default function BoostCTA({
             <span className="bct-cta__icon">⚡</span>
             <div className="bct-cta__text">
               <strong>Booster cette annonce</strong>
-              <span>Dès 2 500 FCFA · Mobile Money</span>
+              <span>Dès 2 500 FCFA · Wave, Orange, MTN, Moov</span>
             </div>
             <span className="bct-cta__arr">›</span>
           </button>
@@ -158,7 +163,7 @@ export default function BoostCTA({
             <div className="bct-handle" />
             <div className="bct-head">
               <div>
-                <h2 className="bct-title">⚡ Booster mon annonce</h2>
+                <h2 className="bct-title">⚡ Choisir un pack</h2>
                 <p className="bct-sub">{adTitle.length > 40 ? adTitle.slice(0, 40) + "…" : adTitle}</p>
               </div>
               <button className="bct-close" onClick={handleClose}>✕</button>
@@ -167,12 +172,10 @@ export default function BoostCTA({
             {/* Sélection du plan */}
             <div className="bct-plans">
               {BOOST_PLANS.map((p) => (
-                <button
-                  key={p.id}
+                <button key={p.id}
                   className={`bct-plan ${selectedPlan === p.id ? "bct-plan-on" : ""}`}
                   style={{ "--pc": p.color } as React.CSSProperties}
-                  onClick={() => setSelectedPlan(p.id)}
-                >
+                  onClick={() => setSelectedPlan(p.id)}>
                   {p.highlight && <span className="bct-pop">POPULAIRE</span>}
                   <div className="bct-plan__row">
                     <span className="bct-plan__ico">{p.icon}</span>
@@ -180,41 +183,25 @@ export default function BoostCTA({
                       <span className="bct-plan__name">{p.label}</span>
                       <span className="bct-plan__perks">{p.perks.join(" · ")}</span>
                     </div>
-                    <span className="bct-plan__price">
-                      {p.price.toLocaleString()}<small> FCFA</small>
-                    </span>
+                    <span className="bct-plan__price">{p.price.toLocaleString("fr-CI")}<small> FCFA</small></span>
                   </div>
                 </button>
               ))}
             </div>
 
-            {/* Récap + bouton paiement */}
-            <div className="bct-recap">
-              <div className="bct-recap__row">
-                <span>{plan.icon} Pack {plan.label}</span>
-                <strong>{plan.price.toLocaleString()} FCFA</strong>
-              </div>
-              <p className="bct-recap__sub">
-                Paiement sécurisé — Wave, Orange Money, MTN MoMo, Moov Money
-              </p>
-            </div>
-
+            {/* Erreur */}
             {error && <p className="bct-err">⚠️ {error}</p>}
 
+            {/* Footer paiement */}
             <div className="bct-footer">
-              <button
-                className={`bct-btn-pay ${isLoading ? "bct-loading" : ""}`}
-                onClick={handlePay}
-                disabled={isLoading}
-              >
+              <button className={`bct-btn-pay ${isLoading ? "bct-loading" : ""}`}
+                onClick={handlePay} disabled={isLoading}>
                 {isLoading
-                  ? <span className="bct-spin" />
-                  : `⚡ Payer ${plan.price.toLocaleString()} FCFA via GeniusPay`}
+                  ? <><span className="bct-spin" /> Redirection...</>
+                  : `Payer ${plan.price.toLocaleString("fr-CI")} FCFA →`}
               </button>
-              <button className="bct-btn-back" onClick={handleClose}>Annuler</button>
+              <p className="bct-note">🔒 Paiement sécurisé via GeniusPay · Wave, Orange, MTN, Moov</p>
             </div>
-
-            <p className="bct-note">🔒 Paiement sécurisé · Redirection vers GeniusPay</p>
           </div>
         </div>
       )}
@@ -224,8 +211,6 @@ export default function BoostCTA({
           --bct-gold:#F5A623; --bct-dark:#111827;
           --bct-surf:#1F2937; --bct-dim:rgba(255,255,255,0.5);
         }
-
-        /* ── DESKTOP CARD ─────────────────────────── */
         .bct-desktop-card { display:none; }
         @media(min-width:768px){
           .bct-desktop-card {
@@ -258,8 +243,6 @@ export default function BoostCTA({
           border:1px solid #F5A623; border-radius:8px;
           color:#F5A623; font-size:12px; font-weight:600; cursor:pointer;
         }
-
-        /* ── MOBILE STICKY ────────────────────────── */
         .bct-sticky {
           position:fixed; bottom:0; left:0; right:0; z-index:9999;
           padding:12px 16px; padding-bottom:calc(12px + env(safe-area-inset-bottom));
@@ -297,8 +280,6 @@ export default function BoostCTA({
           border:1px solid var(--bct-gold); border-radius:8px;
           color:var(--bct-gold); font-size:13px; font-weight:600; cursor:pointer;
         }
-
-        /* ── MODAL ────────────────────────────────── */
         .bct-overlay {
           position:fixed; inset:0; z-index:10000;
           background:rgba(0,0,0,.75); backdrop-filter:blur(4px);
@@ -328,9 +309,7 @@ export default function BoostCTA({
           font-size:13px; cursor:pointer; flex-shrink:0;
           display:flex; align-items:center; justify-content:center;
         }
-
-        /* Plans */
-        .bct-plans { display:flex; flex-direction:column; gap:10px; margin-bottom:16px; }
+        .bct-plans { display:flex; flex-direction:column; gap:10px; margin-bottom:20px; }
         .bct-plan {
           position:relative; width:100%; padding:14px 16px;
           background:rgba(255,255,255,.04);
@@ -355,46 +334,25 @@ export default function BoostCTA({
         .bct-plan__perks { display:block; font-size:11px; color:var(--bct-dim); margin-top:2px; }
         .bct-plan__price { font-size:16px; font-weight:800; color:var(--pc,var(--bct-gold)); white-space:nowrap; }
         .bct-plan__price small { font-size:10px; font-weight:500; }
-
-        /* Récap */
-        .bct-recap {
-          background:rgba(245,166,35,.08);
-          border:1px solid rgba(245,166,35,.2);
-          border-radius:12px; padding:14px 16px; margin-bottom:16px;
-        }
-        .bct-recap__row {
-          display:flex; justify-content:space-between; align-items:center;
-          font-size:14px; color:#fff; margin-bottom:6px;
-        }
-        .bct-recap__row strong { color:#FFD36E; font-size:18px; }
-        .bct-recap__sub { font-size:11px; color:var(--bct-dim); margin:0; }
-
         .bct-err { color:#F87171; font-size:13px; margin:0 0 12px; }
-        .bct-footer { padding:0 0 8px; display:flex; flex-direction:column; gap:10px; }
+        .bct-footer { padding:16px 0 20px; border-top:1px solid rgba(255,255,255,.07); }
         .bct-btn-pay {
-          width:100%; padding:16px;
-          background:linear-gradient(135deg,#F5A623,#C47D0E);
-          border:none; border-radius:13px;
+          width:100%; padding:15px;
+          background:linear-gradient(135deg,var(--bct-gold),#C47D0E);
+          border:none; border-radius:12px;
           color:#111827; font-size:15px; font-weight:700;
-          cursor:pointer; display:flex; align-items:center; justify-content:center;
-          transition:transform .15s; box-shadow:0 4px 16px rgba(245,166,35,.35);
+          cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px;
+          transition:transform .15s;
         }
         .bct-loading { opacity:.7; cursor:not-allowed; }
-        .bct-btn-pay:active { transform:scale(.98); }
-        .bct-btn-back {
-          width:100%; padding:13px;
-          background:rgba(255,255,255,.06);
-          border:1px solid rgba(255,255,255,.1); border-radius:12px;
-          color:var(--bct-dim); font-size:14px; font-weight:500; cursor:pointer;
-        }
+        .bct-btn-pay:active:not(.bct-loading) { transform:scale(.98); }
         .bct-spin {
-          width:20px; height:20px;
-          border:2px solid rgba(26,26,46,.3);
-          border-top-color:#111827; border-radius:50%;
-          animation:bct-rot .7s linear infinite;
+          width:18px; height:18px;
+          border:2px solid rgba(26,26,46,.3); border-top-color:#111827;
+          border-radius:50%; animation:bct-rot .7s linear infinite;
         }
         @keyframes bct-rot { to{transform:rotate(360deg)} }
-        .bct-note { text-align:center; font-size:11px; color:var(--bct-dim); margin:8px 0 16px; }
+        .bct-note { text-align:center; font-size:11px; color:var(--bct-dim); margin:10px 0 16px; }
       `}</style>
     </>
   );
