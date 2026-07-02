@@ -65,7 +65,6 @@ export function Footer() {
             <ul className="space-y-2 text-sm text-white/60">
               <li><Link href="/securite" className="hover:text-orange-400 transition-colors">{t('footer.security')}</Link></li>
               <li><Link href="/cgu" className="hover:text-orange-400 transition-colors">{t('footer.terms')}</Link></li>
-              <li><Link href="/vendeur" className="hover:text-orange-400 transition-colors">{t('footer.pricing')}</Link></li>
               <li><Link href="/abonnements" className="hover:text-orange-400 transition-colors">Tarifs</Link></li>
               <li><Link href="/contact" className="hover:text-orange-400 transition-colors">{t('footer.contact')}</Link></li>
               {/* ✅ Fix : liens corrects pour Presse et Recrutement */}
