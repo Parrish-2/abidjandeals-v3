@@ -223,7 +223,7 @@ export default function AbonnementsPage() {
 
     async function handleSubscribe(planId: string) {
         if (planId === 'gratuit') {
-            router.push('/auth/register')
+            router.push('/?auth=register')
             return
         }
 
