@@ -236,6 +236,10 @@ export default function AbonnementsPage() {
             })
             const data = await res.json()
             if (!res.ok || !data.checkout_url) {
+                if (data.error === 'Non authentifié') {
+                    router.push('/?auth=login&redirect=/abonnements')
+                    return
+                }
                 toast.error(data.error || 'Erreur lors de la création du paiement')
                 return
             }
