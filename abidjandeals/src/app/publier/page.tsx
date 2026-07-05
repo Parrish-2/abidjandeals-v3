@@ -111,6 +111,36 @@ const EMPTY_FORM = {
 const MAX_IMAGES = 8
 type MediaFile = { file: File; url: string; type: 'image' | 'video' }
 
+// ─── Listes de secours (fallback si Supabase lent) ───────────────────────────
+const FALLBACK_COMMUNES = [
+  'Abidjan', 'Abobo', 'Adjamé', 'Anyama', 'Attécoubé',
+  'Bingerville', 'Cocody', 'Koumassi', 'Marcory', 'Plateau',
+  'Port-Bouët', 'Treichville', 'Yopougon',
+  'Bouaké', 'Yamoussoukro', 'San-Pédro', 'Daloa', 'Korhogo',
+  'Man', 'Gagnoa', 'Abengourou', 'Divo', 'Soubré',
+  'Bondoukou', 'Odienné', 'Touba', 'Séguéla',
+]
+
+const FALLBACK_QUARTIERS: Record<string, string[]> = {
+  'Cocody': ['Riviera 1', 'Riviera 2', 'Riviera 3', 'Riviera 4', 'Angré', 'Blockhauss', 'II Plateaux', 'Palmeraie', 'Bonoumin', 'Danga'],
+  'Yopougon': ['Selmer', 'Niangon', 'Wassakara', 'Sideci', 'Kouté', 'Banco', 'Doukouré', 'Maroc', 'Williamsville'],
+  'Abobo': ['Abobo-Gare', 'Abobo-Doumé', 'Sagbé', 'PK 18', 'Avocatier', 'Clouetcha', 'Sogefia', 'N\'Dotré'],
+  'Adjamé': ['Adjamé-Liberté', 'Adjamé-220 Logements', 'Adjamé-Mosquée', 'Bracodi', 'Williamsville'],
+  'Marcory': ['Zone 4', 'Anoumabo', 'Résidenxe', 'Biétry', 'Koumassi'],
+  'Plateau': ['Centre', 'Abidjan Plateau', 'Zone commerciale'],
+  'Treichville': ['Zone commerciale', 'Port'],
+  'Port-Bouët': ['Vridi', 'Aéroport', 'Gonzagueville', 'Zone industrielle'],
+  'Koumassi': ['Remblai', 'Grand Campement', 'Zone industrielle'],
+  'Attécoubé': ['Sébroko', 'Santé', 'Agban'],
+  'Bingerville': ['Centre', 'Résidentiel'],
+  'Anyama': ['Centre', 'Liézoua'],
+  'Bouaké': ['Koko', 'Air France', 'Commerce', 'Belleville', 'N\'Gattakro', 'Dar Es Salam'],
+  'Yamoussoukro': ['Centre', 'Dioulakro', 'Morofé', 'N\'Zuéssé'],
+  'San-Pédro': ['Cité', 'Port', 'Balmer'],
+  'Daloa': ['Centre', 'Tazibouo', 'Orly'],
+  'Korhogo': ['Centre', 'Koko', 'Soba'],
+}
+
 export default function PublierPage() {
   const router = useRouter()
   const { user: storeUser } = useStore()
@@ -144,16 +174,23 @@ export default function PublierPage() {
   const imageCount = media.filter(m => m.type === 'image').length
   const hasVideo = !!media.find(m => m.type === 'video')
 
-  // ── 1. Charger les régions en premier ──────────────────────────────────────
+  // ── 1. Charger les régions avec fallback si Supabase lent ───────────────────
   useEffect(() => {
+    // Afficher le fallback immédiatement
+    setRegions(FALLBACK_COMMUNES)
+    setRegionsLoaded(true)
+
+    // Essayer Supabase en arrière-plan (3s timeout)
+    const timeout = setTimeout(() => { }, 3000)
     supabase.from('locations').select('region').eq('is_active', true)
       .then(({ data }) => {
-        if (data) {
+        clearTimeout(timeout)
+        if (data && data.length > 0) {
           const unique = [...new Set(data.map((d: any) => d.region))].sort() as string[]
           setRegions(unique)
         }
-        setRegionsLoaded(true)  // ← déclenche le chargement du brouillon
       })
+      .catch(() => { /* garde le fallback */ })
   }, [])
 
   // ── 2. Charger le brouillon APRÈS les régions (FIX bug communes) ───────────
@@ -170,14 +207,21 @@ export default function PublierPage() {
     } catch { }
   }, [regionsLoaded])
 
-  // ── 3. Quartiers selon commune ─────────────────────────────────────────────
+  // ── 3. Quartiers avec fallback si Supabase lent ────────────────────────────
   useEffect(() => {
     if (!form.city) { setQuartiersDB([]); return }
+
+    // Afficher le fallback immédiatement si disponible
+    const fallbackQ = FALLBACK_QUARTIERS[form.city] ?? []
+    if (fallbackQ.length > 0) setQuartiersDB(fallbackQ)
+
+    // Essayer Supabase en arrière-plan
     supabase.from('locations').select('name')
       .eq('region', form.city).eq('is_active', true).order('name')
       .then(({ data }) => {
-        if (data) setQuartiersDB(data.map((d: any) => d.name))
+        if (data && data.length > 0) setQuartiersDB(data.map((d: any) => d.name))
       })
+      .catch(() => { /* garde le fallback */ })
   }, [form.city])
 
   // ── Sauvegarde automatique brouillon ───────────────────────────────────────
