@@ -28,7 +28,7 @@ export const metadata: Metadata = {
   metadataBase: new URL(BASE_URL),
 
   title: {
-    default: "Kivoo – Marketplace N°1 de Côte d'Ivoire",
+    default: "Kivoo – Marketplace de Côte d'Ivoire",
     template: '%s | Kivoo',
   },
   description:
@@ -59,7 +59,7 @@ export const metadata: Metadata = {
         url: '/og-default.png',
         width: 1200,
         height: 630,
-        alt: "Kivoo – Marketplace N°1 de Côte d'Ivoire",
+        alt: "Kivoo – Marketplace de Côte d'Ivoire",
         type: 'image/png',
       },
     ],
