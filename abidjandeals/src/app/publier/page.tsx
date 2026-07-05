@@ -190,7 +190,6 @@ export default function PublierPage() {
           setRegions(unique)
         }
       })
-      .catch(() => { /* garde le fallback */ })
   }, [])
 
   // ── 2. Charger le brouillon APRÈS les régions (FIX bug communes) ───────────
@@ -221,7 +220,7 @@ export default function PublierPage() {
       .then(({ data }) => {
         if (data && data.length > 0) setQuartiersDB(data.map((d: any) => d.name))
       })
-      .catch(() => { /* garde le fallback */ })
+
   }, [form.city])
 
   // ── Sauvegarde automatique brouillon ───────────────────────────────────────
