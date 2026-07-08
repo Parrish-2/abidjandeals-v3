@@ -8,7 +8,7 @@ import { supabase } from '@/lib/supabase'
 import type { BoostLevel } from '@/types/admin'
 import { CheckCircle, Eye, Heart, MapPin } from 'lucide-react'
 import Link from 'next/link'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
 
 // ─── Import du slider unifié ──────────────────────────────────────────────────
@@ -72,6 +72,21 @@ export function AdCard({ ad }: AdCardProps) {
   const [liked, setLiked] = useState(false)
   const [likeLoading, setLikeLoading] = useState(false)
   const { user, setAuthModalOpen } = useStore()
+
+  // ── Charge l'état réel du favori depuis la DB au montage ──────────────────
+  useEffect(() => {
+    if (!user) { setLiked(false); return }
+    let cancelled = false
+    supabase
+      .from('favorites')
+      .select('id')
+      .eq('user_id', user.id)
+      .eq('ad_id', String(ad.id))
+      .maybeSingle()
+      .then(({ data }) => { if (!cancelled) setLiked(!!data) })
+    return () => { cancelled = true }
+  }, [user, ad.id])
+
   const badge = ad.badge ? BADGE_CONFIG[ad.badge] : null
 
   const isBoosted =

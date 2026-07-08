@@ -13,7 +13,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-import { CATEGORIES as CAT_DATA } from '@/lib/data';
+import { SUBCAT_LABELS as CAT_DATA } from '@/lib/data';
 
 const ADULT_CATEGORIES = ['lingerie', 'cat_lingerie', 'cat_adulte']
 const STORAGE_KEY = 'KIVOO_age_verified'
@@ -83,7 +83,7 @@ const CAT_EMOJI: Record<string, string> = {
   "maison": "🛋️", "cat_maison": "🛋️", "services": "🛠️", "cat_serv": "🛠️",
   "sport-loisirs": "⚽", "cat_loisir": "⚽", "sport": "⚽",
   "autres": "📦", "cat_autres": "📦", "cat_agri": "🌾", "agri": "🌾",
-  "agriculture": "🌾", "lingerie": "👙", "cat_lingerie": "👙",
+  "agriculture": "🌾", "lingerie": "👙", "cat_lingerie": "👙", "cat_adulte": "❤️",
 }
 
 function getLabel(slug: string | null): string {
@@ -250,7 +250,9 @@ function SearchContentV2() {
   const sort = searchParams.get("sort") ?? "recent"
 
   const dbCategoryId = resolveDbCategoryId(categorySlug)
-  const subcatLabel = subcategorySlug ?? null
+  const subcatLabel = subcategorySlug
+    ? (SUBCAT_LABELS[subcategorySlug] ?? subcategorySlug)
+    : null
 
   const supabase = useMemo(() => createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,

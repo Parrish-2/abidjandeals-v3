@@ -1,7 +1,7 @@
 ﻿'use client'
 import { Footer } from '@/components/Footer'
 import { Navbar } from '@/components/Navbar'
-import { CATEGORIES } from '@/lib/data'
+import { CATEGORIES, SUBCAT_LABELS } from '@/lib/data'
 import { useStore } from '@/lib/store'
 import { supabase } from '@/lib/supabase'
 import { CheckCircle, ChevronRight, GripVertical, Loader2, MapPin, Phone, Save, Sparkles, Upload, Video, X } from 'lucide-react'
@@ -11,16 +11,6 @@ import toast from 'react-hot-toast'
 
 type ExtraField = { name: string; label: string; type?: string; options?: string[]; placeholder?: string }
 type CatConfig = { etats: string[]; extraFields: ExtraField[] }
-
-const SUBCAT_LABELS: Record<string, string> = {
-  'telephones-accessoires': 'Téléphones et Accessoires',
-  'ordinateurs': 'Ordinateurs',
-  'tablettes': 'Tablettes',
-  'objets-connectes': 'Objets Connectés',
-  'voitures-d-occasion': 'Voitures occasion',
-  'voitures-neuves': 'Voitures Neuves',
-  'motos-scooters': 'Motos et Scooters',
-}
 
 const CATEGORY_FIELDS: Record<string, CatConfig> = {
   cat_tech: {
