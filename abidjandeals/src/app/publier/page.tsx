@@ -1,13 +1,74 @@
 ﻿'use client'
 import { Footer } from '@/components/Footer'
 import { Navbar } from '@/components/Navbar'
-import { CATEGORIES, SUBCAT_LABELS } from '@/lib/data'
+import { CATEGORIES } from '@/lib/data'
 import { useStore } from '@/lib/store'
 import { supabase } from '@/lib/supabase'
 import { CheckCircle, ChevronRight, GripVertical, Loader2, MapPin, Phone, Save, Sparkles, Upload, Video, X } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import toast from 'react-hot-toast'
+
+const SUBCAT_LABELS: Record<string, string> = {
+  'telephones-accessoires': 'Téléphones & Accessoires',
+  'ordinateurs': 'Ordinateurs',
+  'tablettes': 'Tablettes',
+  'tv-son': 'TV & Son',
+  'photo-video': 'Photo & Vidéo',
+  'consoles-jeux': 'Consoles & Jeux',
+  'objets-connectes': 'Objets Connectés',
+  'composants': 'Composants',
+  'voitures-d-occasion': "Voitures d'Occasion",
+  'motos-scooters': 'Motos & Scooters',
+  'bateaux-nautisme': 'Bateaux & Nautisme',
+  'pieces-detachees-pneus': 'Pièces & Pneus',
+  'location-auto': 'Location Auto',
+  'camions-utilitaires': 'Camions & Utilitaires',
+  'groupes-electrogenes': 'Groupes Électrogènes',
+  'outillage-industriel': 'Outillage Industriel',
+  'engins-chantier': 'Engins de Chantier',
+  'vente-appartement': 'Vente Appartement',
+  'vente-maison-villa': 'Vente Maison & Villa',
+  'location-meublee': 'Location Meublée',
+  'maison-a-louer': 'Maison à Louer',
+  'colocation': 'Colocation',
+  'terrains-acd': 'Terrains & ACD',
+  'bureaux-boutiques': 'Bureaux & Boutiques',
+  'freelance-it': 'Freelance & IT',
+  'batiment': 'Bâtiment & Travaux',
+  'cours-formation': 'Cours & Formation',
+  'offres-emploi': "Offres d'Emploi",
+  'transport': 'Transport',
+  'menage': 'Ménage & Nettoyage',
+  'evenementiel': 'Événementiel',
+  'meubles': 'Meubles',
+  'electromenager': 'Électroménager',
+  'decoration': 'Décoration',
+  'jardin-bricolage': 'Jardin & Bricolage',
+  'vetements': 'Vêtements',
+  'chaussures': 'Chaussures',
+  'sacs-accessoires': 'Sacs & Accessoires',
+  'montres': 'Montres',
+  'cosmetiques': 'Cosmétiques',
+  'soins-visage': 'Soins Visage',
+  'soins-corps': 'Soins Corps',
+  'parfums': 'Parfums',
+  'complements-alimentaires': 'Compléments Alimentaires',
+  'materiel-coiffure': 'Matériel Coiffure',
+  'equipements-sport': 'Équipements Sport',
+  'instruments-musique': 'Instruments de Musique',
+  'jouets': 'Jouets',
+  'voyages': 'Voyages',
+  'velos': 'Vélos',
+  'animaux': 'Animaux',
+  'fournitures-scolaires': 'Fournitures Scolaires',
+  'collection': 'Collection',
+  'inclassables': 'Inclassables',
+  'lingerie-sous-vetements': 'Lingerie & Sous-vêtements',
+  'maillots-de-bain': 'Maillots de Bain',
+  'cosmetiques-bien-etre': 'Cosmétiques Bien-être',
+  'accessoires-mode': 'Accessoires Mode',
+}
 
 type ExtraField = { name: string; label: string; type?: string; options?: string[]; placeholder?: string }
 type CatConfig = { etats: string[]; extraFields: ExtraField[] }
