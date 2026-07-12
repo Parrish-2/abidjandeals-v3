@@ -466,7 +466,7 @@ export default function PublierPage() {
         }
       }
 
-      const { error } = await Promise.race([
+      const { data: insertedAd, error } = await Promise.race([
         supabase.from('ads').insert({
           user_id: userId,
           title: form.title,
@@ -484,13 +484,22 @@ export default function PublierPage() {
           video_url: videoUrl || null,
           status: 'pending',
           views: 0,
-        }),
-        new Promise<{ error: { message: string } }>(r =>
-          setTimeout(() => r({ error: { message: 'Délai dépassé' } }), 30000)
+        }).select('id').single(),
+        new Promise<{ data: null; error: { message: string } }>(r =>
+          setTimeout(() => r({ data: null, error: { message: 'Délai dépassé' } }), 30000)
         )
       ])
 
       if (error) { toast.error('Erreur: ' + error.message); clearTimeout(globalTimeout); return }
+
+      // Déclenche l'auto-modération IA en tâche de fond (jamais bloquant, jamais d'échec visible)
+      if (insertedAd?.id) {
+        fetch('/api/ads/auto-moderate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ adId: insertedAd.id }),
+        }).catch(() => { })
+      }
 
       clearTimeout(globalTimeout)
       localStorage.removeItem(STORAGE_KEY)
@@ -979,3 +988,4 @@ export default function PublierPage() {
     </div>
   )
 }
+
