@@ -660,7 +660,6 @@ function SearchContentV2() {
           {searchBanner && (
             <div className="hidden lg:block w-72 flex-shrink-0">
               <div className="sticky top-24">
-                <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-2">Publicité</p>
                 <div className="rounded-2xl overflow-hidden border border-gray-100 shadow-sm">
                   <SmartBanner banner={searchBanner} />
                 </div>
