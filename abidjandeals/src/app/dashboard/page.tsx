@@ -25,7 +25,7 @@ interface Ad {
   images: string[] | null
   created_at: string
   boost_level: 'STANDARD' | 'PREMIUM' | 'URGENT' | null
-  boost_until?: string | null
+  boost_expires_at?: string | null
 }
 
 interface Profile {
@@ -103,7 +103,7 @@ function AdRow({ ad, deleting, onDelete, onBoost }: {
   onDelete: (id: string, title: string) => void
   onBoost: (ad: Ad) => void
 }) {
-  const boosted = !!ad.boost_level && (!ad.boost_until || new Date(ad.boost_until) > new Date())
+  const boosted = !!ad.boost_level && (!ad.boost_expires_at || new Date(ad.boost_expires_at) > new Date())
   const thumb = Array.isArray(ad.images) && ad.images.length > 0 ? ad.images[0] : null
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '12px 20px', borderBottom: '0.5px solid #f3f4f6' }}>
@@ -465,7 +465,7 @@ export default function DashboardPage() {
         const [profileRes, adsRes] = await Promise.allSettled([
           supabase.from('profiles').select('prenom, nom').eq('id', uid).single(),
           supabase.from('ads')
-            .select('id, title, price, status, category_id, city, images, created_at, boost_level, boost_until')
+            .select('id, title, price, status, category_id, city, images, created_at, boost_level, boost_expires_at')
             .eq('user_id', uid)
             .order('created_at', { ascending: false }),
         ])
@@ -521,7 +521,7 @@ export default function DashboardPage() {
 
   const activeCount = ads.filter(a => a.status === 'active').length
   const pendingCount = ads.filter(a => a.status === 'pending').length
-  const boostedCount = ads.filter(a => !!a.boost_level && (!a.boost_until || new Date(a.boost_until) > new Date())).length
+  const boostedCount = ads.filter(a => !!a.boost_level && (!a.boost_expires_at || new Date(a.boost_expires_at) > new Date())).length
   const prenom = profile?.prenom || profile?.nom?.split(' ')[0] || ''
 
   const handleDelete = async (id: string, title: string) => {
@@ -545,7 +545,7 @@ export default function DashboardPage() {
     if (!uid) return
     const { data } = await supabase
       .from('ads')
-      .select('id, title, price, status, category_id, city, images, created_at, boost_level, boost_until')
+      .select('id, title, price, status, category_id, city, images, created_at, boost_level, boost_expires_at')
       .eq('user_id', uid)
       .order('created_at', { ascending: false })
     if (data) setAds(data as Ad[])
@@ -700,3 +700,4 @@ export default function DashboardPage() {
     </div>
   )
 }
+
