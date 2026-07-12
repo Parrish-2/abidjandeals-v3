@@ -13,10 +13,71 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-import { SUBCAT_LABELS as CAT_DATA } from '@/lib/data';
+import { CATEGORIES } from '@/lib/data';
 
 const ADULT_CATEGORIES = ['lingerie', 'cat_lingerie', 'cat_adulte']
 const STORAGE_KEY = 'KIVOO_age_verified'
+
+const SUBCAT_LABELS: Record<string, string> = {
+  'telephones-accessoires': 'Téléphones & Accessoires',
+  'ordinateurs': 'Ordinateurs',
+  'tablettes': 'Tablettes',
+  'tv-son': 'TV & Son',
+  'photo-video': 'Photo & Vidéo',
+  'consoles-jeux': 'Consoles & Jeux',
+  'objets-connectes': 'Objets Connectés',
+  'composants': 'Composants',
+  'voitures-d-occasion': "Voitures d'Occasion",
+  'motos-scooters': 'Motos & Scooters',
+  'bateaux-nautisme': 'Bateaux & Nautisme',
+  'pieces-detachees-pneus': 'Pièces & Pneus',
+  'location-auto': 'Location Auto',
+  'camions-utilitaires': 'Camions & Utilitaires',
+  'groupes-electrogenes': 'Groupes Électrogènes',
+  'outillage-industriel': 'Outillage Industriel',
+  'engins-chantier': 'Engins de Chantier',
+  'vente-appartement': 'Vente Appartement',
+  'vente-maison-villa': 'Vente Maison & Villa',
+  'location-meublee': 'Location Meublée',
+  'maison-a-louer': 'Maison à Louer',
+  'colocation': 'Colocation',
+  'terrains-acd': 'Terrains & ACD',
+  'bureaux-boutiques': 'Bureaux & Boutiques',
+  'freelance-it': 'Freelance & IT',
+  'batiment': 'Bâtiment & Travaux',
+  'cours-formation': 'Cours & Formation',
+  'offres-emploi': "Offres d'Emploi",
+  'transport': 'Transport',
+  'menage': 'Ménage & Nettoyage',
+  'evenementiel': 'Événementiel',
+  'meubles': 'Meubles',
+  'electromenager': 'Électroménager',
+  'decoration': 'Décoration',
+  'jardin-bricolage': 'Jardin & Bricolage',
+  'vetements': 'Vêtements',
+  'chaussures': 'Chaussures',
+  'sacs-accessoires': 'Sacs & Accessoires',
+  'montres': 'Montres',
+  'cosmetiques': 'Cosmétiques',
+  'soins-visage': 'Soins Visage',
+  'soins-corps': 'Soins Corps',
+  'parfums': 'Parfums',
+  'complements-alimentaires': 'Compléments Alimentaires',
+  'materiel-coiffure': 'Matériel Coiffure',
+  'equipements-sport': 'Équipements Sport',
+  'instruments-musique': 'Instruments de Musique',
+  'jouets': 'Jouets',
+  'voyages': 'Voyages',
+  'velos': 'Vélos',
+  'animaux': 'Animaux',
+  'fournitures-scolaires': 'Fournitures Scolaires',
+  'collection': 'Collection',
+  'inclassables': 'Inclassables',
+  'lingerie-sous-vetements': 'Lingerie & Sous-vêtements',
+  'maillots-de-bain': 'Maillots de Bain',
+  'cosmetiques-bien-etre': 'Cosmétiques Bien-être',
+  'accessoires-mode': 'Accessoires Mode',
+}
 
 function isAgeVerified(): boolean {
   try { return localStorage.getItem(STORAGE_KEY) === 'true' } catch { return false }
@@ -48,7 +109,7 @@ function _slugify(str: string): string {
 
 const SUBCAT_SLUG_TO_NAME: Record<string, string> = (() => {
   const map: Record<string, string> = {}
-  for (const cat of CAT_DATA) {
+  for (const cat of CATEGORIES) {
     for (const sub of cat.subcats) {
       const name = typeof sub === 'string' ? sub : (sub as { name: string }).name
       if (name) map[_slugify(name)] = name
