@@ -16,6 +16,7 @@
     "isolatedModules": true,
     "jsx": "react-jsx",
     "incremental": true,
+    "baseUrl": ".",
     "paths": {
       "@/*": [
         "./src/*"
@@ -39,6 +40,8 @@
     "node_modules",
     ".next",
     "supabase",
-    "**/supabase/functions/**"
+    "**/supabase/functions/**",
+    "backup_before_kivoo_20260524_210553",
+    "**/backup_*/**"
   ]
 }

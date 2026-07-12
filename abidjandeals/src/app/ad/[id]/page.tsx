@@ -444,13 +444,24 @@ export default function AdDetailPage() {
                 <Footer />
             </div>
 
-            {hasWhatsApp && (
+            {(ad.tel || hasWhatsApp) && (
                 <div className="fixed bottom-0 left-0 right-0 z-50 lg:hidden px-4 pb-4 pt-2 bg-gradient-to-t from-white via-white/95 to-transparent">
-                    <a href={whatsappUrl} target="_blank" rel="noopener noreferrer"
-                        className="flex items-center justify-center gap-3 w-full py-4 rounded-2xl bg-[#25D366] hover:bg-[#20b858] active:scale-95 text-white font-extrabold text-base shadow-lg shadow-green-200 transition-all">
-                        <MessageCircle size={20} />
-                        {t('ads.contact_seller')}
-                    </a>
+                    <div className="flex gap-2">
+                        {ad.tel && (
+                            <a href={`tel:${ad.tel}`}
+                                className="flex items-center justify-center gap-2 flex-1 py-4 rounded-2xl bg-orange-500 hover:bg-orange-600 active:scale-95 text-white font-extrabold text-base shadow-lg shadow-orange-200 transition-all">
+                                <Phone size={20} />
+                                {t('ad.call')}
+                            </a>
+                        )}
+                        {hasWhatsApp && (
+                            <a href={whatsappUrl} target="_blank" rel="noopener noreferrer"
+                                className="flex items-center justify-center gap-2 flex-1 py-4 rounded-2xl bg-[#25D366] hover:bg-[#20b858] active:scale-95 text-white font-extrabold text-base shadow-lg shadow-green-200 transition-all">
+                                <MessageCircle size={20} />
+                                WhatsApp
+                            </a>
+                        )}
+                    </div>
                 </div>
             )}
         </>

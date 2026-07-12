@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { supabase } from '@/lib/supabase'
 import { AlertTriangle, CheckCircle2, Eye, LogOut, PlusCircle, RefreshCw, Search, Shield, Trash2, XCircle } from 'lucide-react'
@@ -674,7 +674,7 @@ export default function ModerationPage() {
     } catch { toast.error('Erreur réseau'); setProcessingId(null); return }
     if (message && user_id) {
       await supabase.from('notifications').insert({ user_id, type: 'ad_rejected', title: 'Annonce refusée', message, ad_id: id, read: false })
-        .then(() => null).catch(err => console.warn('Notif échouée:', err.message))
+        .then(() => null, (err: any) => console.warn('Notif échouée:', err.message))
     }
     toast.success('Annonce refusée'); setAds(p => p.filter(a => a.id !== id)); setProcessingId(null)
   }
@@ -899,3 +899,4 @@ export default function ModerationPage() {
     </div>
   )
 }
+

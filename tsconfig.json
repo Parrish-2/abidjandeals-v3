@@ -38,6 +38,8 @@
   ],
   "exclude": [
     "node_modules",
-    "supabase"
+    "supabase",
+    "abidjandeals/backup_before_kivoo_20260524_210553",
+    "**/backup_*/**"
   ]
 }
