@@ -1,10 +1,12 @@
-import { createClient } from '@supabase/supabase-js'
+﻿import { createClient } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
 
 // Seuil de confiance à partir duquel une annonce est publiée automatiquement.
 // Le rejet, lui, n'est JAMAIS automatique — il reste toujours soumis à validation humaine.
 const CONFIDENCE_THRESHOLD = 90
 const MAX_IMAGES_ANALYZED = 4
+
+export const maxDuration = 60
 
 export async function POST(req: NextRequest) {
     const adminSupabase = createClient(
@@ -158,3 +160,4 @@ Retourne ce JSON exact :
         return NextResponse.json({ success: false, error: 'server_error' })
     }
 }
+
