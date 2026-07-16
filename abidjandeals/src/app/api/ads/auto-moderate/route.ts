@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from 'next/server'
 // Seuil de confiance à partir duquel une annonce est publiée automatiquement.
 // Le rejet, lui, n'est JAMAIS automatique — il reste toujours soumis à validation humaine.
 const CONFIDENCE_THRESHOLD = 90
+const MAX_IMAGES_ANALYZED = 4
 
 export async function POST(req: NextRequest) {
     const adminSupabase = createClient(
@@ -33,7 +34,7 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ success: true, skipped: true, reason: 'not_pending' })
     }
 
-    const imageUrl = ad.images?.[0] ?? null
+    const imageUrls = (ad.images ?? []).slice(0, MAX_IMAGES_ANALYZED)
 
     const textPrompt = `Tu es un modérateur expert pour Kivoo, un marketplace ivoirien (Côte d'Ivoire).
 
@@ -46,15 +47,18 @@ Annonce :
 - Catégorie : ${ad.category_id}
 - Ville : ${ad.city}
 
-${imageUrl ? "Une image est jointe. Vérifie si c'est une vraie photo du produit ou une image catalogue/stock." : "Aucune image fournie."}
+${imageUrls.length > 0
+            ? `${imageUrls.length} photo(s) jointe(s) (sur ${ad.images?.length ?? 0} au total). Vérifie que CHAQUE photo correspond bien au produit décrit dans le titre et la description — pas seulement la première. Vérifie aussi si ce sont de vraies photos du produit ou des images catalogue/stock.`
+            : "Aucune image fournie."}
 
 Critères d'évaluation :
 1. Contenu interdit (armes, drogues, contenus adultes hors catégorie, fausses CNI)
 2. Arnaque potentielle (prix anormalement bas, description vague, offres trop belles)
 3. Mauvaise catégorie
-4. Photos catalogue/stock vs vraies photos
-5. Informations insuffisantes
-6. Prix cohérent avec le marché ivoirien
+4. Cohérence entre les photos et le produit décrit (titre + description)
+5. Photos catalogue/stock vs vraies photos
+6. Informations insuffisantes
+7. Prix cohérent avec le marché ivoirien
 
 Retourne ce JSON exact :
 {
@@ -75,14 +79,13 @@ Retourne ce JSON exact :
 
     try {
         const messages: any[] = []
-        if (imageUrl) {
-            messages.push({
-                role: 'user',
-                content: [
-                    { type: 'image', source: { type: 'url', url: imageUrl } },
-                    { type: 'text', text: textPrompt },
-                ],
-            })
+        if (imageUrls.length > 0) {
+            const content: any[] = imageUrls.map((url: string) => ({
+                type: 'image',
+                source: { type: 'url', url },
+            }))
+            content.push({ type: 'text', text: textPrompt })
+            messages.push({ role: 'user', content })
         } else {
             messages.push({ role: 'user', content: textPrompt })
         }

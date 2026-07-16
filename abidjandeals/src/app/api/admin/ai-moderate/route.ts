@@ -1,45 +1,40 @@
-// src/app/api/admin/ai-moderate/route.ts
-import { createServerClient } from '@supabase/ssr'
-import { cookies } from 'next/headers'
+import { createClient } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
 
+// Seuil de confiance à partir duquel une annonce est publiée automatiquement.
+// Le rejet, lui, n'est JAMAIS automatique — il reste toujours soumis à validation humaine.
+const CONFIDENCE_THRESHOLD = 90
+const MAX_IMAGES_ANALYZED = 4
+
 export async function POST(req: NextRequest) {
-    const cookieStore = await cookies()
-
-    // ✅ Auth admin
-    const supabase = createServerClient(
+    const adminSupabase = createClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-        { cookies: { get: (n) => cookieStore.get(n)?.value, set() { }, remove() { } } }
-    )
-    const adminSupabase = createServerClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.SUPABASE_SERVICE_ROLE_KEY!,
-        { cookies: { get: (n) => cookieStore.get(n)?.value, set() { }, remove() { } } }
+        process.env.SUPABASE_SERVICE_ROLE_KEY!
     )
 
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
-
-    const { data: profile } = await adminSupabase
-        .from('profiles').select('role').eq('id', user.id).single()
-    if (!profile || !['admin', 'moderator'].includes(profile.role))
-        return NextResponse.json({ error: 'Accès refusé' }, { status: 403 })
-
-    const { adId } = await req.json()
+    let adId: string | undefined
+    try {
+        const body = await req.json()
+        adId = body?.adId
+    } catch {
+        return NextResponse.json({ error: 'Corps de requête invalide' }, { status: 400 })
+    }
     if (!adId) return NextResponse.json({ error: 'adId requis' }, { status: 400 })
 
-    // ✅ Récupérer l'annonce
     const { data: ad } = await adminSupabase
         .from('ads')
-        .select('id, title, description, price, category_id, city, images')
+        .select('id, user_id, title, description, price, category_id, city, images, status')
         .eq('id', adId)
         .single()
 
     if (!ad) return NextResponse.json({ error: 'Annonce introuvable' }, { status: 404 })
 
-    // ✅ Construire le prompt
-    const imageUrl = ad.images?.[0] ?? null
+    // Si l'annonce n'est plus en attente (déjà traitée manuellement entre-temps), on ne fait rien.
+    if (ad.status !== 'pending') {
+        return NextResponse.json({ success: true, skipped: true, reason: 'not_pending' })
+    }
+
+    const imageUrls = (ad.images ?? []).slice(0, MAX_IMAGES_ANALYZED)
 
     const textPrompt = `Tu es un modérateur expert pour Kivoo, un marketplace ivoirien (Côte d'Ivoire).
 
@@ -52,15 +47,18 @@ Annonce :
 - Catégorie : ${ad.category_id}
 - Ville : ${ad.city}
 
-${imageUrl ? "Une image est jointe. Vérifie si c'est une vraie photo du produit ou une image catalogue/stock." : "Aucune image fournie."}
+${imageUrls.length > 0
+            ? `${imageUrls.length} photo(s) jointe(s) (sur ${ad.images?.length ?? 0} au total). Vérifie que CHAQUE photo correspond bien au produit décrit dans le titre et la description — pas seulement la première. Vérifie aussi si ce sont de vraies photos du produit ou des images catalogue/stock.`
+            : "Aucune image fournie."}
 
 Critères d'évaluation :
 1. Contenu interdit (armes, drogues, contenus adultes hors catégorie, fausses CNI)
 2. Arnaque potentielle (prix anormalement bas, description vague, offres trop belles)
 3. Mauvaise catégorie
-4. Photos catalogue/stock vs vraies photos
-5. Informations insuffisantes
-6. Prix cohérent avec le marché ivoirien
+4. Cohérence entre les photos et le produit décrit (titre + description)
+5. Photos catalogue/stock vs vraies photos
+6. Informations insuffisantes
+7. Prix cohérent avec le marché ivoirien
 
 Retourne ce JSON exact :
 {
@@ -80,21 +78,14 @@ Retourne ce JSON exact :
 }`
 
     try {
-        // ✅ Appel Claude API avec ou sans image
         const messages: any[] = []
-
-        if (imageUrl) {
-            // Avec image — on passe l'URL directement
-            messages.push({
-                role: 'user',
-                content: [
-                    {
-                        type: 'image',
-                        source: { type: 'url', url: imageUrl }
-                    },
-                    { type: 'text', text: textPrompt }
-                ]
-            })
+        if (imageUrls.length > 0) {
+            const content: any[] = imageUrls.map((url: string) => ({
+                type: 'image',
+                source: { type: 'url', url },
+            }))
+            content.push({ type: 'text', text: textPrompt })
+            messages.push({ role: 'user', content })
         } else {
             messages.push({ role: 'user', content: textPrompt })
         }
@@ -115,26 +106,55 @@ Retourne ce JSON exact :
 
         if (!response.ok) {
             const err = await response.text()
-            console.error('[ai-moderate] Claude API error:', err)
-            return NextResponse.json({ error: 'Erreur API Claude' }, { status: 502 })
+            console.error('[auto-moderate] Claude API error:', err)
+            // Échec silencieux : l'annonce reste en pending, modération manuelle prendra le relais.
+            return NextResponse.json({ success: false, error: 'ai_error' })
         }
 
         const claudeData = await response.json()
         const rawText = claudeData.content?.[0]?.text ?? ''
 
-        // ✅ Parser le JSON retourné par Claude
         let analysis
         try {
             const clean = rawText.replace(/```json|```/g, '').trim()
             analysis = JSON.parse(clean)
         } catch {
-            console.error('[ai-moderate] Parse error:', rawText)
-            return NextResponse.json({ error: 'Réponse IA invalide', raw: rawText }, { status: 500 })
+            console.error('[auto-moderate] Parse error:', rawText)
+            return NextResponse.json({ success: false, error: 'invalid_ai_response' })
         }
-        return NextResponse.json({ success: true, analysis })
 
+        // ── Auto-approbation uniquement — le rejet reste TOUJOURS manuel ──
+        if (analysis.decision === 'approve' && analysis.confidence >= CONFIDENCE_THRESHOLD) {
+            const { error: updateError, data: updated } = await adminSupabase
+                .from('ads')
+                .update({ status: 'active' })
+                .eq('id', adId)
+                .eq('status', 'pending') // évite une course avec une modération manuelle simultanée
+                .select('id')
+
+            if (updateError) {
+                console.error('[auto-moderate] update error:', updateError)
+                return NextResponse.json({ success: false, error: 'db_update_failed' })
+            }
+
+            if (updated && updated.length > 0) {
+                await adminSupabase.from('notifications').insert({
+                    user_id: ad.user_id,
+                    type: 'ad_auto_approved',
+                    title: 'Annonce publiée !',
+                    message: `Votre annonce "${ad.title}" a été vérifiée et publiée automatiquement.`,
+                    ad_id: adId,
+                    read: false,
+                })
+
+                return NextResponse.json({ success: true, autoApproved: true, analysis })
+            }
+        }
+
+        // Rejet, incertitude, ou confiance insuffisante → reste en attente pour modération manuelle.
+        return NextResponse.json({ success: true, autoApproved: false, analysis })
     } catch (err) {
-        console.error('[ai-moderate]', err)
-        return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 })
+        console.error('[auto-moderate]', err)
+        return NextResponse.json({ success: false, error: 'server_error' })
     }
 }
