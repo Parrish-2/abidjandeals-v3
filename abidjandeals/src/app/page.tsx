@@ -51,12 +51,19 @@ async function getAds(page: number) {
             .order('created_at', { ascending: false })
             .range(from, to)
 
-        const ads = (data ?? []).map((ad: any) => ({
-            ...ad,
-            category: ad.category_id ?? ad.category ?? '',
-            seller: 'Vendeur',
-            img: ad.images?.[0] ?? null,
-        }))
+        const NEW_BADGE_HOURS = 48
+        const ads = (data ?? []).map((ad: any) => {
+            const isNew = ad.created_at
+                ? (Date.now() - new Date(ad.created_at).getTime()) < NEW_BADGE_HOURS * 60 * 60 * 1000
+                : false
+            return {
+                ...ad,
+                category: ad.category_id ?? ad.category ?? '',
+                seller: 'Vendeur',
+                img: ad.images?.[0] ?? null,
+                badge: isNew ? 'new' : (ad.badge ?? null),
+            }
+        })
         return { ads, totalPages: Math.ceil((count ?? 0) / PAGE_SIZE), total: count ?? 0 }
     } catch {
         return { ads: [], totalPages: 1, total: 0 }
