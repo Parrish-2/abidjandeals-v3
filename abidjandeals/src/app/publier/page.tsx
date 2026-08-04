@@ -157,7 +157,7 @@ const STORAGE_KEY = 'KIVOO_draft'
 const EMPTY_FORM = {
   title: '', description: '', price: '',
   category: '', subcategory: '', etat: '',
-  city: '', quartier: '', tel: '', whatsapp: '',
+  city: '', quartier: '', tel: '', whatsapp: '', guest_name: '',
 }
 const MAX_IMAGES = 8
 type MediaFile = { file: File; url: string; type: 'image' | 'video' }
@@ -480,6 +480,7 @@ export default function PublierPage() {
           quartier: form.quartier || null,
           tel: form.tel,
           whatsapp: form.whatsapp || form.tel,
+          guest_name: form.guest_name.trim() || null,
           images: uploadedImages,
           video_url: videoUrl || null,
           status: 'pending',
@@ -853,6 +854,9 @@ export default function PublierPage() {
                   <input name="whatsapp" value={form.whatsapp || ''} onChange={handleChange}
                     placeholder="WhatsApp si différent du téléphone"
                     className="w-full border border-gray-100 bg-gray-50 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-orange-400 focus:bg-white transition" />
+                  <input name="guest_name" value={form.guest_name || ''} onChange={handleChange}
+                    placeholder="Nom du vendeur (si vous publiez pour quelqu'un d'autre)"
+                    className="w-full border border-gray-100 bg-gray-50 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-orange-400 focus:bg-white transition" />
                 </div>
               </div>
             </div>
@@ -988,4 +992,7 @@ export default function PublierPage() {
     </div>
   )
 }
+
+
+
 

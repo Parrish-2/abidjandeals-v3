@@ -380,7 +380,7 @@ export default function AdDetailPage() {
                                 <div className="flex items-center gap-3 mb-4 pb-4 border-b border-gray-100">
                                     <div className="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center text-orange-600 font-bold">V</div>
                                     <div className="flex items-center gap-2">
-                                        <p className="font-bold text-gray-900">{t('ad.seller')}</p>
+                                        <p className="font-bold text-gray-900">{ad.guest_name || t('ad.seller')}</p>
                                         {/* ── Badge Pro vendeur ── */}
                                         {vendorIsPro && (
                                             <span style={{
@@ -471,4 +471,5 @@ export default function AdDetailPage() {
         </>
     )
 }
+
 
