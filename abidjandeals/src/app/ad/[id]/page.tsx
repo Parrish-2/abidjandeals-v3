@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 import BoostCTA from '@/components/boost/BoostCTA'
 import { Footer } from '@/components/Footer'
 import { HybridGallery } from '@/components/HybridGallery'
@@ -52,7 +52,11 @@ export default function AdDetailPage() {
                 setAd(data)
                 setFound(true)
                 if (data.status === 'active') {
-                    supabase.from('ads').update({ views: (data.views || 0) + 1 }).eq('id', adId)
+                    fetch('/api/ads/track-view', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ adId }),
+                    }).catch(() => { })
                 }
             } catch { setFound(false) }
         }
@@ -467,3 +471,4 @@ export default function AdDetailPage() {
         </>
     )
 }
+
