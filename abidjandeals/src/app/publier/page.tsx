@@ -398,7 +398,7 @@ export default function PublierPage() {
     const globalTimeout = setTimeout(() => {
       setLoading(false)
       toast.error('Délai dépassé. Vérifiez votre connexion et réessayez.')
-    }, 5 * 60 * 1000)
+    }, 90 * 1000)
 
     try {
       let userId = storeUser?.id
@@ -419,7 +419,7 @@ export default function PublierPage() {
       let uploadFailed = false
 
       if (media.length > 0) {
-        const getTimeout = (type: string) => type === 'video' ? 3 * 60 * 1000 : 90 * 1000
+        const getTimeout = (type: string) => type === 'video' ? 60 * 1000 : 30 * 1000
 
         const uploadWithRetry = async (m: MediaFile, attempt = 1): Promise<string | null> => {
           const ext = m.file.name.split('.').pop()
@@ -487,7 +487,7 @@ export default function PublierPage() {
           views: 0,
         }).select('id').single(),
         new Promise<{ data: null; error: { message: string } }>(r =>
-          setTimeout(() => r({ data: null, error: { message: 'Délai dépassé' } }), 30000)
+          setTimeout(() => r({ data: null, error: { message: 'Délai dépassé' } }), 20000)
         )
       ])
 
@@ -992,6 +992,7 @@ export default function PublierPage() {
     </div>
   )
 }
+
 
 
 
