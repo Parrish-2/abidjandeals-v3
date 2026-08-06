@@ -90,11 +90,8 @@ export default async function HomePage({
         <div className="min-h-screen flex flex-col bg-gray-50">
             <Navbar />
             {showIndependenceBanner && (
-                <div className="w-full text-center py-2.5 px-4 text-sm font-semibold text-white"
-                    style={{ background: 'linear-gradient(90deg, #F97316 0%, #F97316 33%, #FFFFFF 33%, #FFFFFF 66%, #16A34A 66%, #16A34A 100%)' }}>
-                    <span style={{ textShadow: '0 1px 3px rgba(0,0,0,0.5)' }}>
-                        🇨🇮 Bonne fête de l'Indépendance ! Kivoo vous souhaite une excellente célébration.
-                    </span>
+                <div className="w-full text-center py-2.5 px-4 text-sm font-semibold text-white" style={{ background: "#F97316" }}>
+                    Bonne fête de l'Indépendance ! Kivoo vous souhaite une excellente célébration.
                 </div>
             )}
             <main className="flex-1">
